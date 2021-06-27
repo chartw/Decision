@@ -55,11 +55,12 @@ class Decision:
 
         global_path_pub= rospy.Publisher('/global_path',Path, queue_size=1)
         local_target_pub= rospy.Publisher('/local_target',Point32, queue_size=1)
+        local_path_pub= rospy.Publisher('/local_path',Path, queue_size=1)
         driving_mode_pub= rospy.Publisher('/driving_mode',String, queue_size=1)
 
-        rospy.Subscriber("/obstacles", Obstacles, self.obstacleInfo)
-        rospy.Subscriber("/pose", Odometry, self.positionInfo)
-        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectInfo)
+        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        rospy.Subscriber("/pose", Odometry, self.positionCallback)
+        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
 
         self.is_position=False
         self.is_obstacle=False
@@ -69,9 +70,9 @@ class Decision:
 
         self.global_path=Path()
 
-        self.obstacle_info_msg=Obstacles()
-        self.position_info_msg=Odometry()
-        self.object_info_msg=BoundingBoxes()
+        self.obstacle_msg=Obstacles()
+        self.position_msg=Odometry()
+        self.object_msg=BoundingBoxes()
 
         rate=rospy.Rate(100) # 100hz
 
@@ -463,6 +464,15 @@ class Decision:
 
 
     #----------------------------------------------
+    def positionCallback(self,msg):
+        self.position_msg=msg
+
+    def obstacleCallback(self,msg):
+        self.obstacle_msg=msg
+
+    def objectCallback(self,msg):
+        self.object_msg=msg
+
 
     def sensorCallback(self,lidar_msg,pos_msg):
         # lidar_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(lidar_msg.header.stamp.secs))+".%09d" % lidar_msg.header.stamp.nsecs
@@ -525,7 +535,7 @@ class Decision:
         self.flagtimeminkyu = time.time()
         
 
-print("Decision ON")
+# print("Decision ON")
 #print(self.control_data)
 #print('Decision')
 # rospy.Subscriber("/vehicle_node", String, self.final)
@@ -536,18 +546,14 @@ print("Decision ON")
 # print('okokok')
 # rospy.Subscriber('/uturn', uuu, self.uTurn)
 con=Decision()
-lidar=message_filters.Subscriber("/obstacles",Obstacles)
-pos=message_filters.Subscriber("/pose",Odometry)
+# lidar=message_filters.Subscriber("/obstacles",Obstacles)
+# pos=message_filters.Subscriber("/pose",Odometry)
 # lane=message_filters.Subscriber("/laneinformation", lane)
 # obj=message_filters.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes)
 
 
-ats=message_filters.ApproximateTimeSynchronizer([lidar, pos],10,0.1,allow_headerless=True)
-ats.registerCallback(con.sensorCallback)
-
-# rospy.Subscriber("/obstacles", Obstacles, self.getObstacles)
-# rospy.Subscriber("/pose", Odometry, self.getOdoMsg)
-rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, con.getObstacleClass)
+# ats=message_filters.ApproximateTimeSynchronizer([lidar, pos],10,0.1,allow_headerless=True)
+# ats.registerCallback(con.sensorCallback)
 
 rospy.Subscriber("/timer",Time,con.decision)
 rospy.spin()
