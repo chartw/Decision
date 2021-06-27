@@ -121,17 +121,6 @@ class Controller:
         self.obstacle_detect=0
         self.V_veh = 0
 
-        
-        
-
-        # UTurn
-        self.mission_mode = ""
-        self.first_uturn = True
-        self.old_yaw = 0
-
-        # Parking
-        self.parking_first = True
-
         # Displacement - encoder
         self.msg = Float32()
         self.pub_dis = rospy.Publisher('/Displacement', Float32, queue_size=1)
