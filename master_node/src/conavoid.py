@@ -12,13 +12,7 @@ from master_node.msg import Local
 from std_msgs.msg import String
 # from obstacle_detector.msg import Obs
 import numpy as np
-from math import radians
-from math import degrees
-from math import sin
-from math import cos
-from math import hypot
-from math import atan2
-from math import pi
+from math import radians, degrees, sin, cos, hypot, atan2, pi
 # import LPP
 import sys
 import serial
@@ -27,32 +21,18 @@ import time
 import message_filters
 import matplotlib.pyplot as plt
 from hybrid_a_star import path_plan 
-from master_node.msg import Obstacles 
-from master_node.msg import PangPang
+from master_node.msg import Obstacles, PangPang, Local, Path
+
 from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
-from std_msgs.msg import Float32
-from std_msgs.msg import Time
+from std_msgs.msg import Float32, Time
 from lane_detection.msg import lane
 
+from master_node.msg import Local 
 
-map="kcity_"
+from map import global_path_plan
 
-
-# sys.path.append("./map/")
-
-# try:
-#     import GPP
-# except:
-#     raise
-
-sys.path.append("./map1/")
-
-try:
-    import makeTarget
-except:
-    raise
 class Path():
     def __init__(self):
         self.x=[]
@@ -65,45 +45,41 @@ class Pose():
         self.yaw=0
         self.update=False
 
-class PID():
-    def __init__(self):
-        self.Kp_ld = 0.03
-
-        self.Kp_v = 50
-        self.Ki_v = 5
-        self.Kd_v = 10
-
-        self.Kp_s = 0.5
-        self.Ki_s = 0.01
-        self.Kd_s = 0
-
-        self.speed_look_ahead = 6
-        self.V_err = 0
-        self.V_err_old = 0
-        self.V_in = 0
-        self.V_veh = 0
-        self.V_err_pro = 0
-        self.V_err_inte = 0
-        self.V_err_deri = 0
-
-        self.steering_veh = 0
-        self.steering_err =0
-        self.steering_err_old = 0
-        self.steering_in = 0
-        self.steering_err_inte = 0
-        self.steering_err_deri = 0
-
-
-class Controller:
+class Decision:
     def __init__(self):
         rospy.init_node('Decision', anonymous=False)
-        self.ser = serial.Serial('/dev/ttyUSB0',115200) # USB 권한 주
-        self.look_ahead=4
-        self.WB=1
-        self.target_speed=80
-        self.path=Path()
-        self.pose=Pose()
-        self.pid=PID()
+
+        arg=rospy.myargv(argv=sys.argv)
+        self.map=arg[1]
+        self.goal_node=arg[2]
+
+        global_path_pub= rospy.Publisher('/global_path',Path, queue_size=1)
+        local_target_pub= rospy.Publisher('/local_target',Point32, queue_size=1)
+        driving_mode_pub= rospy.Publisher('/driving_mode',String, queue_size=1)
+
+        rospy.Subscriber("/obstacles", Obstacles, self.obstacleInfo)
+        rospy.Subscriber("/pose", Odometry, self.positionInfo)
+        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectInfo)
+
+        self.is_position=False
+        self.is_obstacle=False
+        self.is_object=False
+
+        path_maker=global_path_plan.GPP(self.map)
+
+        self.global_path=Path()
+
+        self.obstacle_info_msg=Obstacles()
+        self.position_info_msg=Odometry()
+        self.object_info_msg=BoundingBoxes()
+
+        rate=rospy.Rate(100) # 100hz
+
+        while not rospy.is_shutdown():
+
+
+            rate.sleep()
+
 
         self.goal=Point32()
         self.avoid_target=Point32()
@@ -549,9 +525,9 @@ class Controller:
         self.flagtimeminkyu = time.time()
         
 
-print("Controller ON")
+print("Decision ON")
 #print(self.control_data)
-#print('controller')
+#print('Decision')
 # rospy.Subscriber("/vehicle_node", String, self.final)
 # print("run ok")
 
@@ -559,7 +535,7 @@ print("Controller ON")
 # if self.first == False:
 # print('okokok')
 # rospy.Subscriber('/uturn', uuu, self.uTurn)
-con=Controller()
+con=Decision()
 lidar=message_filters.Subscriber("/obstacles",Obstacles)
 pos=message_filters.Subscriber("/pose",Odometry)
 # lane=message_filters.Subscriber("/laneinformation", lane)
