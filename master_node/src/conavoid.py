@@ -96,7 +96,7 @@ class PID():
 
 class Controller:
     def __init__(self):
-        rospy.init_node('Precision', anonymous=False)
+        rospy.init_node('Decision', anonymous=False)
         self.ser = serial.Serial('/dev/ttyUSB0',115200) # USB 권한 주
         self.look_ahead=4
         self.WB=1
@@ -114,13 +114,10 @@ class Controller:
         self.start_idx = 0
         self.target_steer=0
         self.mode_sw = "general"
-
-        self.lane_curv=0
-        
+ 
         self.person_detect = 0
         self.obstacle_detect=0
-        self.V_veh = 0
-
+        
         # Displacement - encoder
         self.msg = Float32()
         self.pub_dis = rospy.Publisher('/Displacement', Float32, queue_size=1)
@@ -128,7 +125,7 @@ class Controller:
         self.now_add = 0 #엔코더에서 사용하는 저장변수
         self.enc_flag = 0 #엔코더에서 사용하는 flag
 
-        self.pub_test=rospy.Publisher('/precision',String,queue_size=1)
+        self.pub_test=rospy.Publisher('/decision',String,queue_size=1)
 
         self.flagtimeminkyu = time.time()
 
@@ -249,95 +246,6 @@ class Controller:
 
             
             return int(delta)
-
-    def calc_velocity(self, k):
-        V_ref_max = 15 # km/h
-        n = 0.8 #safety factor
-
-        critical_k = ((n/V_ref_max)**2) * 19.071
-
-        if k < critical_k:
-            V_ref = V_ref_max
-        else:
-            V_ref = n * (sqrt(19.071/k))
-
-        return 10 * V_ref # 10*(km/h)
-
-
-    def serWrite(self, speed, steering, cnt):
-        input_speed = speed
-        break_val = 0x01
-        # steering 값 2000 넘길 시 2000으로 설정
-        if abs(steering)>=2000:
-            if steering>0:
-                steering = 1999
-            else :
-                steering =-1999
-        # if abs(steering) < 300 :
-        #     steering = int(0.5*steering)
-
-        # 기어 기본값 0: 전진, 1:후진
-        goal_dis = hypot(self.goal.x - self.pose.x, self.goal.y - self.pose.y) # 하이팟 대신에 x, y 따로 비교를 할까...
-        
-        # if self.ls == 1 and self.break_once == False:
-        #     # break_val = 0x10
-        #     self.break_once = True
-            # speed = 0x00
-
-        if goal_dis > 3:
-            speed = speed
-        else:
-            break_val = 0x0B #
-            speed = 0x00
-            # self.next = 
-        # get_test = []
-        # for i in range(int(self.ob_num)):
-        #     get_test.append(self.calc_dis(self.obx[i], self.oby[i]))
-        # ox, oy = [], []
-        # if len(get_test) is not 0:
-        #     if self.person_detect is 1 and min(get_test) < 8:
-        #         speed = 0x00
-        #         break_val = 150
-        if self.person_detect == 1:
-            print("emergency stop")
-            break_val = 200
-            steering=0
-            # self.target_speed = 0
-
-        # if self.mode_sw == "avoidance":
-            # print("avoidance")
-            # self.target_speed = 0
-            # break_val = 0x0B
-        if self.mission_mode == "PCOM":
-            break_val = 200
-            speed = 0x00
-
-        if self.mission_mode == "UTURN":
-            print("###Uturn ON")
-            if self.first_uturn is False:
-                print("okok", self.pose.yaw, self.old_yaw)
-                steering = -1999
-                self.mission_mode = "UTing"
-
-            else:
-                pass
-
-
-        # if self.
-        # print("steering value:", steering)
-        result = struct.pack('!BBBBBBHhBBBB', 0x53, 0x54, 0x58, 0x01, 0x00, 0x00, int(speed),
-                    steering, break_val, cnt, 0x0D, 0x0A )    # big endian 방식으로 타입에 맞춰서 pack   
-        # print("pc : ", result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8],
-        # result[9], result[10], result[11], result[12], result[13] )
-        self.ser.write(result)
-
-        if self.mission_mode == "UTing":
-            print("###ing")
-            time.sleep(3)
-            self.mission_mode = ""
-            self.first_uturn = False
-        # print(result)
-
 
     def calc_dis(self, nx, ny):
         # print(nx, ny, )
@@ -477,14 +385,6 @@ class Controller:
 
         # valid_node_list = []
         for node in nodelist:
-            # dx, dy = nodelist[node].x - cx, nodelist[node].y - cy
-            # dyaw = (atan2(dy, dx) *180 / 3.14) - 90
-            # if dyaw < 0:
-            #     dyaw += 360
-            # print(node, dyaw, cyaw)
-
-            # if abs(dyaw - cyaw) < 10:
-            #     valid_node_list.append(nodelist[node])
             temp_dis = self.calc_dis(nodelist[node].x, nodelist[node].y)
             if temp_dis < min_dis:
                 min_dis = temp_dis
@@ -506,36 +406,13 @@ class Controller:
         self.goal.x, self.goal.y = self.path.x[-1], self.path.y[-1]
 
 
-    def precision(self, msg):
-        # print(self.mode_sw)
-        # print(self.pose.update)
-
-        # UTURN #
-        #--------------------------------------------------------
-        # if abs(self.pose.x - 17.3) < 0.8 and abs(self.pose.y - 36.4) < 0.8 and self.first_uturn == True and self.mission_mode is not "UTURN":
-        #     print("UTURN ON")
-        #     self.mission_mode = "UTURN"
-        #     self.first_uturn = False
-        #     self.old_yaw = self.pose.yaw
-        # #--------------------------------------------------------
+    def decision(self, msg):
 
         if self.pose.update is True and len(self.path.x) is 0:
             print("GPP start")
             self.GPP()
             self.mode_sw = "general"
 
-        # 골포인트 성공할시
-
-        # print("pose : ",self.pose.x,self.pose.y)
-        # print("goal : ",tempx,tempy)
-        # if self.calc_dis(self.avoid_goal.x,self.avoid_goal.y) < 0.5 and self.mode_sw is "avoidance":
-        #     self.mode_sw = "general"
-        #     self.avoid_target.x, self.avoid_target.y = 0, 0
-        # if self.calc_dis(-0.8059, 38.989) < 2
-        #     self.mode_sw = "general"
-            # self.final()
-            # self.ls = 1
-        # print("first_check", self.control_data['first_check'])
         if self.mode_sw is "general":
             # print(""general"")
             self.target_speed = 80
@@ -604,11 +481,8 @@ class Controller:
 
             self.msg = add
 
-            # if difference > 500:
-            #     self.msg = self.pre_add
-
             self.pub_dis.publish(self.msg)
-            self.pub_test.publish("precision")
+            self.pub_test.publish("decision")
             
 
 
@@ -675,17 +549,6 @@ class Controller:
         self.flagtimeminkyu = time.time()
         
 
-    def uTurn(self, msg):
-        if msg.data == "UTURN" and self.first_uturn is True:
-            self.mission_mode = "UTURN"
-            self.first_uturn = False
-            self.old_yaw = self.pose.yaw
-
-    
-
-
-
-
 print("Controller ON")
 #print(self.control_data)
 #print('controller')
@@ -710,7 +573,7 @@ ats.registerCallback(con.sensorCallback)
 # rospy.Subscriber("/pose", Odometry, self.getOdoMsg)
 rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, con.getObstacleClass)
 
-rospy.Subscriber("/timer",Time,con.precision)
+rospy.Subscriber("/timer",Time,con.decision)
 rospy.spin()
 
 
