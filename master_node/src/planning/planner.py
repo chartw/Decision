@@ -1,20 +1,47 @@
+#-*- coding:utf-8 -*-
+
 import rospy
-from control_planner import ControlPlanner
+import threading
 from mission_planner import MissionPlanner
+from control_planner import ControlPlanner
 
 class Planner():
-  def __init__():
+  def __init__(self):
+    rospy.init_node('Planner', anonymous=False)
+
     self.planning_data = {
                   'mission': 'general', \
+                  'cur_x': 0.0, \
+                  'cur_y': 0.0, \
+                  'cur_yaw': 0.0, \
                   'test': 0 \
                   }
 
-    self.mission_planner = MissionPlanner(self) #센서들과 통신. 미션 결정하고 무슨 데이터 받을 지 등등.
+    self.control_data = {
+                  'steering': 0, \
+                  'target_speed': 50, \
+                  'break_val': 0, \
+                  'test' : 0 \
+                  }
+
+
+    # Loop 1 by rospy.spin
+    self.receiver = Receiver(self)
+    th_receiver = threading.Thread(target=self.receiver.run, args=())
+    th_receiver.start()
+    print('===Receiver Start!')
+
+    # Loop 2 by rospy.spin
+    self.transmitter = Transmitter(self)
+    th_transmitter = threading.Thread(target=self.transmitter.run, args=())
+    th_transmitter.start()
+    print('===Transmitter Start!')
+
+    # Loop 3 by while
+    self.mission_planner = MissionPlanner(self)
     print("====Mission Planner Start!")
-    self.control_planner = ControlPlanner(self) #제어에서 뭐할지 결정 및 시리얼로 연결해서 직접 제어. 민수형 아이디어 채용.
+    self.control_planner = ControlPlanner(self)
     print("====Control Planner Start!")
-
-
 
   def run(self):
     rate=rospy.Rate(100) # 100hz
@@ -26,5 +53,5 @@ class Planner():
 
 
 if __name__ == "__main__":
-    plan = Planner()
-    plan.run()
+    planner = Planner()
+    planner.run()

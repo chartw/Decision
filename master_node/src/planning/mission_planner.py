@@ -1,3 +1,5 @@
+#-*- coding:utf-8 -*-
+
 import rospy
 from nav_msgs.msg import Odometry
 
@@ -12,18 +14,28 @@ class MissionPlanner():
 
 
     def run(self):
-        #General
-        data['mission'] = 'general'
 
         #Parking
-        data['mission'] = 'parking'
+        if 1 is 2:
+            self.data['mission'] = 'parking'
+            print("MissionPlanner: mission parking")        
 
         #Avoidance
-        data['mission'] = 'avoidance'
+        elif 2 is 3:
+            self.data['mission'] = 'avoidance'
+            print("MissionPlanner: mission avoidance")        
 
         #Stop
-        data['mission'] = 'stop'
+        elif 3 is 4:
+            self.data['mission'] = 'stop'
+            print("MissionPlanner: mission stop")        
 
         #UTurn
-        data['mission'] = 'uturn'
-        print("=======mission uturn")        
+        elif 4 is 5:
+            self.data['mission'] = 'uturn'
+            print("MissionPlanner: mission uturn")
+
+        #General
+        else:
+            self.data['mission'] = 'general'
+            print("MissionPlanner: mission general")        
