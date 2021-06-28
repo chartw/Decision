@@ -7,10 +7,12 @@ from nav_msgs.msg import Odometry
 class MissionPlanner():
     def __init__(self, planner):
         self.data = planner.planning_data
-        # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        # rospy.Subscriber("/pose", Odometry, self.positionCallback)
-        # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
+        self.pub_mission=rospy.Publisher('/mission',String,queue_size=1)
 
+        ## 어떤 미션인지 판단에 필요한 센서 정보들만 subscribe. 아마 표지판???
+
+        # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback) => callback으로 mission 변경
+        # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
 
 
     def run(self):
@@ -39,3 +41,7 @@ class MissionPlanner():
         else:
             self.data['mission'] = 'general'
             print("MissionPlanner: mission general")        
+
+
+        #Publish Mission to Vision & LiDAR
+        self.pub_mission.publish(self.data['mission'])

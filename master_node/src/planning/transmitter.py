@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 import serial
-
-from nav_msgs.msg import Odometry
 from std_msgs.msg import String
-from geometry_msgs.msg import Point
 
 class Transmitter():
     def __init__(self, planner):
@@ -18,7 +15,7 @@ class Transmitter():
         self.ser = serial.Serial('/dev/ttyUSB0',115200)
 
 
-    def publish(self):
+    def publish_mission(self):
         self.msg = self.data['mission']
         self.pub.publish(self.msg)
 
@@ -37,7 +34,7 @@ class Transmitter():
         self.ser.write(result)
 
     def timerCallback(self, msg):
-        self.publish()
+        self.publish_mission()
         self.serialWrite()
 
     
