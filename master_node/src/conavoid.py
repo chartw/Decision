@@ -8,7 +8,7 @@ import pymap3d
 #import csv
 import rospy
 from nav_msgs.msg import Odometry
-from master_node.msg import Local
+#from master_node.msg import Local
 from std_msgs.msg import String
 # from obstacle_detector.msg import Obs
 import numpy as np
@@ -21,13 +21,13 @@ import time
 import message_filters
 import matplotlib.pyplot as plt
 from hybrid_a_star import path_plan 
-from master_node.msg import Obstacles, PangPang, Local, Path
+#from master_node.msg import Obstacles, PangPang, Local, Path
 
 from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time
-from lane_detection.msg import lane
+#from lane_detection.msg import lane
 
 from master_node.msg import Local 
 
