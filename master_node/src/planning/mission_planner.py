@@ -17,14 +17,15 @@ class MissionPlanner():
 
 
     def run(self):
-
-        #Parking
+        # 각 조건은 표지판 인식 되었을때
+        #Parking 
         if 1 is 2:
             self.data['mission'] = 'parking'
             print("MissionPlanner: mission parking")        
 
         #Avoidance
         elif 2 is 3:
+
             self.data['mission'] = 'avoidance'
             print("MissionPlanner: mission avoidance")        
 
