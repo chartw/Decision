@@ -8,7 +8,7 @@ class ControlPlanner():
         self.control_data = planner.control_data
 
     def run(self):
-      self.mission_name = "mission_" + self.data['mission']
+      self.mission_name = "mission_" + self.planning_data['mission']
       self.mission = getattr(self, self.mission_name, lambda:"general")
       return self.mission() # Switch문 비슷하게 동작함.
     
@@ -16,6 +16,7 @@ class ControlPlanner():
 
     def mission_general(self):
         print("ControlPlanner: mission general")
+
 
 
     def mission_parking(self):

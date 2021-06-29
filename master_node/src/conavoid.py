@@ -127,108 +127,6 @@ class Decision:
         # print(rad)
         return clstob.last_point.x + (d*cos(rad)), clstob.last_point.y + (d*sin(rad))
 
-    def line_detect(self, point):
-        x_sum = 0
-        y_sum = 0
-        number = len(point)
-        for i in range(number):
-            x_sum += point[i].x
-            y_sum += point[i].y
-        number = float(number)
-        x_mean = x_sum / number
-        y_mean = y_sum / number
-
-        up = 0
-        down = 0
-
-        for i in range(int(number)):
-            up += (point[i].x-x_mean) * (point[i].y - y_mean)
-            down += (point[i].x-x_mean) ** 2
-
-        a = up / down
-        b = y_mean - a * x_mean
-
-        return a, b
-
-    def getlane(self, msg):
-        self.lane_curv = msg.curvature
-
-        left_first = Point32()
-        left_last = Point32()
-        right_first = Point32()
-        right_last = Point32()
-        center_first = Point32()
-        center_last = Point32()
-
-        left_x=[]
-        left_y=[]
-        right_x=[]
-        right_y=[]
-
-        for i in range(len(msg.left)):
-            left_x.append(msg.left[i].x)
-            left_y.append(msg.left[i].y)
-
-        for i in range(len(msg.right)):
-            right_x.append(msg.right[i].x)
-            right_y.append(msg.right[i].y)
-
-        if len(msg.left) != 0:
-            l_a, l_b = self.line_detect(msg.left)
-            left_first.x = min(left_x)
-            left_first.y = min(left_y) * l_a + l_b
-            left_last.x = max(left_x)
-            left_last.y = max(left_y) * l_a + l_b
-        else:
-            l_a, l_b = 0, 0
-            left_first.x = 0
-            left_first.y = 0
-            left_last.x = 0
-            left_last.y = 0
-
-        # right is not empty
-        if len(msg.right) != 0:
-            r_a, r_b = self.line_detect(msg.right)
-            right_first.x = min(right_x)
-            right_first.y = min(right_y) * r_a + r_b
-            right_last.x = max(right_x)
-            right_last.y = max(right_y) * r_a + r_b
-        else:
-            r_a, r_b = 0, 0
-            right_first.x = 0
-            right_first.y = 0
-            right_last.x = 0
-            right_last.y = 0
-
-
-        c_a = (l_a + r_a) / 2
-        c_b = 0.0
-        
-
-        center_first.x = 0.0
-        center_first.y = 0.0
-        center_last.x = 2.0
-        center_last.y = 2.0 * c_a + c_b
-        d=1.5
-        l_rad=np.arctan2(left_last.y - left_first.y, left_last.x - left_first.x) - pi / 2
-        r_rad=np.arctan2(right_last.y - right_first.y, right_last.x - right_first.x) +pi / 2
-        if len(msg.left)!= 0 and len(msg.right) != 0:
-            target_x, target_y = (left_last.x + right_last.x)/2 , (left_last.y + right_last.y)/2
-        elif len(msg.left)== 0 and len(msg.right) == 0:
-            target_x, target_y = 1, 0
-        elif len(msg.left) != 0 and len(msg.right) == 0:
-            print("left_deg : ",np.rad2deg(rad2))
-            target_x = left_last.x + (d*cos(l_rad))
-            target_y = left_last.y + (d*sin(l_rad))
-
-        elif len(msg.left) == 0 and len(msg.right) != 0:
-            print("right_deg : ",np.rad2deg(r_rad))
-
-            target_x = right_last.x + (d*cos(r_rad))
-            target_y = right_last.y + (d*sin(r_rad))
-
-        return target_x, target_y
-
     def select_start_node(self, cx, cy, cyaw):
         nodelist = []
         nodelist = makeTarget.node_set()
@@ -251,7 +149,6 @@ class Decision:
         # print('from goal_node:', msg.data)
         self.target_idx = 0
         self.path.x, self.path.y = [], []
-        self.first = False
 
         self.start_idx = self.select_start_node(self.pose.x, self.pose.y, self.pose.yaw)
         print(self.pose.x, self.pose.y, self.pose.yaw)
@@ -279,26 +176,26 @@ class Decision:
     #----------------------------------------------        
         cnt=0x00
 
-        result = self.ser.readline()
+        serial_input = self.ser.readline()
         self.ser.flushInput()
-        # print(result)
-        # print(result[0])
+        # print(serial_input)
+        # print(serial_input[0])
 
-        if (result[0] is 0x53 and result[1] is 0x54 and result[2] is 0x58):
+        if (serial_input[0] is 0x53 and serial_input[1] is 0x54 and serial_input[2] is 0x58):
             res_arr = []
             res_idx = 0
             # print('okokok')
 
             while True:
-                for i in range(len(result)):
-                    if result[i] is 0x0A and i is not 17:
+                for i in range(len(serial_input)):
+                    if serial_input[i] is 0x0A and i is not 17:
                         # print("### 0x0A Found!", i, "th data")
                         res_arr.append(0x0B)
                     else :
-                        res_arr.append(result[i])
+                        res_arr.append(serial_input[i])
 
                 if len(res_arr) < 18:
-                    result = self.ser.readline()
+                    serial_input = self.ser.readline()
                 else:
                     break
 
@@ -309,10 +206,7 @@ class Decision:
 
             self.target_steer  = self.cal_steering(self.pose.x, self.pose.y,  self.pose.yaw, self.look_ahead)
             # print("res_arr is", res_arr[6])
-            if self.V_veh < 50:
-                self.target_speed = 200
-            else:
-                self.target_speed = 80
+            
             self.serWrite(int(self.target_speed), int(self.target_steer), cnt)
             
             a = res_arr[11]

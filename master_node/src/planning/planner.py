@@ -4,7 +4,7 @@ import rospy
 import threading
 from mission_planner import MissionPlanner
 from control_planner import ControlPlanner
-
+from communicator import Communicator
 class Planner():
   def __init__(self):
     rospy.init_node('Planner', anonymous=False)
@@ -25,19 +25,13 @@ class Planner():
                   }
 
 
-    # Loop 1 by rospy.spin
-    self.receiver = Receiver(self)
-    th_receiver = threading.Thread(target=self.receiver.run, args=())
-    th_receiver.start()
-    print('===Receiver Start!')
+    # Loop 1 by while
+    self.communicator = Communicator(self)
+    th_communicator = threading.Thread(target=self.communicator.run, args=())
+    th_communicator.start()
+    print('===Communicator Start!')
 
-    # Loop 2 by rospy.spin
-    self.transmitter = Transmitter(self)
-    th_transmitter = threading.Thread(target=self.transmitter.run, args=())
-    th_transmitter.start()
-    print('===Transmitter Start!')
-
-    # Loop 3 by while
+    # Loop 2 by while
     self.mission_planner = MissionPlanner(self)
     print("====Mission Planner Start!")
     self.control_planner = ControlPlanner(self)
