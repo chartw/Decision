@@ -8,7 +8,7 @@ import pymap3d
 #import csv
 import rospy
 from nav_msgs.msg import Odometry
-from master_node.msg import Local
+#from master_node.msg import Local
 from std_msgs.msg import String
 # from obstacle_detector.msg import Obs
 import numpy as np
@@ -21,13 +21,13 @@ import time
 import message_filters
 import matplotlib.pyplot as plt
 from hybrid_a_star import path_plan 
-from master_node.msg import Obstacles, PangPang, Local, Path
+#from master_node.msg import Obstacles, PangPang, Local, Path
 
 from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time
-from lane_detection.msg import lane
+#from lane_detection.msg import lane
 
 from master_node.msg import Local 
 
@@ -107,128 +107,6 @@ class Decision:
         self.flagtimeminkyu = time.time()
 
     
-    def select_target(self, cx, cy, cidx, path_x, path_y):
-        valid_idx_list = []
-
-        for i in range(cidx, len(path_x)):
-            dis = ((path_x[i]-cx)**2 +(path_y[i]-cy)**2)**0.5
-
-            if dis <= self.look_ahead:
-                valid_idx_list.append(i)
-            if len(valid_idx_list) != 0 and dis > self.look_ahead:
-                break
-        if len(valid_idx_list) == 0:
-            return 0
-        else:
-            return valid_idx_list[len(valid_idx_list) - 1]
-
-             
-    def cal_steering(self, cur_x, cur_y, cur_yaw, look_ahead):
-        if len(self.path.x) is not 0:
-            self.target_idx = self.select_target(cur_x, cur_y, self.target_idx, self.path.x, self.path.y)
-
-            if self.mode_sw is "general":
-                target_x = self.path.x[self.target_idx]
-                target_y = self.path.y[self.target_idx]
-            elif self.mode_sw is "avoidance":
-                target_x = self.avoid_target.x
-                target_y = self.avoid_target.y
-                # target_x = self.lpath_x[10]
-                # target_y = self.lpath_y[10]
-            
-            return self.steering_angle(cur_x, cur_y, cur_yaw, target_x, target_y)
-        return 0
-             
-    def steering_angle(self,  cur_x, cur_y, cur_yaw, target_x, target_y):
-        # pure pursuit 계산되는 부분 
-        if self.mode_sw is "general":
-            tmp_th = degrees(atan2((target_y - cur_y), (target_x - cur_x)))
-
-            tmp_th = tmp_th%360
-
-            alpha =  cur_yaw - tmp_th  
-            # print('alpha:',  alpha)
-            # print('tmp_th', tmp_th)
-            if abs(alpha)>180:
-                if (alpha < 0) :
-                    alpha += 360
-                else :
-                    alpha -= 360
-            # print('alpha2:',  alpha)        
-            alpha = max(alpha,  -90)
-            alpha = min(alpha,  90)
-            # print('modified alpha:',  alpha)
-            # alpha = -alpha
-            delta = degrees(atan2(2*self.WB*sin(radians(alpha))/self.look_ahead,1))
-            # print('delta:',  delta)
-            
-            #test = tmp_th - cur_yaw
-            
-            
-            if abs(delta)>180:
-                if (delta < 0) :
-                    delta += 360
-                else :
-                    delta -= 360
-            
-            
-            # print("delta2 : ", delta)
-            if abs(delta)>30:
-                if delta > 0:
-                    # print('del;',  '1900')
-                    return 1999
-                else :
-                    # print('del;',  '-1900' )
-                    return -1999
-            else :
-                delta = 71*delta
-                # print('del:',  delta)
-                return int(delta)
-        elif self.mode_sw is "avoidance":
-            cur_x, cur_y, cur_yaw = 0, 0, 0
-            tmp_th = degrees(atan2((target_y - cur_y), (target_x - cur_x)))
-            tmp_th = tmp_th%360
-            # print("temp", tmp_th)
-            alpha =  cur_yaw - tmp_th
-            # alpha = 360 - alpha
-            # print("what?: ", alpha)
-            if abs(alpha)>180:
-                if (alpha < 0) :
-                    alpha += 360
-                else :
-                    alpha -= 360
-            # print("what2?: ", alpha)
-            alpha = max(alpha,  -90)
-            alpha = min(alpha,  90)
-            # print("alpha", alpha)
-            # delta = degrees(atan2(2*self.control_data['WB']*sin(radians(alpha))/1,1))
-            # print("delta :", delta)
-            delta = alpha
-            # if target_y>0:
-            #     delta = -alpha
-            # print(delta)
-            if abs(delta)>180:
-                if (delta < 0) :
-                    delta += 360
-                else :
-                    delta -= 360
-            # print("delta", delta)
-            if abs(delta)>30:
-                if delta > 0:
-                    return 1999
-                else :
-                    return -1999
-            else :
-                delta = 71*delta
-
-            
-            return int(delta)
-
-    def calc_dis(self, nx, ny):
-        # print(nx, ny, )
-        distance = ((nx - self.pose.x)**2 +  (ny - self.pose.y)**2)**0.5
-
-        return distance
 
     def getAvoidGoal(self, msg):
 
@@ -248,108 +126,6 @@ class Decision:
         rad=np.arctan2(clstob.last_point.y - clstob.first_point.y, clstob.last_point.x - clstob.first_point.x)
         # print(rad)
         return clstob.last_point.x + (d*cos(rad)), clstob.last_point.y + (d*sin(rad))
-
-    def line_detect(self, point):
-        x_sum = 0
-        y_sum = 0
-        number = len(point)
-        for i in range(number):
-            x_sum += point[i].x
-            y_sum += point[i].y
-        number = float(number)
-        x_mean = x_sum / number
-        y_mean = y_sum / number
-
-        up = 0
-        down = 0
-
-        for i in range(int(number)):
-            up += (point[i].x-x_mean) * (point[i].y - y_mean)
-            down += (point[i].x-x_mean) ** 2
-
-        a = up / down
-        b = y_mean - a * x_mean
-
-        return a, b
-
-    def getlane(self, msg):
-        self.lane_curv = msg.curvature
-
-        left_first = Point32()
-        left_last = Point32()
-        right_first = Point32()
-        right_last = Point32()
-        center_first = Point32()
-        center_last = Point32()
-
-        left_x=[]
-        left_y=[]
-        right_x=[]
-        right_y=[]
-
-        for i in range(len(msg.left)):
-            left_x.append(msg.left[i].x)
-            left_y.append(msg.left[i].y)
-
-        for i in range(len(msg.right)):
-            right_x.append(msg.right[i].x)
-            right_y.append(msg.right[i].y)
-
-        if len(msg.left) != 0:
-            l_a, l_b = self.line_detect(msg.left)
-            left_first.x = min(left_x)
-            left_first.y = min(left_y) * l_a + l_b
-            left_last.x = max(left_x)
-            left_last.y = max(left_y) * l_a + l_b
-        else:
-            l_a, l_b = 0, 0
-            left_first.x = 0
-            left_first.y = 0
-            left_last.x = 0
-            left_last.y = 0
-
-        # right is not empty
-        if len(msg.right) != 0:
-            r_a, r_b = self.line_detect(msg.right)
-            right_first.x = min(right_x)
-            right_first.y = min(right_y) * r_a + r_b
-            right_last.x = max(right_x)
-            right_last.y = max(right_y) * r_a + r_b
-        else:
-            r_a, r_b = 0, 0
-            right_first.x = 0
-            right_first.y = 0
-            right_last.x = 0
-            right_last.y = 0
-
-
-        c_a = (l_a + r_a) / 2
-        c_b = 0.0
-        
-
-        center_first.x = 0.0
-        center_first.y = 0.0
-        center_last.x = 2.0
-        center_last.y = 2.0 * c_a + c_b
-        d=1.5
-        l_rad=np.arctan2(left_last.y - left_first.y, left_last.x - left_first.x) - pi / 2
-        r_rad=np.arctan2(right_last.y - right_first.y, right_last.x - right_first.x) +pi / 2
-        if len(msg.left)!= 0 and len(msg.right) != 0:
-            target_x, target_y = (left_last.x + right_last.x)/2 , (left_last.y + right_last.y)/2
-        elif len(msg.left)== 0 and len(msg.right) == 0:
-            target_x, target_y = 1, 0
-        elif len(msg.left) != 0 and len(msg.right) == 0:
-            print("left_deg : ",np.rad2deg(rad2))
-            target_x = left_last.x + (d*cos(l_rad))
-            target_y = left_last.y + (d*sin(l_rad))
-
-        elif len(msg.left) == 0 and len(msg.right) != 0:
-            print("right_deg : ",np.rad2deg(r_rad))
-
-            target_x = right_last.x + (d*cos(r_rad))
-            target_y = right_last.y + (d*sin(r_rad))
-
-        return target_x, target_y
 
     def select_start_node(self, cx, cy, cyaw):
         nodelist = []
@@ -373,7 +149,6 @@ class Decision:
         # print('from goal_node:', msg.data)
         self.target_idx = 0
         self.path.x, self.path.y = [], []
-        self.first = False
 
         self.start_idx = self.select_start_node(self.pose.x, self.pose.y, self.pose.yaw)
         print(self.pose.x, self.pose.y, self.pose.yaw)
@@ -401,26 +176,26 @@ class Decision:
     #----------------------------------------------        
         cnt=0x00
 
-        result = self.ser.readline()
+        serial_input = self.ser.readline()
         self.ser.flushInput()
-        # print(result)
-        # print(result[0])
+        # print(serial_input)
+        # print(serial_input[0])
 
-        if (result[0] is 0x53 and result[1] is 0x54 and result[2] is 0x58):
+        if (serial_input[0] is 0x53 and serial_input[1] is 0x54 and serial_input[2] is 0x58):
             res_arr = []
             res_idx = 0
             # print('okokok')
 
             while True:
-                for i in range(len(result)):
-                    if result[i] is 0x0A and i is not 17:
+                for i in range(len(serial_input)):
+                    if serial_input[i] is 0x0A and i is not 17:
                         # print("### 0x0A Found!", i, "th data")
                         res_arr.append(0x0B)
                     else :
-                        res_arr.append(result[i])
+                        res_arr.append(serial_input[i])
 
                 if len(res_arr) < 18:
-                    result = self.ser.readline()
+                    serial_input = self.ser.readline()
                 else:
                     break
 
@@ -431,10 +206,7 @@ class Decision:
 
             self.target_steer  = self.cal_steering(self.pose.x, self.pose.y,  self.pose.yaw, self.look_ahead)
             # print("res_arr is", res_arr[6])
-            if self.V_veh < 50:
-                self.target_speed = 200
-            else:
-                self.target_speed = 80
+            
             self.serWrite(int(self.target_speed), int(self.target_steer), cnt)
             
             a = res_arr[11]
