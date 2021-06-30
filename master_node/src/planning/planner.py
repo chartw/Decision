@@ -1,13 +1,11 @@
 # -*- coding:utf-8 -*-
 import rospy
 
-
 import numpy as np
 from math import radians, degrees, sin, cos, hypot, atan2, pi
 import sys
 import time
-from hybrid_a_star import path_plan
-from master_node.msg import Obstacles, PangPang, Local, Path
+from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local
 from nav_msgs.msg import Odometry
 from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
@@ -37,16 +35,27 @@ class Planner:
 
         # 맵 이름이랑, 도착노드 system argument로 받아서 실행하자~
         # ex) python3 planner.py songdo 38
+        # 후에는 roslaunch 파일로 바꾸면서 parameter 가져오도록 변경
         arg = rospy.myargv(argv=sys.argv)
         self.map = arg[1]
         self.goal_node = arg[2]
         self.start_node = None
 
-        # publish 정의
-        global_path_pub = rospy.Publisher("/global_path", Path, queue_size=1)
-        local_target_pub = rospy.Publisher("/local_target", Point32, queue_size=1)
-        local_path_pub = rospy.Publisher("/local_path", Path, queue_size=1)
-        mission_mode_pub = rospy.Publisher("/mission_mode", String, queue_size=1)
+        """
+        publish 정의
+        Planning_Info
+        {
+            String mode
+            Local local
+            Path path
+            Point32 target 
+        }
+        """
+        planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
+        # local_target_pub = rospy.Publisher("/local_target", Point32, queue_size=1)
+        # local_path_pub = rospy.Publisher("/local_path", Path, queue_size=1)
+        # mission_mode_pub = rospy.Publisher("/mission_mode", String, queue_size=1)
+        self.pub_msg = Planning_Info()
 
         # subscriber 정의
         # LiDAR
@@ -82,9 +91,15 @@ class Planner:
                 self.gpp_requested = False
                 self.is_global_path_pub = True
 
+            if:
+            elif:
+            elif:
+            else:
+                self.pub_msg.mode="general"
+
             # global path가 생성되어 새로 publish 해야 할때
             if self.is_global_path_pub:
-                global_path_pub.publish(self.global_path)
+                self.pub_msg.path = self.global_path
                 self.is_global_path_pub = False
             rate.sleep()
 
