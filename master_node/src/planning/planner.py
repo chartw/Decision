@@ -54,7 +54,7 @@ class Planner:
         # local_target_pub = rospy.Publisher("/local_target", Point32, queue_size=1)
         # local_path_pub = rospy.Publisher("/local_path", Path, queue_size=1)
         # mission_mode_pub = rospy.Publisher("/mission_mode", String, queue_size=1)
-        self.pub_msg = Planning_Info()
+        self.planning_msg = Planning_Info()
 
         # subscriber 정의
         # LiDAR
@@ -76,8 +76,9 @@ class Planner:
 
         # data 변수 선언
         self.global_path = Path()
-        self.obstacle = Obstacles()
+        self.obstacles = Obstacles()
         self.position = Pose()
+        self.objects=BoundingBoxes()
         self.is_person = False
 
         rate = rospy.Rate(100)  # 100hz
@@ -86,19 +87,18 @@ class Planner:
             # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
             if self.is_position and self.gpp_requested:
                 self.global_path = global_path_maker.path_plan()
+                self.planning_msg.path = self.global_path
                 self.gpp_requested = False
-                self.is_global_path_pub = True
+
 
             if:
             elif:
             elif:
             else:
-                self.pub_msg.mode="general"
+                self.planning_msg.mode="general"
 
             # global path가 생성되어 새로 publish 해야 할때
-            if self.is_global_path_pub:
-                self.pub_msg.path = self.global_path
-                self.is_global_path_pub = False
+ 
             rate.sleep()
 
 
@@ -112,11 +112,9 @@ class Planner:
         self.position.yaw = msg.twist.twist.angular.z
         self.is_position = True
 
-    def obstacleCallback(self, msg):
-        self.obstacle_msg = msg
+    def obstacleCallback(self, msg):self.obstacle_msg = msg
 
-    def objectCallback(self, msg):
-        self.object_msg = msg
+    def objectCallback(self, msg):self.object_msg = msg
 
 
 if __name__ == "__main__":
