@@ -19,9 +19,10 @@ class Serial_Node:
         rospy.Subscriber("/control", Serial_Info, controlCallback)
 
         # Messages/Data
-        self.serial_msg = Serial_Info()
+        self.serial_msg = Serial_Info() # Message to publish
         self.control_input = Serial_Info()
         self.serial_data = []
+        
         
         # Main Loop
         rate = rospy.Rate(100)
@@ -56,16 +57,12 @@ class Serial_Node:
                     break
 
             # cnt=int(self.serial_data[15])
-            self.V_veh = int(self.serial_data[6])
             
     def serialCal(self):
         self.serial_msg.auto_manual =  int(self.serial_data[3])
         self.serial_msg.emergency_stop = int(self.serial_data[4])
         self.serial_msg.gear = int(self.serial_data[5])
-        self.serial_msg.speed = int(
-                                    self.serial_data[6]
-                                    + 256*self.seria_data[7]      
-                                    )
+        self.serial_msg.speed = int(self.serial_data[6] / 10) #km/h
 
         self.serial_msg.steer = int(
                                     self.serial_data[8]

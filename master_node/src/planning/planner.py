@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 import rospy
 
@@ -51,9 +52,6 @@ class Planner:
         }
         """
         planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        # local_target_pub = rospy.Publisher("/local_target", Point32, queue_size=1)
-        # local_path_pub = rospy.Publisher("/local_path", Path, queue_size=1)
-        # mission_mode_pub = rospy.Publisher("/mission_mode", String, queue_size=1)
         self.planning_msg = Planning_Info()
 
         # subscriber 정의
@@ -91,10 +89,7 @@ class Planner:
                 self.gpp_requested = False
 
 
-            if:
-            elif:
-            elif:
-            else:
+                ##call mission plan
                 self.planning_msg.mode="general"
 
             # global path가 생성되어 새로 publish 해야 할때
