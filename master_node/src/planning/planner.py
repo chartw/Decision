@@ -13,7 +13,7 @@ from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
-from map import global_path_plan
+from lib.planner_utils.global_path_plan import GPP
 
 # class Path():
 #     def __init__(self):
@@ -37,9 +37,8 @@ class Planner:
         # ex) python3 planner.py songdo 38
         # 후에는 roslaunch 파일로 바꾸면서 parameter 가져오도록 변경
         arg = rospy.myargv(argv=sys.argv)
-        self.map = arg[1]
-        self.goal_node = arg[2]
-        self.start_node = None
+        self.map = str(arg[1])
+        self.goal_node = str(arg[2])
 
         """
         publish 정의
@@ -73,7 +72,7 @@ class Planner:
         self.is_global_path_pub = False
 
         # gpp 변수 선언
-        path_maker = global_path_plan.GPP(self.map)
+        global_path_maker = GPP(planner)
 
         # data 변수 선언
         self.global_path = Path()
@@ -86,8 +85,7 @@ class Planner:
         while not rospy.is_shutdown():
             # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
             if self.is_position and self.gpp_requested:
-                self.start_node = self.select_start_node()
-                self.global_path = path_maker.path_connect(self.start_node, self.goal_node)
+                self.global_path = global_path_maker.path_plan()
                 self.gpp_requested = False
                 self.is_global_path_pub = True
 
@@ -102,30 +100,10 @@ class Planner:
                 self.pub_msg.path = self.global_path
                 self.is_global_path_pub = False
             rate.sleep()
-    
 
 
-    # 가장 가까운 노드를 시작 노드로 설정
-    def select_start_node(self, path_maker):
-        nodelist = path_maker.nodelist
 
-        min_dis = 99999
-        min_idx = 10000
-        temp_idx = 10000
-        temp_dis = 9999
 
-        for node in nodelist:
-            temp_dis = self.calc_dis(nodelist[node].x, nodelist[node].y)
-            if temp_dis < min_dis:
-                min_dis = temp_dis
-                min_idx = node
-
-        return min_idx
-
-    def calc_dis(self, nx, ny):
-        distance = ((nx - self.position.x ** 2) + (ny - self.position.y) ** 2) ** 0.5
-
-        return distance
 
     # Callback Function
     def positionCallback(self, msg):
