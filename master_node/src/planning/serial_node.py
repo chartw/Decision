@@ -1,3 +1,4 @@
+from traceback import clear_frames
 import serial
 import rospy
 import struct
@@ -7,30 +8,38 @@ from master_node.msg import Serial_Info
 
 class Serial_Node:
     def __init__(self):
+        # Serial Connect
         self.ser = serial.Serial("/dev/ttyUSB0", 115200)
-
+        
+        # ROS
         rospy.init_node("Serial", anonymous=False)
-        serial_info_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
-
+        serial_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
         rospy.Subscriber("/control", Serial_Info, self.controlCallback)
-        self.serial_info = Serial_Info()
 
+        # Data
+        self.serial_msg = Serial_Info()
         self.serial_data = []
+        self.control_input = {'auto_manual':0, 
+                              'emergency_stop':0, 
+                              'gear':0,
+                              'speed':0,
+                              'steer':0,
+                              'brake':0
+                              }
+        
+        # Main Loop
         rate = rospy.Rate(100)
-        # main loop
         while not rospy.is_shutdown():
             self.serialRead()
-            
+            self.serialCal()
+            serial_pub.publish(self.serial_msg)
             self.serialWrite()
+            
             rate.sleep()
 
     def serialRead(self):
-        # serial_data를 가공하여 어디에 저장할지가 관건?
-
         serial_input = self.ser.readline()
         self.ser.flushInput()
-        # print(serial_input)
-        # print(serial_input[0])
 
         if (
             serial_input[0] is 0x53
@@ -52,6 +61,27 @@ class Serial_Node:
 
             # cnt=int(self.serial_data[15])
             self.V_veh = int(self.serial_data[6])
+            
+    def serialCal(self):
+        self.serial_msg.auto_manual =  int(self.serial_data[3])
+        self.serial_msg.emergency_stop = int(self.serial_data[4])
+        self.serial_msg.gear = int(self.serial_data[5])
+        self.serial_msg.speed = int(
+                                    self.serial_data[6]
+                                    + 256*self.seria_data[7]      
+                                    )
+
+        self.serial_msg.steer = int(
+                                    self.serial_data[8]
+                                    + 256*self.seria_data[7]      
+                                    )
+        self.serial_msg.brake = int(self.serial_data[10])
+        self.serial_msg.encoder = float(
+                                        self.serial_data[11]
+                                        + 256*self.serial_data[12]
+                                        + 65536*self.serial_data[13]
+                                        + 16777216*self.serial_data[14]
+                                        )
 
     def serialWrite(self):
         steering = self.control_data["steering"]
@@ -63,11 +93,11 @@ class Serial_Node:
             0x54,
             0x58,
             0x01,
-            0x00,
-            0x00,
-            int(self.control_data["speed"]),
-            self.control_data["steering"],
-            self.control_data["break_val"],
+            self.control_input['emergency_stop'],
+            self.control_input['gear'],
+            self.control_input['speed'],
+            self.control_input['steer'],
+            self.control_input['brake'],
             cnt,
             0x0D,
             0x0A,
@@ -76,4 +106,9 @@ class Serial_Node:
         self.ser.write(result)
 
     def controlCallback(self, msg):
-        self.serial_info = msg
+        self.control_input['auto_manual'] = msg.auto_manual 
+        self.control_input['emergency_stop'] = msg.emergency_stop 
+        self.control_input['gear'] = msg.gear
+        self.control_input['speed'] = msg.speed 
+        self.control_input['steer'] = msg.steer 
+        self.control_input['brake'] = msg.brake 
