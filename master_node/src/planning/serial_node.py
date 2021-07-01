@@ -1,4 +1,3 @@
-from traceback import clear_frames
 import serial
 import rospy
 import struct
@@ -11,21 +10,18 @@ class Serial_Node:
         # Serial Connect
         self.ser = serial.Serial("/dev/ttyUSB0", 115200)
         
-        # ROS
+        # ROS Publish
         rospy.init_node("Serial", anonymous=False)
         serial_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
-        rospy.Subscriber("/control", Serial_Info, self.controlCallback)
+                    
+        # ROS Subscribe        
+        def controlCallback(self, msg): self.control_input = msg
+        rospy.Subscriber("/control", Serial_Info, controlCallback)
 
-        # Data
+        # Messages/Data
         self.serial_msg = Serial_Info()
+        self.control_input = Serial_Info()
         self.serial_data = []
-        self.control_input = {'auto_manual':0, 
-                              'emergency_stop':0, 
-                              'gear':0,
-                              'speed':0,
-                              'steer':0,
-                              'brake':0
-                              }
         
         # Main Loop
         rate = rospy.Rate(100)
@@ -93,11 +89,11 @@ class Serial_Node:
             0x54,
             0x58,
             0x01,
-            self.control_input['emergency_stop'],
-            self.control_input['gear'],
-            self.control_input['speed'],
-            self.control_input['steer'],
-            self.control_input['brake'],
+            self.control_input.emergency_stop,
+            self.control_input.gear,
+            self.control_input.speed,
+            self.control_input.steer,
+            self.control_input.brake,
             cnt,
             0x0D,
             0x0A,
@@ -106,9 +102,4 @@ class Serial_Node:
         self.ser.write(result)
 
     def controlCallback(self, msg):
-        self.control_input['auto_manual'] = msg.auto_manual 
-        self.control_input['emergency_stop'] = msg.emergency_stop 
-        self.control_input['gear'] = msg.gear
-        self.control_input['speed'] = msg.speed 
-        self.control_input['steer'] = msg.steer 
-        self.control_input['brake'] = msg.brake 
+        self.control_input = msg
