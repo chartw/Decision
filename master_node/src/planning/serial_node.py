@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
 import serial
 import rospy
 import struct
@@ -22,42 +25,41 @@ class Serial_Node:
         self.serial_msg = Serial_Info() # Message to publish
         self.control_input = Serial_Info()
         self.serial_data = []
+        self.alive = 0
         
         
         # Main Loop
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
             self.serialRead()
-            self.serialCal()
+            # self.serialCal()
             serial_pub.publish(self.serial_msg)
-            self.serialWrite()
+            # self.serialWrite()
             
             rate.sleep()
 
     def serialRead(self):
-        serial_input = self.ser.readline()
-        self.ser.flushInput()
-
-        if (
-            serial_input[0] is 0x53
-            and serial_input[1] is 0x54
-            and serial_input[2] is 0x58
-        ):
-            while True:
-                for i in range(len(serial_input)):
-                    if serial_input[i] is 0x0A and i is not 17:
-                        # print("### 0x0A Found!", i, "th data")
-                        self.serial_data.append(0x0B)
-                    else:
-                        self.serial_data.append(serial_input[i])
-
-                if len(self.serial_data) < 18:
-                    serial_input = self.ser.readline()
-                else:
-                    break
-
-            # cnt=int(self.serial_data[15])
-            
+        while True :
+            packet = self.ser.readline()
+            if len(packet)==18:
+                header= packet[0:3].decode()
+                
+                if header == "STX":
+                    self.is_data=True
+                    self.serial_msg.auto_manual,
+                    self.serial_msg.emergency_stop,
+                    self.serial_msg.gear = struct.unpack('BBB',packet[3:6])
+                    
+                    self.serial_msg.speed,
+                    self.serial_msg.steer = struct.unpack('2h',packet[6:10])
+                    
+                    self.serial_msg.brake = struct.unpack('B',packet[10:11])
+                    
+                    self.serial_msg.encoder = struct.unpack('f',packet[11:15])
+                    self.alive=struct.unpack('B',packet[15:16])
+                    print(self.speed,self.steer)
+                    
+                    
     def serialCal(self):
         self.serial_msg.auto_manual =  int(self.serial_data[3])
         self.serial_msg.emergency_stop = int(self.serial_data[4])
@@ -97,3 +99,10 @@ class Serial_Node:
         )  # big endian 방식으로 타입에 맞춰서 pack
 
         self.ser.write(result)
+        
+        
+        
+erp = Serial_Node()
+
+# while True:
+#     erp.serialRead()
