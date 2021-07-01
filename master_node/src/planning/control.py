@@ -31,6 +31,7 @@ class Control:
         rospy.init_node("Control", anonymous=False)
 
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
+        self.pub_msg = Serial_Info()
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
@@ -42,7 +43,11 @@ class Control:
         # main loop
         while not rospy.is_shutdown():
 
+            control_pub.publish(self.pub_msg)
             rate.sleep()
+
+
+
 
     # Callback Function
     def planningCallback(self, msg):

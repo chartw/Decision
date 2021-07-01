@@ -213,13 +213,5 @@ class GPP:
                 self.path.heading.append(pyaw)
 
 
-# def main():
-#     node_set()
-#     lane_set()
-#     px, py = path_connect('50', '11')
-
-#     plt.plot(px, py, ".r")
-
-#     plt.show()
-#     # for i in range(len(self.tx)):
-#     #     steering=angle(cx, cy, cyaw, self.tx[i], ty[i]) # cx, cy, cyaw : GPS, IMU에서 받은 값
+gpp=GPP("songdo")
+self.global_path = path_maker.path_connect(self.start_node, self.goal_node)

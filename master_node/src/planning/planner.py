@@ -102,6 +102,8 @@ class Planner:
                 self.pub_msg.path = self.global_path
                 self.is_global_path_pub = False
             rate.sleep()
+    
+
 
     # 가장 가까운 노드를 시작 노드로 설정
     def select_start_node(self, path_maker):
@@ -125,6 +127,7 @@ class Planner:
 
         return distance
 
+    # Callback Function
     def positionCallback(self, msg):
         self.position.x = msg.pose.pose.position.x
         self.position.y = msg.pose.pose.position.y
