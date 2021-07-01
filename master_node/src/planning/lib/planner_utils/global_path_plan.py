@@ -6,7 +6,6 @@
 # connect_path
 # by 전민규,차태웅
 
-
 import os
 import csv
 import math
@@ -16,9 +15,8 @@ from math import atan2
 from math import sin
 from math import degrees
 from math import radians
-from master_node.msg import Path
 
-import matplotlib.pyplot as plt
+from master_node.msg import Path
 
 
 class Graph:  # graph
@@ -57,13 +55,15 @@ class node:  # node
 
 
 class GPP:
-    def __init__(self, mapname):
+    def __init__(self, planner):
+        self.cur_x = planner.position.x
+        self.cur_y = planner.position.y
+        self.goal_id = planner.goal_node
+
         self.nodelist = {}
         self.tx, self.ty, self.tyaw = [], [], []
-        self.node_set(mapname)
-        self.lane_set(mapname)
-
-        self.path = Path()
+        self.node_set(planner.map)
+        self.lane_set(planner.map)
 
     def astar_search(self, graph, mynode, start, end):  # A* search (graph)
         class Node:
@@ -126,9 +126,13 @@ class GPP:
                 neighbor.g = current_node.g + graph.get(
                     current_node.name, neighbor.name
                 )
-                neighbor.h = heuristic(mynode[current_node.name], mynode[neighbor.name])
+                neighbor.h = heuristic(
+                    mynode[current_node.name], mynode[neighbor.name]
+                )
                 neighbor.f = neighbor.g + neighbor.h
-                if add_to_open(open, neighbor) == True:  # open에 있는 있는 것보다 f가 크면 추가 안해줌
+                if (
+                    add_to_open(open, neighbor) == True
+                ):  # open에 있는 있는 것보다 f가 크면 추가 안해줌
                     open.append(neighbor)
         return None  # 목적지 까지 경로가 없을때 아무것도 출력하지 않음
 
@@ -161,8 +165,12 @@ class GPP:
                 csv_reader = csv.reader(map_file)
 
                 for line in csv_reader:
-                    globals()["Lane{}".format(tmp_name)]["x"].append(float(line[0]))
-                    globals()["Lane{}".format(tmp_name)]["y"].append(float(line[1]))
+                    globals()["Lane{}".format(tmp_name)]["x"].append(
+                        float(line[0])
+                    )
+                    globals()["Lane{}".format(tmp_name)]["y"].append(
+                        float(line[1])
+                    )
                     if math.degrees(float(line[2])) < 0:
                         deg_yaw = math.degrees(float(line[2])) + 360
                     else:
@@ -173,45 +181,85 @@ class GPP:
                         deg_yaw += 270
 
                     globals()["Lane{}".format(tmp_name)]["yaw"].append(deg_yaw)
-                    globals()["Lane{}".format(tmp_name)]["k"].append(float(line[3]))
-                    globals()["Lane{}".format(tmp_name)]["s"].append(float(line[4]))
+                    globals()["Lane{}".format(tmp_name)]["k"].append(
+                        float(line[3])
+                    )
+                    globals()["Lane{}".format(tmp_name)]["s"].append(
+                        float(line[4])
+                    )
                 globals()["Lane{}".format(tmp_name)]["g_cost"] = 0.1 * len(
                     globals()["Lane{}".format(tmp_name)]["x"]
                 )
                 # print('Lane{}'.format(tmp_name), globals()['Lane{}'.format(tmp_name)]['g_cost'])
 
             graph.connect(
-                file[0:2], file[2:4], globals()["Lane{}".format(tmp_name)]["g_cost"]
+                file[0:2],
+                file[2:4],
+                globals()["Lane{}".format(tmp_name)]["g_cost"],
             )
             map_file.close()
 
     def node_set(self, mapname):
-        with open("./map1/" + mapname + "_node.csv", mode="r") as csv_file:
+        with open("./map/" + mapname + "_node.csv", mode="r") as csv_file:
             csv_reader = csv.DictReader(csv_file)
             for next_r in csv_reader:
                 self.nodelist[next_r["nid"]] = node(
                     str(next_r["nid"]), float(next_r["nx"]), float(next_r["ny"])
                 )
 
-    def path_connect(self, sid, gid):
-        path = self.astar_search(graph, self.nodelist, sid, gid)
+    def path_plan(self):
+        start_id = self.select_start_node()
+        goal_ids = self.goal_id.split("/")
+        path = self.astar_search(graph, self.nodelist, start_id, goal_ids[0])
+        if len(goal_ids) > 1:
+            for i in range(len(goal_ids) - 1):
+                temppath = self.astar_search(
+                    graph, self.nodelist, goal_ids[i], goal_ids[i + 1]
+                )
+                temppath.pop(0)
+                path += temppath
         print(path)
         for i in range(len(path) - 1):
 
             # print('Lane{}'.format(path[i]+path[i+1]))
 
-            for j in range(len(globals()["Lane{}".format(path[i] + path[i + 1])]["x"])):
+            for j in range(
+                len(globals()["Lane{}".format(path[i] + path[i + 1])]["x"])
+            ):
                 self.path.x.append(
                     globals()["Lane{}".format(path[i] + path[i + 1])]["x"][j]
                 )
                 self.path.y.append(
                     globals()["Lane{}".format(path[i] + path[i + 1])]["y"][j]
                 )
-                pyaw = globals()["Lane{}".format(path[i] + path[i + 1])]["yaw"][j] + 90
+                pyaw = (
+                    globals()["Lane{}".format(path[i] + path[i + 1])]["yaw"][j]
+                    + 90
+                )
                 if pyaw >= 360:
                     pyaw -= 360
                 self.path.heading.append(pyaw)
 
+        return path
+        # 가장 가까운 노드를 시작 노드로 설정
 
-gpp=GPP("songdo")
-self.global_path = path_maker.path_connect(self.start_node, self.goal_node)
+    def select_start_node(self):
+        nodelist = self.nodelist
+
+        min_dis = 99999
+        min_idx = 10000
+        temp_idx = 10000
+        temp_dis = 9999
+
+        for node in nodelist:
+            temp_dis = self.calc_dis(nodelist[node].x, nodelist[node].y)
+            if temp_dis < min_dis:
+                min_dis = temp_dis
+                min_idx = node
+
+        return min_idx
+
+    def calc_dis(self, nx, ny):
+        distance = ((nx - self.cur_x ** 2) + (ny - self.cur_y) ** 2) ** 0.5
+
+        return distance

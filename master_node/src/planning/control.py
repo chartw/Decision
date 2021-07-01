@@ -46,9 +46,6 @@ class Control:
             control_pub.publish(self.pub_msg)
             rate.sleep()
 
-
-
-
     # Callback Function
     def planningCallback(self, msg):
         self.planning_info = msg

@@ -11,6 +11,7 @@ class Serial_Node:
 
         rospy.init_node("Serial", anonymous=False)
         serial_info_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
+        
 
         rospy.Subscriber("/control", Serial_Info, self.controlCallback)
         self.serial_info = Serial_Info()
@@ -20,7 +21,7 @@ class Serial_Node:
         # main loop
         while not rospy.is_shutdown():
             self.serialRead()
-            
+
             self.serialWrite()
             rate.sleep()
 

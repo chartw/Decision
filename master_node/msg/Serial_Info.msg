@@ -1,5 +1,5 @@
-int16 auto_man
-int16 e-stop
+int16 auto_manual
+int16 emergency_stop
 int16 gear
 int16 speed
 int16 steer

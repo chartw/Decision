@@ -13,7 +13,7 @@ from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
-from map import global_path_plan
+from lib.planner_utils.global_path_plan import GPP
 
 # class Path():
 #     def __init__(self):
@@ -37,9 +37,8 @@ class Planner:
         # ex) python3 planner.py songdo 38
         # 후에는 roslaunch 파일로 바꾸면서 parameter 가져오도록 변경
         arg = rospy.myargv(argv=sys.argv)
-        self.map = arg[1]
-        self.goal_node = arg[2]
-        self.start_node = None
+        self.map = str(arg[1])
+        self.goal_node = str(arg[2])
 
         """
         publish 정의
@@ -55,7 +54,7 @@ class Planner:
         # local_target_pub = rospy.Publisher("/local_target", Point32, queue_size=1)
         # local_path_pub = rospy.Publisher("/local_path", Path, queue_size=1)
         # mission_mode_pub = rospy.Publisher("/mission_mode", String, queue_size=1)
-        self.pub_msg = Planning_Info()
+        self.planning_msg = Planning_Info()
 
         # subscriber 정의
         # LiDAR
@@ -73,12 +72,13 @@ class Planner:
         self.is_global_path_pub = False
 
         # gpp 변수 선언
-        path_maker = global_path_plan.GPP(self.map)
+        global_path_maker = GPP(planner)
 
         # data 변수 선언
         self.global_path = Path()
-        self.obstacle = Obstacles()
+        self.obstacles = Obstacles()
         self.position = Pose()
+        self.objects=BoundingBoxes()
         self.is_person = False
 
         rate = rospy.Rate(100)  # 100hz
@@ -86,46 +86,24 @@ class Planner:
         while not rospy.is_shutdown():
             # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
             if self.is_position and self.gpp_requested:
-                self.start_node = self.select_start_node()
-                self.global_path = path_maker.path_connect(self.start_node, self.goal_node)
+                self.global_path = global_path_maker.path_plan()
+                self.planning_msg.path = self.global_path
                 self.gpp_requested = False
-                self.is_global_path_pub = True
+
 
             if:
             elif:
             elif:
             else:
-                self.pub_msg.mode="general"
+                self.planning_msg.mode="general"
 
             # global path가 생성되어 새로 publish 해야 할때
-            if self.is_global_path_pub:
-                self.pub_msg.path = self.global_path
-                self.is_global_path_pub = False
+ 
             rate.sleep()
-    
 
 
-    # 가장 가까운 노드를 시작 노드로 설정
-    def select_start_node(self, path_maker):
-        nodelist = path_maker.nodelist
 
-        min_dis = 99999
-        min_idx = 10000
-        temp_idx = 10000
-        temp_dis = 9999
 
-        for node in nodelist:
-            temp_dis = self.calc_dis(nodelist[node].x, nodelist[node].y)
-            if temp_dis < min_dis:
-                min_dis = temp_dis
-                min_idx = node
-
-        return min_idx
-
-    def calc_dis(self, nx, ny):
-        distance = ((nx - self.position.x ** 2) + (ny - self.position.y) ** 2) ** 0.5
-
-        return distance
 
     # Callback Function
     def positionCallback(self, msg):
@@ -134,11 +112,9 @@ class Planner:
         self.position.yaw = msg.twist.twist.angular.z
         self.is_position = True
 
-    def obstacleCallback(self, msg):
-        self.obstacle_msg = msg
+    def obstacleCallback(self, msg):self.obstacle_msg = msg
 
-    def objectCallback(self, msg):
-        self.object_msg = msg
+    def objectCallback(self, msg):self.object_msg = msg
 
 
 if __name__ == "__main__":
