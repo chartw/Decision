@@ -11,11 +11,11 @@ from master_node.msg import Serial_Info
 class Serial_Node:
     def __init__(self):
         # Serial Connect
-        self.ser = serial.Serial("/dev/ttyUSB0", 115200)
+        self.ser = serial.Serial("/dev/ttyUSB1", 115200)
         
         # ROS Publish
         rospy.init_node("Serial", anonymous=False)
-        serial_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
+        self.serial_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
                     
         # ROS Subscribe        
         def controlCallback(self, msg): self.control_input = msg
@@ -31,9 +31,10 @@ class Serial_Node:
         # Main Loop
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
+            print("----------loop!")
             self.serialRead()
             # self.serialCal()
-            serial_pub.publish(self.serial_msg)
+            # self.serial_pub.publish(self.serial_msg)
             # self.serialWrite()
             
             rate.sleep()
@@ -46,19 +47,25 @@ class Serial_Node:
                 
                 if header == "STX":
                     self.is_data=True
-                    self.serial_msg.auto_manual,
-                    self.serial_msg.emergency_stop,
-                    self.serial_msg.gear = struct.unpack('BBB',packet[3:6])
                     
-                    self.serial_msg.speed,
-                    self.serial_msg.steer = struct.unpack('2h',packet[6:10])
+                    tmp1, tmp2, tmp3 = struct.unpack('BBB',packet[3:6])
+                    print(tmp1, tmp2, tmp3)
+                    self.serial_msg.auto_manual = tmp1
+                    self.serial_msg.emergency_stop = tmp2
+                    self.serial_msg.gear = tmp3
                     
-                    self.serial_msg.brake = struct.unpack('B',packet[10:11])
+                    tmp1, tmp2 = struct.unpack('2h',packet[6:10])
+                    self.serial_msg.speed = tmp1
+                    self.serial_msg.steer = tmp2
+                    
+                    tmp3 = struct.unpack('B',packet[10:11])
+                    print(tmp3[0])
+                    self.serial_msg.brake = tmp3[0]
                     
                     self.serial_msg.encoder = struct.unpack('f',packet[11:15])
                     self.alive=struct.unpack('B',packet[15:16])
-                    print(self.speed,self.steer)
-                    
+            self.serial_pub.publish(self.serial_msg)
+
                     
     def serialCal(self):
         self.serial_msg.auto_manual =  int(self.serial_data[3])
