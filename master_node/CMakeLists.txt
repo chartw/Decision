@@ -64,6 +64,7 @@ add_message_files(
    BoundingBox.msg
    Local.msg
    Serial_Info.msg
+   Planning_Info.msg
 )
 
 ## Generate services in the 'srv' folder

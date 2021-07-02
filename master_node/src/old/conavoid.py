@@ -111,14 +111,14 @@ class Decision:
     def getAvoidGoal(self, msg):
 
         clstob=msg.segments[0]
-        for seg in msg.segments:
-            if seg.last_point.x<seg.first_point.x:
-                temp=seg.last_point
-                seg.last_point=seg.first_point
-                seg.first_point=temp
+        for segment in msg.segments:
+            if segment.last_point.x<segment.first_point.x:
+                temp=segment.last_point
+                segment.last_point=segment.first_point
+                segment.first_point=temp
             
-            if self.calc_dis(clstob.first_point.x,clstob.first_point.y) > self.calc_dis(seg.first_point.x,seg.first_point.y):
-                clstob=seg
+            if self.calc_dis(clstob.first_point.x,clstob.first_point.y) > self.calc_dis(segment.first_point.x,segment.first_point.y):
+                clstob=segment
 
         if clstob.first_point.x < 1:
             return 1, 0
