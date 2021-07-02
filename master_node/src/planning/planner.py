@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding:utf-8 -*-
 import rospy
 
@@ -7,13 +8,14 @@ import sys
 import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local
 from nav_msgs.msg import Odometry
-from darknet_ros_msgs.msg import BoundingBoxes
+# from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
+from lib.planner_utils.mission_plan import MissonPlan
 
 # class Path():
 #     def __init__(self):
@@ -47,22 +49,40 @@ class Planner:
             String mode
             Local local
             Path path
-            Point32 target 
+            Point32 point
         }
         """
         planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        # local_target_pub = rospy.Publisher("/local_target", Point32, queue_size=1)
-        # local_path_pub = rospy.Publisher("/local_path", Path, queue_size=1)
-        # mission_mode_pub = rospy.Publisher("/mission_mode", String, queue_size=1)
-        self.planning_msg = Planning_Info()
 
         # subscriber 정의
+        
+        self.planning_msg = Planning_Info()
+        self.obstacle_msg = Obstacles()
+        # self.object_msg = BoundingBoxes()
+        self.surface_msg = String()
+        
+        
         # LiDAR
+        def obstacleCallback(self, msg): self.obstacle_msg = msg        
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        # Localization
+
+        # Localization        
+        def positionCallback(self, msg):
+            self.position.x = msg.pose.pose.position.x
+            self.position.y = msg.pose.pose.position.y
+            self.position.yaw = msg.twist.twist.angular.z
+            self.is_position = True
         rospy.Subscriber("/pose", Odometry, self.positionCallback)
+        
+        
         # Vision - Object
-        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
+        # def objectCallback(self, msg): self.object_msg = msg
+        # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
+        
+
+        # Vision - Surface
+        def surfaceCallback(self, msg): self.surface_msg = msg
+        rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         # 상태 flag
         self.is_position = False
@@ -72,49 +92,39 @@ class Planner:
         self.is_global_path_pub = False
 
         # gpp 변수 선언
-        global_path_maker = GPP(planner)
+        global_path_maker = GPP(self)
+
+        misson_planner = MissonPlan(self)
 
         # data 변수 선언
         self.global_path = Path()
         self.obstacles = Obstacles()
-        self.position = Pose()
-        self.objects=BoundingBoxes()
+        self.position = Local()
+        self.objects = BoundingBoxes()
         self.is_person = False
 
         rate = rospy.Rate(100)  # 100hz
 
         while not rospy.is_shutdown():
-            # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
-            if self.is_position and self.gpp_requested:
-                self.global_path = global_path_maker.path_plan()
-                self.planning_msg.path = self.global_path
-                self.gpp_requested = False
 
+            if self.is_position:
+                # self.planning_msg.mode=misson_planner.decision()
 
-            if:
-            elif:
-            elif:
-            else:
-                self.planning_msg.mode="general"
+                self.planning_msg.mode = "general"
 
-            # global path가 생성되어 새로 publish 해야 할때
- 
-            rate.sleep()
+                # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
+                if self.gpp_requested:
+                    self.global_path = global_path_maker.path_plan()
+                    self.planning_msg.path = self.global_path
+                    self.gpp_requested = False
 
+                planning_info_pub.publish(self.planning_msg)
 
-
-
+                if not self.gpp_requested:
+                    self.planning_msg.path = None
+                rate.sleep()
 
     # Callback Function
-    def positionCallback(self, msg):
-        self.position.x = msg.pose.pose.position.x
-        self.position.y = msg.pose.pose.position.y
-        self.position.yaw = msg.twist.twist.angular.z
-        self.is_position = True
-
-    def obstacleCallback(self, msg):self.obstacle_msg = msg
-
-    def objectCallback(self, msg):self.object_msg = msg
 
 
 if __name__ == "__main__":
