@@ -8,7 +8,7 @@ import sys
 import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local
 from nav_msgs.msg import Odometry
-from darknet_ros_msgs.msg import BoundingBoxes
+# from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time, String
@@ -53,15 +53,36 @@ class Planner:
         }
         """
         planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        self.planning_msg = Planning_Info()
 
         # subscriber 정의
+        
+        self.planning_msg = Planning_Info()
+        self.obstacle_msg = Obstacles()
+        # self.object_msg = BoundingBoxes()
+        self.surface_msg = String()
+        
+        
         # LiDAR
+        def obstacleCallback(self, msg): self.obstacle_msg = msg        
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        # Localization
+
+        # Localization        
+        def positionCallback(self, msg):
+            self.position.x = msg.pose.pose.position.x
+            self.position.y = msg.pose.pose.position.y
+            self.position.yaw = msg.twist.twist.angular.z
+            self.is_position = True
         rospy.Subscriber("/pose", Odometry, self.positionCallback)
+        
+        
         # Vision - Object
-        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
+        # def objectCallback(self, msg): self.object_msg = msg
+        # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
+        
+
+        # Vision - Surface
+        def surfaceCallback(self, msg): self.surface_msg = msg
+        rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         # 상태 flag
         self.is_position = False
@@ -104,17 +125,6 @@ class Planner:
                 rate.sleep()
 
     # Callback Function
-    def positionCallback(self, msg):
-        self.position.x = msg.pose.pose.position.x
-        self.position.y = msg.pose.pose.position.y
-        self.position.heading = msg.twist.twist.angular.z
-        self.is_position = True
-
-    def obstacleCallback(self, msg):
-        self.obstacle_msg = msg
-
-    def objectCallback(self, msg):
-        self.object_msg = msg
 
 
 if __name__ == "__main__":
