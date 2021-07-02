@@ -48,7 +48,6 @@ class General:
 
         delta = degrees(atan2(2 * self.WB * sin(radians(alpha)) / self.lookahead, 1))
 
-
         if abs(delta) > 180:
             if delta < 0:
                 delta += 360
