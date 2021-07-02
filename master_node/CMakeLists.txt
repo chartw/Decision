@@ -63,6 +63,8 @@ add_message_files(
    SegmentObstacle.msg
    BoundingBox.msg
    Local.msg
+   Serial_Info.msg
+   Planning_Info.msg
 )
 
 ## Generate services in the 'srv' folder

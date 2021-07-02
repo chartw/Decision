@@ -64,6 +64,7 @@ class GPP:
         self.tx, self.ty, self.tyaw = [], [], []
         self.node_set(planner.map)
         self.lane_set(planner.map)
+        self.path=Path()
 
     def astar_search(self, graph, mynode, start, end):  # A* search (graph)
         class Node:
@@ -240,7 +241,7 @@ class GPP:
                     pyaw -= 360
                 self.path.heading.append(pyaw)
 
-        return path
+        return self.path
         # 가장 가까운 노드를 시작 노드로 설정
 
     def select_start_node(self):
