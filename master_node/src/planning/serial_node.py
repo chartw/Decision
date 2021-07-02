@@ -110,6 +110,3 @@ class Serial_Node:
         
         
 erp = Serial_Node()
-
-# while True:
-#     erp.serialRead()
