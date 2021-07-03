@@ -11,7 +11,7 @@ from nav_msgs.msg import Odometry
 # from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
-from std_msgs.msg import Float32, Time, String
+from std_msgs.msg import Float32, Time, String, Int16
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
@@ -48,14 +48,15 @@ class Planner:
         # self.object_msg = BoundingBoxes()
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
+        self.parking_msg=Int16()
         
         
         # LiDAR      
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        rospy.Subscriber("/parking",Int16, self.parkingCallback)
 
         # Localization        
         rospy.Subscriber("/pose", Odometry, self.localCallback)
-        
         
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
@@ -112,7 +113,7 @@ class Planner:
                         theta=self.local.heading*pi/180
                         avoid_goal_x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
                         avoid_goal_y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
-                        
+
                     if self.calc_dis(avoid_goal_x,avoid_goal_y) < 1:
                         self.mission_ing=False
 
