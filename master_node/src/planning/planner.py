@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import rospy
 
@@ -110,14 +110,20 @@ class Planner:
                 # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
                 if self.gpp_requested:
                     self.global_path = global_path_maker.path_plan()
-                    self.planning_msg.path = self.global_path
+                    self.planning_msg.path_x = self.global_path.x
+                    self.planning_msg.path_y = self.global_path.y
+                    self.planning_msg.path_heading = self.global_path.heading
                     self.gpp_requested = False
-                self.planning_msg.path = None
+                # self.planning_msg.path = Path()
+
+                self.planning_msg.local=self.position
 
                 planning_info_pub.publish(self.planning_msg)
 
                 if not self.gpp_requested:
-                    self.planning_msg.path = None
+                    self.planning_msg.path_x = []
+                    self.planning_msg.path_y = []
+                    self.planning_msg.path_heading = []
                 rate.sleep()
 
     # Callback Function
@@ -125,6 +131,7 @@ class Planner:
         self.obstacle_msg = msg  
     
     def positionCallback(self, msg):
+        # print(self.position)
         self.position.x = msg.pose.pose.position.x
         self.position.y = msg.pose.pose.position.y
         self.position.heading = msg.twist.twist.angular.z

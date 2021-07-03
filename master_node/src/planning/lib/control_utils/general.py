@@ -14,7 +14,7 @@ class General:
     def select_target(self):
         valid_idx_list = []
 
-        for i in range(self.target_index, len(self.path)):
+        for i in range(self.target_index, len(self.path.x)):
             dis = ((self.path.x[i] - self.cur_x) ** 2 + (self.path.y[i] - self.cur_y) ** 2) ** 0.5
 
             if dis <= self.lookahead:
@@ -22,12 +22,13 @@ class General:
             if len(valid_idx_list) != 0 and dis > self.lookahead:
                 break
         if len(valid_idx_list) == 0:
-            self.target_index = 0
+            return 0
         else:
-            self.target_index = valid_idx_list[len(valid_idx_list) - 1]
+            return valid_idx_list[len(valid_idx_list) - 1]
 
     def pure_pursuit(self):
         self.target_index = self.select_target()
+        print(self.cur_x, self.cur_y)
 
         target_x = self.path.x[self.target_index]
         target_y = self.path.y[self.target_index]
