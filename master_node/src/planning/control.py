@@ -1,7 +1,7 @@
 import rospy
 
-from master_node import Serial_Info, Planning_Info  # 개발할 메세지 타입
-from lib.control_utils.general import General()
+from master_node.msg import Serial_Info, Planning_Info  # 개발할 메세지 타입
+from lib.control_utils.general import General
 
 """
 Serial_Info
@@ -69,3 +69,6 @@ class Control:
 
     def serialCallback(self, msg):
         self.serial_info = msg
+
+    
+control=Control()

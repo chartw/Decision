@@ -62,6 +62,7 @@ add_message_files(
    PangPang.msg
    SegmentObstacle.msg
    BoundingBox.msg
+   Path.msg
    Local.msg
    Serial_Info.msg
    Planning_Info.msg

@@ -23,11 +23,9 @@ class Serial_Node:
         rospy.init_node("Serial", anonymous=False)
         self.serial_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
 
-        # ROS Subscribe
-        def controlCallback(self, msg):
-            self.control_input = msg
+        
 
-        rospy.Subscriber("/control", Serial_Info, controlCallback)
+        rospy.Subscriber("/control", Serial_Info, self.controlCallback)
 
         # Messages/Data
         self.serial_msg = Serial_Info()  # Message to publish
@@ -87,8 +85,8 @@ class Serial_Node:
             0x01,
             self.control_input.emergency_stop,
             self.control_input.gear,
-            self.control_input.speed * 10,
-            self.control_input.steer * 71,
+            int(self.control_input.speed * 10),
+            int(self.control_input.steer * 71),
             self.control_input.brake,
             self.alive,
             0x0D,
@@ -101,6 +99,9 @@ class Serial_Node:
             self.alive += 1
         else:
             self.alive = 0
+    # ROS Subscribe
+    def controlCallback(self, msg):
+        self.control_input = msg
 
 
 erp = Serial_Node()

@@ -15,7 +15,7 @@ from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
-from lib.planner_utils.mission_plan import MissonPlan
+# from lib.planner_utils.mission_plan import MissonPlan
 
 # class Path():
 #     def __init__(self):
@@ -62,16 +62,10 @@ class Planner:
         self.surface_msg = String()
         
         
-        # LiDAR
-        def obstacleCallback(self, msg): self.obstacle_msg = msg        
+        # LiDAR      
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
 
         # Localization        
-        def positionCallback(self, msg):
-            self.position.x = msg.pose.pose.position.x
-            self.position.y = msg.pose.pose.position.y
-            self.position.yaw = msg.twist.twist.angular.z
-            self.is_position = True
         rospy.Subscriber("/pose", Odometry, self.positionCallback)
         
         
@@ -81,7 +75,6 @@ class Planner:
         
 
         # Vision - Surface
-        def surfaceCallback(self, msg): self.surface_msg = msg
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         # 상태 flag
@@ -91,17 +84,19 @@ class Planner:
         self.gpp_requested = True
         self.is_global_path_pub = False
 
-        # gpp 변수 선언
-        global_path_maker = GPP(self)
-
-        misson_planner = MissonPlan(self)
-
         # data 변수 선언
         self.global_path = Path()
         self.obstacles = Obstacles()
         self.position = Local()
-        self.objects = BoundingBoxes()
+        # self.objects = BoundingBoxes()
         self.is_person = False
+
+        # gpp 변수 선언
+        global_path_maker = GPP(self)
+
+        # misson_planner = MissonPlan(self)
+
+        
 
         rate = rospy.Rate(100)  # 100hz
 
@@ -117,6 +112,7 @@ class Planner:
                     self.global_path = global_path_maker.path_plan()
                     self.planning_msg.path = self.global_path
                     self.gpp_requested = False
+                self.planning_msg.path = None
 
                 planning_info_pub.publish(self.planning_msg)
 
@@ -125,6 +121,17 @@ class Planner:
                 rate.sleep()
 
     # Callback Function
+    def obstacleCallback(self, msg): 
+        self.obstacle_msg = msg  
+    
+    def positionCallback(self, msg):
+        self.position.x = msg.pose.pose.position.x
+        self.position.y = msg.pose.pose.position.y
+        self.position.heading = msg.twist.twist.angular.z
+        self.is_position = True
+
+    def surfaceCallback(self, msg): 
+        self.surface_msg = msg
 
 
 if __name__ == "__main__":

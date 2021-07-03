@@ -2,10 +2,10 @@ from math import degrees, atan2, sin, radians
 
 
 class General:
-    def init(self, control):
-        self.cur_x = control.planning_info.position.x
-        self.cur_y = control.planning_info.position.y
-        self.cur_yaw = control.planning_info.position.heading
+    def __init__(self, control):
+        self.cur_x = control.planning_info.local.x
+        self.cur_y = control.planning_info.local.y
+        self.cur_yaw = control.planning_info.local.heading
         self.path = control.global_path
         self.lookahead = control.lookahead
         self.WB = 1
