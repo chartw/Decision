@@ -1,6 +1,6 @@
 import rospy
 
-from master_node.msg import Path, Serial_Info, Planning_Info  # 개발할 메세지 타입
+from master_node.msg import Path, Serial_Info, Planning_Info,Local  # 개발할 메세지 타입
 from lib.control_utils.general import General
 
 """
@@ -33,6 +33,7 @@ class Control:
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
         self.planning_info = Planning_Info()
+        self.local=Local()
         self.serial_info = Serial_Info()
         self.global_path=Path()
         self.lookahead=4
@@ -54,6 +55,7 @@ class Control:
                         self.global_path.heading=self.planning_info.path_heading
                     if self.global_path.x:
                         self.pub_msg.steer=general.pure_pursuit()
+                        print(self.pub_msg.steer)
                     self.pub_msg.speed=10
                     self.pub_msg.brake=0
                     self.pub_msg.encoder=0
@@ -68,6 +70,12 @@ class Control:
     # Callback Function
     def planningCallback(self, msg):
         self.planning_info = msg
+        self.local.x=msg.local.x
+        self.local.y=msg.local.y
+        self.local.heading=msg.local.heading
+
+
+        # print(self.planning_info)
         self.is_planning=True
 
     def serialCallback(self, msg):

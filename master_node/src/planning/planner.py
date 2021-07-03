@@ -66,7 +66,7 @@ class Planner:
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
 
         # Localization        
-        rospy.Subscriber("/pose", Odometry, self.positionCallback)
+        rospy.Subscriber("/pose", Odometry, self.localCallback)
         
         
         # Vision - Object
@@ -78,7 +78,7 @@ class Planner:
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         # 상태 flag
-        self.is_position = False
+        self.is_local = False
         self.is_obstacle = False
         self.is_object = False
         self.gpp_requested = True
@@ -87,7 +87,7 @@ class Planner:
         # data 변수 선언
         self.global_path = Path()
         self.obstacles = Obstacles()
-        self.position = Local()
+        self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
 
@@ -101,11 +101,16 @@ class Planner:
         rate = rospy.Rate(100)  # 100hz
 
         while not rospy.is_shutdown():
-
-            if self.is_position:
+    
+            if self.is_local:
                 # self.planning_msg.mode=misson_planner.decision()
-
                 self.planning_msg.mode = "general"
+
+
+
+
+
+
 
                 # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
                 if self.gpp_requested:
@@ -116,7 +121,8 @@ class Planner:
                     self.gpp_requested = False
                 # self.planning_msg.path = Path()
 
-                self.planning_msg.local=self.position
+
+                self.planning_msg.local=self.local
 
                 planning_info_pub.publish(self.planning_msg)
 
@@ -130,12 +136,12 @@ class Planner:
     def obstacleCallback(self, msg): 
         self.obstacle_msg = msg  
     
-    def positionCallback(self, msg):
-        # print(self.position)
-        self.position.x = msg.pose.pose.position.x
-        self.position.y = msg.pose.pose.position.y
-        self.position.heading = msg.twist.twist.angular.z
-        self.is_position = True
+    def localCallback(self, msg):
+        # print(self.local)
+        self.local.x = msg.pose.pose.position.x
+        self.local.y = msg.pose.pose.position.y
+        self.local.heading = msg.twist.twist.angular.z
+        self.is_local = True
 
     def surfaceCallback(self, msg): 
         self.surface_msg = msg
