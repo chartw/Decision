@@ -2,6 +2,7 @@ import rospy
 
 from master_node.msg import Path, Serial_Info, Planning_Info  # 개발할 메세지 타입
 from lib.control_utils.general import General
+from lib.control_utils.emergency_stop import EmergencyStop
 
 """
 Serial_Info
@@ -39,7 +40,7 @@ class Control:
 
         general=General(self)
         self.is_planning=False
-
+        emergency_stop=EmergencyStop(self)
 
         rate = rospy.Rate(100)  # 100hz
 
@@ -61,7 +62,10 @@ class Control:
                     self.pub_msg.emergency_stop=0
                     self.pub_msg.gear=0
                     self.pub_msg.auto_manual=1
-                    
+            
+                        
+            
+            
             control_pub.publish(self.pub_msg)
             rate.sleep()
 

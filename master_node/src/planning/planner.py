@@ -6,7 +6,7 @@ import numpy as np
 from math import radians, degrees, sin, cos, hypot, atan2, pi
 import sys
 import time
-from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local
+from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
 # from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
@@ -15,7 +15,7 @@ from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
-# from lib.planner_utils.mission_plan import MissonPlan
+from lib.planner_utils.mission_plan import MissonPlan
 
 # class Path():
 #     def __init__(self):
@@ -60,6 +60,7 @@ class Planner:
         self.obstacle_msg = Obstacles()
         # self.object_msg = BoundingBoxes()
         self.surface_msg = String()
+        self.serial_msg = Serial_Info()
         
         
         # LiDAR      
@@ -72,6 +73,8 @@ class Planner:
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
         # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
+        
+        rospy.Subscriber('/serial', Serial_Info, self.serialCallback)
         
 
         # Vision - Surface
@@ -94,7 +97,7 @@ class Planner:
         # gpp 변수 선언
         global_path_maker = GPP(self)
 
-        # misson_planner = MissonPlan(self)
+        misson_planner = MissonPlan(self)
 
         
 
@@ -103,7 +106,7 @@ class Planner:
         while not rospy.is_shutdown():
 
             if self.is_position:
-                # self.planning_msg.mode=misson_planner.decision()
+                self.planning_msg.mode=misson_planner.decision()
 
                 self.planning_msg.mode = "general"
 
@@ -118,13 +121,18 @@ class Planner:
 
                 self.planning_msg.local=self.position
 
-                planning_info_pub.publish(self.planning_msg)
 
                 if not self.gpp_requested:
                     self.planning_msg.path_x = []
                     self.planning_msg.path_y = []
                     self.planning_msg.path_heading = []
                 rate.sleep()
+                
+            if self.surface_msg is "stop":
+                self.planning_msg.mode = "emergency_stop"
+                
+        planning_info_pub.publish(self.planning_msg)
+
 
     # Callback Function
     def obstacleCallback(self, msg): 
@@ -139,6 +147,9 @@ class Planner:
 
     def surfaceCallback(self, msg): 
         self.surface_msg = msg
+        
+    def serialCallback(self, msg):
+        self.serial_msg = msg
 
 
 if __name__ == "__main__":
