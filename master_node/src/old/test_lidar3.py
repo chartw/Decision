@@ -83,14 +83,14 @@ def getMsg(msg):
     # axis_max = 2
     filter_axis = 'x'
     axis_min = 0
-    axis_max = 20
+    axis_max = 4
     # axis_max = 2
     # axis_max = 15
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'y'
-    axis_min = -10
-    axis_max = 10
+    axis_min = -1.5
+    axis_max = 1.5
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'

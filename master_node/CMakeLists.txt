@@ -19,7 +19,6 @@ find_package(
   genmsg
   darknet_ros_msgs
   message_generation
-  lane_detection
 )
 
 ## System dependencies are found with CMake's conventions
@@ -63,8 +62,10 @@ add_message_files(
    PangPang.msg
    SegmentObstacle.msg
    BoundingBox.msg
+   Path.msg
    Local.msg
-   lane.msg
+   Serial_Info.msg
+   Planning_Info.msg
 )
 
 ## Generate services in the 'srv' folder

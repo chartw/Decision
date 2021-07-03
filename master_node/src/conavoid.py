@@ -26,7 +26,7 @@ import struct
 import time
 import message_filters
 import matplotlib.pyplot as plt
-from hybrid_a_star import path_plan 
+# from hybrid_a_star import path_plan 
 from master_node.msg import Obstacles 
 from master_node.msg import PangPang
 from darknet_ros_msgs.msg import BoundingBoxes
