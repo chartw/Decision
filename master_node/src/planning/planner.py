@@ -15,21 +15,8 @@ from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
+from lib.planner_utils.local_point_plan import LPP
 from lib.planner_utils.mission_plan import MissonPlan
-
-# class Path():
-#     def __init__(self):
-#         self.x=[]
-#         self.y=[]
-#         self.yaw=[]
-
-# 이걸 메세지 타입으로 만들자~ 아님 말구
-class Pose:
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.yaw = 0
-
 
 class Planner:
     def __init__(self):
@@ -86,6 +73,7 @@ class Planner:
         self.is_object = False
         self.gpp_requested = True
         self.is_global_path_pub = False
+        self.mission_ing = False
 
         # data 변수 선언
         self.global_path = Path()
@@ -96,8 +84,7 @@ class Planner:
 
         # gpp 변수 선언
         global_path_maker = GPP(self)
-        misson_planner = MissonPlan(self)
-
+        local_point_maker = LPP(self)
         misson_planner = MissonPlan(self)
 
         
@@ -115,10 +102,23 @@ class Planner:
                     self.planning_msg.path_heading = self.global_path.heading
                     self.gpp_requested = False
 
+                if self.mission_ing == False:
+                    self.planning_msg.mode=misson_planner.decision()
 
-                self.planning_msg.mode=misson_planner.decision()
+                if self.planning_msg.mode=="avoidance":
+                    if len(self.obstacle_msg.segments) !=0:
+                        self.planning_msg.point=local_point_maker.point_plan()
+                        point=self.planning_msg.point
+                        theta=self.local.heading*pi/180
+                        avoid_goal_x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
+                        avoid_goal_y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+                        
+                    if self.calc_dis(avoid_goal_x,avoid_goal_y) < 1:
+                        self.mission_ing=False
 
-
+                elif self.planning_msg.mode=="parking":
+                    self.
+                
                 self.planning_msg.local=self.local
                 planning_info_pub.publish(self.planning_msg)
                 if not self.gpp_requested:
@@ -127,9 +127,6 @@ class Planner:
                     self.planning_msg.path_heading = []
                     
                 rate.sleep()
-                
-            if self.surface_msg is "stop":
-                self.planning_msg.mode = "emergency_stop"
                 
         planning_info_pub.publish(self.planning_msg)
 
@@ -150,6 +147,12 @@ class Planner:
         
     def serialCallback(self, msg):
         self.serial_msg = msg
+    
+    def calc_dis(self, nx, ny):
+        # print(nx, ny, )
+        distance = ((nx - self.local.x)**2 +  (ny - self.local.y)**2)**0.5
+
+        return distance
 
 
 if __name__ == "__main__":

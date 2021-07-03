@@ -77,7 +77,7 @@ class Control:
                     self.pub_msg.emergency_stop = 0
                     self.pub_msg.auto_manual = 1
 
-                elif self.planning_info.mode == "emergecy stop":
+                elif self.planning_info.mode == "emergency_stop":
                     self.pub_msg.steer = 0
                     self.pub_msg.speed = 0
                     self.pub_msg.brake = 0
