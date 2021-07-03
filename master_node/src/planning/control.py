@@ -1,7 +1,7 @@
 import rospy
 
-from master_node import Serial_Info, Planning_Info  # 개발할 메세지 타입
-from lib.control_utils.general import General()
+from master_node.msg import Path, Serial_Info, Planning_Info,Local  # 개발할 메세지 타입
+from lib.control_utils.general import General
 
 """
 Serial_Info
@@ -33,8 +33,9 @@ class Control:
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
         self.planning_info = Planning_Info()
+        self.local=Local()
         self.serial_info = Serial_Info()
-        self.global_path=None
+        self.global_path=Path()
         self.lookahead=4
 
         general=General(self)
@@ -45,27 +46,40 @@ class Control:
 
         # main loop
         while not rospy.is_shutdown():
-
+            # print(self.global_path)
             if self.is_planning:
                 if self.planning_info.mode=="general":
-                    if self.planning_info.path:
-                        self.global_path=self.planning_info.path
-                    if self.global_path:
-                        self.serial_info.steer=general.pure_pursuit()
-                    self.serial_info.speed=10
-                    self.serial_info.brake=0
-                    self.serial_info.enc=0
-                    self.serial_info.gear=0
-                    self.serial_info.emergency_stop=0
-                    self.serial_info.gear=0
-                    self.serial_info.auto_manual=1
+                    if self.planning_info.path_x:
+                        self.global_path.x=self.planning_info.path_x
+                        self.global_path.y=self.planning_info.path_y
+                        self.global_path.heading=self.planning_info.path_heading
+                    if self.global_path.x:
+                        self.pub_msg.steer=general.pure_pursuit()
+                        print(self.pub_msg.steer)
+                    self.pub_msg.speed=10
+                    self.pub_msg.brake=0
+                    self.pub_msg.encoder=0
+                    self.pub_msg.gear=0
+                    self.pub_msg.emergency_stop=0
+                    self.pub_msg.gear=0
+                    self.pub_msg.auto_manual=1
+                    
             control_pub.publish(self.pub_msg)
             rate.sleep()
 
     # Callback Function
     def planningCallback(self, msg):
         self.planning_info = msg
+        self.local.x=msg.local.x
+        self.local.y=msg.local.y
+        self.local.heading=msg.local.heading
+
+
+        # print(self.planning_info)
         self.is_planning=True
 
     def serialCallback(self, msg):
         self.serial_info = msg
+
+    
+control=Control()

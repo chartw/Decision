@@ -14,20 +14,14 @@ class Serial_Node:
         # Serial Connect
         self.ser = serial.Serial("/dev/ttyUSB0", 115200)
 
-        # Serial Read Thread
-        th_serialRead = threading.Thread(target=self.serialRead)
-        th_serialRead.daemon = True
-        th_serialRead.start()
 
         # ROS Publish
         rospy.init_node("Serial", anonymous=False)
         self.serial_pub = rospy.Publisher("/serial", Serial_Info, queue_size=1)
 
-        # ROS Subscribe
-        def controlCallback(self, msg):
-            self.control_input = msg
+        
 
-        rospy.Subscriber("/control", Serial_Info, controlCallback)
+        rospy.Subscriber("/control", Serial_Info, self.controlCallback)
 
         # Messages/Data
         self.serial_msg = Serial_Info()  # Message to publish
@@ -35,10 +29,16 @@ class Serial_Node:
         self.serial_data = []
         self.alive = 0
 
+
+        # Serial Read Thread
+        th_serialRead = threading.Thread(target=self.serialRead)
+        th_serialRead.daemon = True
+        th_serialRead.start()
+
         # Main Loop
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
-            print("----------loop!")
+            # print("----------loop!")
             # self.serialRead()
             self.serial_pub.publish(self.serial_msg)
             self.serialWrite()
@@ -61,46 +61,51 @@ class Serial_Node:
                     tmp1, tmp2 = struct.unpack("2h", packet[6:10])
                     self.serial_msg.speed = tmp1 // 10  # km/h
                     self.serial_msg.steer = tmp2 // 71  # degree
-                    print("speed", tmp1, "steer", tmp2)
+                    # print("speed", tmp1, "steer", tmp2)
 
                     tmp3 = struct.unpack("B", packet[10:11])
                     self.serial_msg.brake = tmp3[0]
-                    print("brake", tmp3[0])
+                    # print("brake", tmp3[0])
 
                     tmp1 = struct.unpack("f", packet[11:15])
                     self.serial_msg.encoder = tmp1[0]
-                    print("encoder", tmp1[0])
+                    # print("encoder", tmp1[0])
 
-                    self.alive = struct.unpack("B", packet[15:16])
-
+                    self.alive = struct.unpack("B", packet[15:16])[0]
             self.serial_pub.publish(self.serial_msg)
 
     def serialWrite(self):
         if self.control_input.speed > 20:
             self.control_input.speed = 20
 
+        print(self.control_input.speed)
         result = struct.pack(
-            "!BBBBBBHhBBBB",
+            ">BBBBBBHhBBBB",
             0x53,
             0x54,
             0x58,
-            0x01,
+            self.control_input.auto_manual,
             self.control_input.emergency_stop,
             self.control_input.gear,
-            self.control_input.speed * 10,
-            self.control_input.steer * 71,
+            int(self.control_input.speed * 10),
+            int(self.control_input.steer * 71),
             self.control_input.brake,
             self.alive,
             0x0D,
-            0x0A,
+            0x0A
+            
         )  # big endian 방식으로 타입에 맞춰서 pack
-
+        # tail = '\r\n'.encode()
         self.ser.write(result)
+        print('alive', self.alive)
 
         if self.alive < 255:
             self.alive += 1
         else:
             self.alive = 0
+    # ROS Subscribe
+    def controlCallback(self, msg):
+        self.control_input = msg
 
 
 erp = Serial_Node()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import rospy
 
@@ -15,7 +15,7 @@ from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
-from lib.planner_utils.mission_plan import MissonPlan
+# from lib.planner_utils.mission_plan import MissonPlan
 
 # class Path():
 #     def __init__(self):
@@ -62,17 +62,11 @@ class Planner:
         self.surface_msg = String()
         
         
-        # LiDAR
-        def obstacleCallback(self, msg): self.obstacle_msg = msg        
+        # LiDAR      
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
 
         # Localization        
-        def positionCallback(self, msg):
-            self.position.x = msg.pose.pose.position.x
-            self.position.y = msg.pose.pose.position.y
-            self.position.yaw = msg.twist.twist.angular.z
-            self.is_position = True
-        rospy.Subscriber("/pose", Odometry, self.positionCallback)
+        rospy.Subscriber("/pose", Odometry, self.localCallback)
         
         
         # Vision - Object
@@ -81,50 +75,76 @@ class Planner:
         
 
         # Vision - Surface
-        def surfaceCallback(self, msg): self.surface_msg = msg
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         # 상태 flag
-        self.is_position = False
+        self.is_local = False
         self.is_obstacle = False
         self.is_object = False
         self.gpp_requested = True
         self.is_global_path_pub = False
 
-        # gpp 변수 선언
-        global_path_maker = GPP(self)
-
-        misson_planner = MissonPlan(self)
-
         # data 변수 선언
         self.global_path = Path()
         self.obstacles = Obstacles()
-        self.position = Local()
-        self.objects = BoundingBoxes()
+        self.local = Local()
+        # self.objects = BoundingBoxes()
         self.is_person = False
+
+        # gpp 변수 선언
+        global_path_maker = GPP(self)
+
+        # misson_planner = MissonPlan(self)
+
+        
 
         rate = rospy.Rate(100)  # 100hz
 
         while not rospy.is_shutdown():
-
-            if self.is_position:
+    
+            if self.is_local:
                 # self.planning_msg.mode=misson_planner.decision()
-
                 self.planning_msg.mode = "general"
+
+
+
+
+
+
 
                 # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
                 if self.gpp_requested:
                     self.global_path = global_path_maker.path_plan()
-                    self.planning_msg.path = self.global_path
+                    self.planning_msg.path_x = self.global_path.x
+                    self.planning_msg.path_y = self.global_path.y
+                    self.planning_msg.path_heading = self.global_path.heading
                     self.gpp_requested = False
+                # self.planning_msg.path = Path()
+
+
+                self.planning_msg.local=self.local
 
                 planning_info_pub.publish(self.planning_msg)
 
                 if not self.gpp_requested:
-                    self.planning_msg.path = None
+                    self.planning_msg.path_x = []
+                    self.planning_msg.path_y = []
+                    self.planning_msg.path_heading = []
                 rate.sleep()
 
     # Callback Function
+    def obstacleCallback(self, msg): 
+        self.obstacle_msg = msg  
+    
+    def localCallback(self, msg):
+        # print(self.local)
+        self.local.x = msg.pose.pose.position.x
+        self.local.y = msg.pose.pose.position.y
+        self.local.heading = msg.twist.twist.angular.z
+        self.is_local = True
+
+    def surfaceCallback(self, msg): 
+        self.surface_msg = msg
 
 
 if __name__ == "__main__":
