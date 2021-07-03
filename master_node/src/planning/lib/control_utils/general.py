@@ -3,9 +3,7 @@ from math import degrees, atan2, sin, radians
 
 class General:
     def __init__(self, control):
-        self.cur_x = control.planning_info.local.x
-        self.cur_y = control.planning_info.local.y
-        self.cur_yaw = control.planning_info.local.heading
+        self.cur = control.local
         self.path = control.global_path
         self.lookahead = control.lookahead
         self.WB = 1
@@ -15,7 +13,7 @@ class General:
         valid_idx_list = []
 
         for i in range(self.target_index, len(self.path.x)):
-            dis = ((self.path.x[i] - self.cur_x) ** 2 + (self.path.y[i] - self.cur_y) ** 2) ** 0.5
+            dis = ((self.path.x[i] - self.cur.x) ** 2 + (self.path.y[i] - self.cur.y) ** 2) ** 0.5
 
             if dis <= self.lookahead:
                 valid_idx_list.append(i)
@@ -27,17 +25,19 @@ class General:
             return valid_idx_list[len(valid_idx_list) - 1]
 
     def pure_pursuit(self):
+        if len(self.path.x)==0: 
+            return
         self.target_index = self.select_target()
-        print(self.cur_x, self.cur_y)
+        # print(self.cur.x, self.cur.y)
 
         target_x = self.path.x[self.target_index]
         target_y = self.path.y[self.target_index]
         # pure pursuit 계산되는 부분
-        tmp_th = degrees(atan2((target_y - self.cur_y), (target_x - self.cur_x)))
+        tmp_th = degrees(atan2((target_y - self.cur.y), (target_x - self.cur.x)))
 
         tmp_th = tmp_th % 360
 
-        alpha = self.cur_yaw - tmp_th
+        alpha = self.cur.heading - tmp_th
         if abs(alpha) > 180:
             if alpha < 0:
                 alpha += 360

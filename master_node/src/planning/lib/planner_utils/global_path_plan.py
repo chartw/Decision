@@ -56,8 +56,7 @@ class node:  # node
 
 class GPP:
     def __init__(self, planner):
-        self.cur_x = planner.position.x
-        self.cur_y = planner.position.y
+        self.cur = planner.local
         self.goal_id = planner.goal_node
 
         self.nodelist = {}
@@ -261,6 +260,6 @@ class GPP:
         return min_idx
 
     def calc_dis(self, nx, ny):
-        distance = ((nx - self.cur_x ** 2) + (ny - self.cur_y) ** 2) ** 0.5
+        distance = ((nx - self.cur.x ** 2) + (ny - self.cur.y) ** 2)
 
         return distance
