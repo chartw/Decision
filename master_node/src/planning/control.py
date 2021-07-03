@@ -3,6 +3,7 @@ import rospy
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
+from lib.control_utils.emergency_stop import EmergencyStop
 
 """
 Serial_Info
@@ -40,10 +41,11 @@ class Control:
         self.global_path = Path()
         self.lookahead = 4
 
-        general = General(self)
+        general=General(self)
         avoidance = Avoidance(self)
+        emergency_stop=EmergencyStop(self)
+        self.is_planning=False
 
-        self.is_planning = False
 
         rate = rospy.Rate(100)  # 100hz
 

@@ -6,7 +6,7 @@ import numpy as np
 from math import radians, degrees, sin, cos, hypot, atan2, pi
 import sys
 import time
-from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local
+from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
 # from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
@@ -60,6 +60,7 @@ class Planner:
         self.obstacle_msg = Obstacles()
         # self.object_msg = BoundingBoxes()
         self.surface_msg = String()
+        self.serial_msg = Serial_Info()
         
         
         # LiDAR      
@@ -72,6 +73,8 @@ class Planner:
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
         # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
+        
+        rospy.Subscriber('/serial', Serial_Info, self.serialCallback)
         
 
         # Vision - Surface
@@ -93,6 +96,8 @@ class Planner:
 
         # gpp 변수 선언
         global_path_maker = GPP(self)
+        misson_planner = MissonPlan(self)
+
         misson_planner = MissonPlan(self)
 
         
@@ -122,6 +127,12 @@ class Planner:
                     self.planning_msg.path_heading = []
                     
                 rate.sleep()
+                
+            if self.surface_msg is "stop":
+                self.planning_msg.mode = "emergency_stop"
+                
+        planning_info_pub.publish(self.planning_msg)
+
 
     # Callback Function
     def obstacleCallback(self, msg): 
@@ -136,6 +147,9 @@ class Planner:
 
     def surfaceCallback(self, msg): 
         self.surface_msg = msg
+        
+    def serialCallback(self, msg):
+        self.serial_msg = msg
 
 
 if __name__ == "__main__":
