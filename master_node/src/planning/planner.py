@@ -15,7 +15,7 @@ from std_msgs.msg import Float32, Time, String
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
-# from lib.planner_utils.mission_plan import MissonPlan
+from lib.planner_utils.mission_plan import MissonPlan
 
 # class Path():
 #     def __init__(self):
@@ -93,8 +93,7 @@ class Planner:
 
         # gpp 변수 선언
         global_path_maker = GPP(self)
-
-        # misson_planner = MissonPlan(self)
+        misson_planner = MissonPlan(self)
 
         
 
@@ -103,15 +102,6 @@ class Planner:
         while not rospy.is_shutdown():
     
             if self.is_local:
-                # self.planning_msg.mode=misson_planner.decision()
-                self.planning_msg.mode = "general"
-
-
-
-
-
-
-
                 # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
                 if self.gpp_requested:
                     self.global_path = global_path_maker.path_plan()
@@ -119,17 +109,18 @@ class Planner:
                     self.planning_msg.path_y = self.global_path.y
                     self.planning_msg.path_heading = self.global_path.heading
                     self.gpp_requested = False
-                # self.planning_msg.path = Path()
+
+
+                self.planning_msg.mode=misson_planner.decision()
 
 
                 self.planning_msg.local=self.local
-
                 planning_info_pub.publish(self.planning_msg)
-
                 if not self.gpp_requested:
                     self.planning_msg.path_x = []
                     self.planning_msg.path_y = []
                     self.planning_msg.path_heading = []
+                    
                 rate.sleep()
 
     # Callback Function
