@@ -17,11 +17,13 @@ class NormalStop():
         self.pub_msg.encoder = 0
         self.pub_msg.gear = 0
              
-        if self.status.speed > 1:
+        if self.status.speed > 0.5:
             self.des_brake += 2 #parameter
             self.pub_msg.brake = self.des_brake
         else:
-            self.des_brake = 200
+            self.pub_msg.emergency_stop = 1
+            self.des_brake = 30
+            
         
 
 
