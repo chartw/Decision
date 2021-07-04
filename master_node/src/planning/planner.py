@@ -98,6 +98,7 @@ class Planner:
                     self.planning_msg.path_x = self.global_path.x
                     self.planning_msg.path_y = self.global_path.y
                     self.planning_msg.path_heading = self.global_path.heading
+                    self.planning_msg.path_k = self.global_path.k
                     self.planning_msg.mode="global"
                     self.gpp_requested = False
                     
@@ -123,6 +124,7 @@ class Planner:
                     self.planning_msg.path_x = []
                     self.planning_msg.path_y = []
                     self.planning_msg.path_heading = []
+                    self.planning_msg.path_k = []
                     
                 rate.sleep()
 
