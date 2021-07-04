@@ -139,7 +139,7 @@ class General:
 
     def calc_Vref(self):
         stidx = self.select_target(self.speed_lookahead)
-        target_k = abs(path.k[stidx])
+        target_k = abs(self.path.k[stidx])
         V_ref = self.calc_velocity(target_k):
 
         return int(V_ref)
@@ -166,7 +166,7 @@ class General:
         V_in = self.PID(V_ref)
         if V_in > 200:
             V_in = 200
-        elif V_in < 0:
-            V_in = 0
+        elif V_in < V_ref:
+            V_in = V_ref
 
         return int(V_in)
