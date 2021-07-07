@@ -1,13 +1,18 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
 from math import degrees, atan2, sin, radians
 
 
 class General:
     def __init__(self, control):
-        self.cur = control.local
-        self.path = control.global_path
-        self.lookahead = control.lookahead
+        # 깊은 복사 수행
+        self.cur = control.local # local 좌표
+        self.path = control.global_path # global_path
+        self.GeneralLookahead = control.lookahead #직진 주행시 lookahead
+        self.lookahead = None
         self.WB = 1
         self.target_index = 0
+        
 
     def select_target(self):
         valid_idx_list = []
@@ -24,7 +29,18 @@ class General:
         else:
             return valid_idx_list[len(valid_idx_list) - 1]
 
+    #Dynamic Lookahead
+    def Dynamic_LookAhead(self):
+        self.lookahead = self.GeneralLookahead
+        heading_difference = (self.cur.heading - self.path.heading[self.target_index])
+        if heading_difference > 10 :
+            self.lookahead = self.GeneralLookahead/2 
+        print ("LookAhead : ",self.lookahead)
+
     def pure_pursuit(self):
+        
+        self.Dynamic_LookAhead() # 동적 lookAhead 
+
         if len(self.path.x)==0: 
             return
         self.target_index = self.select_target()
