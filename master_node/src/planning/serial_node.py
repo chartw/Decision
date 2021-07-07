@@ -36,7 +36,7 @@ class Serial_Node:
         th_serialRead.start()
 
         # Main Loop
-        rate = rospy.Rate(100)
+        rate = rospy.Rate(50)
         while not rospy.is_shutdown():
             # print("----------loop!")
             # self.serialRead()
@@ -59,8 +59,8 @@ class Serial_Node:
                     self.serial_msg.gear = tmp3
 
                     tmp1, tmp2 = struct.unpack("2h", packet[6:10])
-                    self.serial_msg.speed = tmp1 // 10  # km/h
-                    self.serial_msg.steer = tmp2 // 71  # degree
+                    self.serial_msg.speed = tmp1 / 10  # km/h
+                    self.serial_msg.steer = tmp2 / 71  # degree
                     # print("speed", tmp1, "steer", tmp2)
 
                     tmp3 = struct.unpack("B", packet[10:11])
@@ -72,13 +72,14 @@ class Serial_Node:
                     # print("encoder", tmp1[0])
 
                     self.alive = struct.unpack("B", packet[15:16])[0]
+                    print(self.alive)
             self.serial_pub.publish(self.serial_msg)
 
     def serialWrite(self):
         if self.control_input.speed > 20:
             self.control_input.speed = 20
 
-        print(self.control_input.speed)
+        # print(self.control_input.speed)
         result = struct.pack(
             ">BBBBBBHhBBBB",
             0x53,
@@ -97,12 +98,12 @@ class Serial_Node:
         )  # big endian 방식으로 타입에 맞춰서 pack
         # tail = '\r\n'.encode()
         self.ser.write(result)
-        print('alive', self.alive)
+        # print('alive', self.alive)
 
-        if self.alive < 255:
-            self.alive += 1
-        else:
-            self.alive = 0
+        # if self.alive < 255:
+        #     self.alive += 1
+        # else:
+        #     self.alive = 0
     # ROS Subscribe
     def controlCallback(self, msg):
         self.control_input = msg

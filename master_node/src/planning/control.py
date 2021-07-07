@@ -47,7 +47,7 @@ class Control:
         self.is_planning=False
 
 
-        rate = rospy.Rate(100)  # 100hz
+        rate = rospy.Rate(50)  # 100hz
 
         # main loop
         while not rospy.is_shutdown():
