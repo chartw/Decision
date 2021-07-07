@@ -4,6 +4,7 @@ from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
 from lib.control_utils.emergency_stop import EmergencyStop
+from lib.control_utils.normal_stop import NormalStop
 
 """
 Serial_Info
@@ -44,6 +45,7 @@ class Control:
         general=General(self)
         avoidance = Avoidance(self)
         emergency_stop=EmergencyStop(self)
+        self.normal_stop = NormalStop(self)
         self.is_planning=False
 
 
@@ -85,6 +87,9 @@ class Control:
                     self.pub_msg.gear = 0
                     self.pub_msg.emergency_stop = 1
                     self.pub_msg.auto_manual = 1
+                    
+                elif self.planning_info.mode == "normal_stop":
+                    self.normal_stop.run()
 
                 elif self.planning_info.mode == "parking":
                     
