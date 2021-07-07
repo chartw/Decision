@@ -98,7 +98,7 @@ class Planner:
 
         
 
-        rate = rospy.Rate(100)  # 100hz
+        rate = rospy.Rate(50)  # 100hz
 
         while not rospy.is_shutdown():
     
