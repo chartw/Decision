@@ -98,25 +98,25 @@ class Planner:
                     self.planning_msg.path_x = self.global_path.x
                     self.planning_msg.path_y = self.global_path.y
                     self.planning_msg.path_heading = self.global_path.heading
-                    self.planning_msg.mode="global"
+                    self.planning_msg.mode="general"
                     self.gpp_requested = False
                     
-                else:
-                    self.planning_msg.mode=misson_planner.decision(self)
+                # else:
+                #     self.planning_msg.mode=misson_planner.decision(self)
 
-                    if self.planning_msg.mode=="avoidance":
-                        if len(self.obstacle_msg.segments) !=0:
-                            self.planning_msg.point=local_point_maker.point_plan()
-                            point=self.planning_msg.point
-                            theta=self.local.heading*pi/180
-                            self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                            self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+                #     if self.planning_msg.mode=="avoidance":
+                #         if len(self.obstacle_msg.segments) !=0:
+                #             self.planning_msg.point=local_point_maker.point_plan()
+                #             point=self.planning_msg.point
+                #             theta=self.local.heading*pi/180
+                #             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
+                #             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
 
-                    # elif self.planning_msg.mode=="parking-start":
-                        # self.planning_msg.path=
+                #     # elif self.planning_msg.mode=="parking-start":
+                #         # self.planning_msg.path=
                 
 
-                self.planning_msg.local=self.local
+                # self.planning_msg.local=self.local
                 planning_info_pub.publish(self.planning_msg)
 
                 if not self.gpp_requested:

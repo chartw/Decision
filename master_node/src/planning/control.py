@@ -70,28 +70,28 @@ class Control:
                     self.pub_msg.emergency_stop = 0
                     self.pub_msg.auto_manual = 1
 
-                elif self.planning_info.mode == "avoidance":
-                    self.pub_msg.steer = avoidance.pure_puresuit()
-                    self.pub_msg.speed = 10
-                    self.pub_msg.brake = 0
-                    self.pub_msg.encoder = 0
-                    self.pub_msg.gear = 0
-                    self.pub_msg.emergency_stop = 0
-                    self.pub_msg.auto_manual = 1
+                # elif self.planning_info.mode == "avoidance":
+                #     self.pub_msg.steer = avoidance.pure_puresuit()
+                #     self.pub_msg.speed = 10
+                #     self.pub_msg.brake = 0
+                #     self.pub_msg.encoder = 0
+                #     self.pub_msg.gear = 0
+                #     self.pub_msg.emergency_stop = 0
+                #     self.pub_msg.auto_manual = 1
 
-                elif self.planning_info.mode == "emergency_stop":
-                    self.pub_msg.steer = 0
-                    self.pub_msg.speed = 0
-                    self.pub_msg.brake = 0
-                    self.pub_msg.encoder = 0
-                    self.pub_msg.gear = 0
-                    self.pub_msg.emergency_stop = 1
-                    self.pub_msg.auto_manual = 1
+                # elif self.planning_info.mode == "emergency_stop":
+                #     self.pub_msg.steer = 0
+                #     self.pub_msg.speed = 0
+                #     self.pub_msg.brake = 0
+                #     self.pub_msg.encoder = 0
+                #     self.pub_msg.gear = 0
+                #     self.pub_msg.emergency_stop = 1
+                #     self.pub_msg.auto_manual = 1
                     
-                elif self.planning_info.mode == "normal_stop":
-                    self.normal_stop.run()
+                # elif self.planning_info.mode == "normal_stop":
+                #     self.normal_stop.run()
 
-                elif self.planning_info.mode == "parking":
+                # elif self.planning_info.mode == "parking":
                     
     
             control_pub.publish(self.pub_msg)
