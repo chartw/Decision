@@ -26,6 +26,7 @@ class Planner:
         # ex) python3 planner.py songdo 38
         # 후에는 roslaunch 파일로 바꾸면서 parameter 가져오도록 변경
         arg = rospy.myargv(argv=sys.argv)
+        # arg[0] == planner.py
         self.map = str(arg[1])
         self.goal_node = str(arg[2])
 

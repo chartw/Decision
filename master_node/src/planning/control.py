@@ -43,12 +43,11 @@ class Control:
         self.lookahead = 4
         self.past_mode = None
 
-        general=General(self)
+        general = General(self)
         avoidance = Avoidance(self)
-        emergency_stop=EmergencyStop(self)
+        emergency_stop = EmergencyStop(self)
         self.normal_stop = NormalStop(self)
-        self.is_planning=False
-
+        self.is_planning = False
 
         rate = rospy.Rate(50)  # 100hz
 
@@ -63,15 +62,7 @@ class Control:
                         self.global_path.heading = self.planning_info.path_heading
                         self.global_path.k = self.planning_info.path_k
                     if self.global_path.x:
-                        self.pub_msg.steer = general.pure_pursuit()
-                        print(self.pub_msg.steer)
-                        self.pub_msg.speed = general.calc_velocity()  # PID 추가
-                        print(self.pub_msg.speed)
-                    self.pub_msg.brake = 0
-                    self.pub_msg.encoder = 0
-                    self.pub_msg.gear = 0
-                    self.pub_msg.emergency_stop = 0
-                    self.pub_msg.auto_manual = 1
+                        self.pub_msg = general.driving()
 
                 # elif self.planning_info.mode == "avoidance":
                 #     self.pub_msg.steer = avoidance.pure_puresuit()
@@ -90,13 +81,12 @@ class Control:
                 #     self.pub_msg.gear = 0
                 #     self.pub_msg.emergency_stop = 1
                 #     self.pub_msg.auto_manual = 1
-                    
+
                 # elif self.planning_info.mode == "normal_stop":
                 #     self.normal_stop.run()
 
                 # elif self.planning_info.mode == "parking":
-                    
-                
+
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.pub_msg)
                 rate.sleep()

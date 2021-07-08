@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
+from master_node.msg import Serial_Info  # 개발할 메세지 타입
+
 from math import degrees, atan2, sin, radians
 import time
 
@@ -35,8 +37,7 @@ class General:
         self.V_err_deri = 0
 
         self.safety_factor = 0.8
-        self.V_ref_max = 150
-        
+        self.V_ref_max = 150        
 
     def select_target(self,lookahead):
         valid_idx_list = []
@@ -170,3 +171,15 @@ class General:
             V_in = V_ref
 
         return int(V_in)
+
+    def driving(self):
+        temp_msg=Serial_Info()
+        temp_msg.steer = self.pure_pursuit()
+        temp_msg.speed = self.calc_velocity()  # PID 추가
+        temp_msg.brake = 0
+        temp_msg.encoder = 0
+        temp_msg.gear = 0
+        temp_msg.emergency_stop = 0
+        temp_msg.auto_manual = 1
+
+        return temp_msg
