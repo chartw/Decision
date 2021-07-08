@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 from math import degrees, atan2, sin, radians
+import time
 
 
 class General:
@@ -9,12 +10,35 @@ class General:
         self.cur = control.local # local 좌표
         self.path = control.global_path # global_path
         self.GeneralLookahead = control.lookahead #직진 주행시 lookahead
+        self.serial_info = control.serial_info
+        self.past_mode = control.past_mode
+
         self.lookahead = None
-        self.WB = 1
+        self.speed_lookahead = 6
+        self.WB = 1.04
         self.target_index = 0
+
+        self.t_start = 0
+        self.t_delta = 0
+        self.t_old = 0
+        self.t_new = 0
+        self.t = 0
+
+        self.Kp_v = 50
+        self.Ki_v = 5
+        self.Kd_v = 10
+
+        self.V_err = 0
+        self.V_err_old = 0
+        self.V_err_pro = 0
+        self.V_err_inte = 0
+        self.V_err_deri = 0
+
+        self.safety_factor = 0.8
+        self.V_ref_max = 150
         
 
-    def select_target(self):
+    def select_target(self,lookahead):
         valid_idx_list = []
 
         for i in range(self.target_index, len(self.path.x)):
@@ -22,7 +46,7 @@ class General:
 
             if dis <= self.lookahead:
                 valid_idx_list.append(i)
-            if len(valid_idx_list) != 0 and dis > self.lookahead:
+            if len(valid_idx_list) != 0 and dis > lookahead:
                 break
         if len(valid_idx_list) == 0:
             return 0
@@ -43,7 +67,7 @@ class General:
 
         if len(self.path.x)==0: 
             return
-        self.target_index = self.select_target()
+        self.target_index = self.select_target(self.lookahead)
         # print(self.cur.x, self.cur.y)
 
         target_x = self.path.x[self.target_index]
@@ -79,3 +103,70 @@ class General:
         else:
 
             return delta
+
+###################조향 속도 구분선###################
+
+    def PID(self,V_ref):
+        
+        self.V_err_old = self.V_err
+        self.V_err = V_ref - self.serial_info.speed
+
+        self.t_old = self.t_new
+        self.t_new = time.time()
+        self.t_delta = self.t_new - self.t_old
+        self.t = time.time() - self.t_start
+
+        self.V_err_pro = self.Kp_v * self.V_err
+        if self.Ki_v * self.V_err * self.t_delta < 100:
+            self.V_err_inte += self.Ki_v * self.V_err * self.t_delta
+        self.V_err_deri = self.Kd_v * (self.V_err - self.V_err_old) / self.t_delta
+
+        V_in = self.V_err_pro + self.V_err_inte + self.V_err_deri
+
+        return V_in
+
+
+    def calc_velocity(self, k):
+        critical_k = ((self.safety_factor/self.V_ref_max)**2) * 19.071
+
+        if k < critical_k:
+            V_ref = self.V_ref_max
+        else:
+            V_ref = self.safety_factor * (sqrt(19.071/k))
+
+        return 10 * V_ref # 10*(km/h)
+
+
+    def calc_Vref(self):
+        stidx = self.select_target(self.speed_lookahead)
+        target_k = abs(self.path.k[stidx])
+        V_ref = self.calc_velocity(target_k):
+
+        return int(V_ref)
+
+
+    def calc_velocity(self):
+       
+        if self.past_mode != 'general':
+            # 다른 미션에서 general로 왔을때 pid 변수초기화
+            self.t_start = time.time()
+            self.t_new = 0
+            self.t_delta = 0
+            self.t_old = 0
+            self.t_new = 0
+            self.t = 0
+
+            self.V_err = 0
+            self.V_err_old = 0
+            self.V_err_inte = 0
+            self.V_err_deri = 0
+            self.V_err_pro = 0
+
+        V_ref = self.calc_Vref()
+        V_in = self.PID(V_ref)
+        if V_in > 200:
+            V_in = 200
+        elif V_in < V_ref:
+            V_in = V_ref
+
+        return int(V_in)

@@ -41,6 +41,7 @@ class Control:
         self.serial_info = Serial_Info()
         self.global_path = Path()
         self.lookahead = 4
+        self.past_mode = None
 
         general=General(self)
         avoidance = Avoidance(self)
@@ -60,10 +61,12 @@ class Control:
                         self.global_path.x = self.planning_info.path_x
                         self.global_path.y = self.planning_info.path_y
                         self.global_path.heading = self.planning_info.path_heading
+                        self.global_path.k = self.planning_info.path_k
                     if self.global_path.x:
                         self.pub_msg.steer = general.pure_pursuit()
                         print(self.pub_msg.steer)
-                    self.pub_msg.speed = 10  # PID 추가
+                        self.pub_msg.speed = general.calc_velocity()  # PID 추가
+                        print(self.pub_msg.speed)
                     self.pub_msg.brake = 0
                     self.pub_msg.encoder = 0
                     self.pub_msg.gear = 0
@@ -93,9 +96,10 @@ class Control:
 
                 # elif self.planning_info.mode == "parking":
                     
-    
-            control_pub.publish(self.pub_msg)
-            rate.sleep()
+                
+                self.past_mode = self.planning_info.mode
+                control_pub.publish(self.pub_msg)
+                rate.sleep()
 
     # Callback Function
     def planningCallback(self, msg):
