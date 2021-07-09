@@ -40,6 +40,7 @@ class Planner:
             Point32 point
         }
         """
+
         planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
 
         # subscriber 정의

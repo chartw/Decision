@@ -25,7 +25,7 @@ class Serial_Node:
 
         # Messages/Data
         self.serial_msg = Serial_Info()  # Message to publish
-        self.control_input = Serial_Info()
+        self.control_input = Serial_Info() # @@@@@@@@@@@@?? 
         self.serial_data = []
         self.alive = 0
 

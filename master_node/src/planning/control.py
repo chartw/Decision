@@ -34,16 +34,16 @@ class Control:
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
         self.pub_msg = Serial_Info()
 
-        rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
+        rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
         self.planning_info = Planning_Info()
+        self.serial_info = Serial_Info() # 위에서 받았는데 얘가 계속 초기화 되는거 아니가?? @@@@@@@@
         self.local = Local()
-        self.serial_info = Serial_Info()
         self.global_path = Path()
         self.lookahead = 4
         self.past_mode = None
 
-        general = General(self)
+        self.general = General(self)
         avoidance = Avoidance(self)
         # emergency_stop = EmergencyStop(self)
         self.normal_stop = NormalStop(self)
@@ -54,6 +54,10 @@ class Control:
         # main loop
         while not rospy.is_shutdown():
             # print(self.global_path)
+
+            # rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
+            # rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
+
             if self.is_planning:
                 if self.planning_info.mode == "general":
                     if self.planning_info.path_x:
@@ -62,10 +66,11 @@ class Control:
                         self.global_path.heading = self.planning_info.path_heading
                         self.global_path.k = self.planning_info.path_k
                         print(self.global_path.x)
+
                     if self.global_path.x:
                         # print(1)
-                        self.pub_msg = general.driving()
-                        # print(self.pub_msg)
+                        self.pub_msg = self.general.driving()
+
 
                 # elif self.planning_info.mode == "avoidance":
                 #     self.pub_msg.steer = avoidance.pure_puresuit()
@@ -106,6 +111,7 @@ class Control:
 
     def serialCallback(self, msg):
         self.serial_info = msg
+        # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
 
 
 control = Control()
