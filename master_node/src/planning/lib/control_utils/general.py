@@ -12,6 +12,7 @@ class General:
         self.cur = control.local # local 좌표
         self.path = control.global_path # global_path
         self.GeneralLookahead = control.lookahead #직진 주행시 lookahead
+        # self.serial_info = Serial_Info()
         self.serial_info = control.serial_info
         self.past_mode = control.past_mode
 
@@ -109,10 +110,8 @@ class General:
 ###################조향 속도 구분선###################
 
     def PID(self,V_ref):
-        
         self.V_err_old = self.V_err
         self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
-        print(self.serial_info.speed)
 
         self.t_old = self.t_new
         self.t_new = time.time()

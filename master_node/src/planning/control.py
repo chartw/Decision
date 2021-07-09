@@ -65,6 +65,7 @@ class Control:
                     if self.global_path.x:
                         # print(1)
                         self.pub_msg = general.driving()
+                        print(self.serial_info.steering)
                         # print(self.pub_msg)
 
                 # elif self.planning_info.mode == "avoidance":
@@ -106,6 +107,7 @@ class Control:
 
     def serialCallback(self, msg):
         self.serial_info = msg
+        # print(self.serial_info.speed)
 
 
 control = Control()
