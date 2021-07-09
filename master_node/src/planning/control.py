@@ -65,6 +65,7 @@ class Control:
                     if self.global_path.x:
                         # print(1)
                         self.pub_msg = general.driving()
+                        # print(self.pub_msg)
 
                 # elif self.planning_info.mode == "avoidance":
                 #     self.pub_msg.steer = avoidance.pure_puresuit()

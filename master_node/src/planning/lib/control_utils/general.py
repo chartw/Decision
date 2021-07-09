@@ -26,9 +26,9 @@ class General:
         self.t_new = 0
         self.t = 0
 
-        self.Kp_v = 50
-        self.Ki_v = 5
-        self.Kd_v = 10
+        self.Kp_v = 5
+        self.Ki_v = 0.5
+        self.Kd_v = 1
 
         self.V_err = 0
         self.V_err_old = 0
@@ -37,7 +37,7 @@ class General:
         self.V_err_deri = 0
 
         self.safety_factor = 0.8
-        self.V_ref_max = 150        
+        self.V_ref_max = 12        
 
     def select_target(self,lookahead):
         valid_idx_list = []
@@ -69,7 +69,7 @@ class General:
         if len(self.path.x)==0: 
             return 0
         self.target_index = self.select_target(self.lookahead)
-        print(self.target_index)
+        # print(self.target_index)
         # print(self.cur.x, self.cur.y)
 
         target_x = self.path.x[self.target_index]
@@ -111,7 +111,8 @@ class General:
     def PID(self,V_ref):
         
         self.V_err_old = self.V_err
-        self.V_err = V_ref - self.serial_info.speed
+        self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
+        print(self.serial_info.speed)
 
         self.t_old = self.t_new
         self.t_new = time.time()
@@ -128,7 +129,7 @@ class General:
         return V_in
 
 
-    def calc(self, k):
+    def calc_k(self, k):
         critical_k = ((self.safety_factor/self.V_ref_max)**2) * 19.071
 
         if k < critical_k:
@@ -136,13 +137,14 @@ class General:
         else:
             V_ref = self.safety_factor * (sqrt(19.071/k))
 
-        return 10 * V_ref # 10*(km/h)
+        return V_ref # km/h
 
 
     def calc_Vref(self):
         stidx = self.select_target(self.speed_lookahead)
         target_k = abs(self.path.k[stidx])
-        V_ref = self.calc(target_k)
+        # print(target_k)
+        V_ref = self.calc_k(target_k)
 
         return int(V_ref)
 
@@ -166,8 +168,8 @@ class General:
 
         V_ref = self.calc_Vref()
         V_in = self.PID(V_ref)
-        if V_in > 200:
-            V_in = 200
+        if V_in > 20:
+            V_in = 20
         elif V_in < V_ref:
             V_in = V_ref
 
