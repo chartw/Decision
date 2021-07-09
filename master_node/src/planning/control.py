@@ -3,7 +3,7 @@ import rospy
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
-from lib.control_utils.emergency_stop import EmergencyStop
+# from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
 
 """
@@ -45,7 +45,7 @@ class Control:
 
         general = General(self)
         avoidance = Avoidance(self)
-        emergency_stop = EmergencyStop(self)
+        # emergency_stop = EmergencyStop(self)
         self.normal_stop = NormalStop(self)
         self.is_planning = False
 
@@ -61,7 +61,9 @@ class Control:
                         self.global_path.y = self.planning_info.path_y
                         self.global_path.heading = self.planning_info.path_heading
                         self.global_path.k = self.planning_info.path_k
+                        print(self.global_path.x)
                     if self.global_path.x:
+                        # print(1)
                         self.pub_msg = general.driving()
 
                 # elif self.planning_info.mode == "avoidance":

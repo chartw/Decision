@@ -2,7 +2,7 @@
 #-*- coding:utf-8 -*-
 from master_node.msg import Serial_Info  # 개발할 메세지 타입
 
-from math import degrees, atan2, sin, radians
+from math import degrees, atan2, sin, radians, sqrt
 import time
 
 
@@ -15,7 +15,7 @@ class General:
         self.serial_info = control.serial_info
         self.past_mode = control.past_mode
 
-        self.lookahead = None
+        self.lookahead = 4
         self.speed_lookahead = 6
         self.WB = 1.04
         self.target_index = 0
@@ -64,11 +64,12 @@ class General:
 
     def pure_pursuit(self):
         
-        self.Dynamic_LookAhead() # 동적 lookAhead 
+        # self.Dynamic_LookAhead() # 동적 lookAhead 
 
         if len(self.path.x)==0: 
-            return
+            return 0
         self.target_index = self.select_target(self.lookahead)
+        print(self.target_index)
         # print(self.cur.x, self.cur.y)
 
         target_x = self.path.x[self.target_index]
@@ -127,7 +128,7 @@ class General:
         return V_in
 
 
-    def calc_velocity(self, k):
+    def calc(self, k):
         critical_k = ((self.safety_factor/self.V_ref_max)**2) * 19.071
 
         if k < critical_k:
@@ -141,7 +142,7 @@ class General:
     def calc_Vref(self):
         stidx = self.select_target(self.speed_lookahead)
         target_k = abs(self.path.k[stidx])
-        V_ref = self.calc_velocity(target_k):
+        V_ref = self.calc(target_k)
 
         return int(V_ref)
 

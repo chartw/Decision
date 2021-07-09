@@ -51,8 +51,8 @@ class Planner:
         self.parking_msg=Int16()
         
         # LiDAR      
-        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        rospy.Subscriber("/parking",Int16, self.parkingCallback)
+        # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        # rospy.Subscriber("/parking",Int16, self.parkingCallback)
 
         # Localization        
         rospy.Subscriber("/pose", Odometry, self.localCallback)
@@ -83,8 +83,8 @@ class Planner:
 
         # gpp 변수 선언
         global_path_maker = GPP(self)
-        local_point_maker = LPP(self)
-        misson_planner = MissonPlan(self)
+        # local_point_maker = LPP(self)
+        # misson_planner = MissonPlan(self)
 
         
 
@@ -118,7 +118,7 @@ class Planner:
                 #         # self.planning_msg.path=
                 
 
-                # self.planning_msg.local=self.local
+                self.planning_msg.local=self.local
                 planning_info_pub.publish(self.planning_msg)
 
                 if not self.gpp_requested:
