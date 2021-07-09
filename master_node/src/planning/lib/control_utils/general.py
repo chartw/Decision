@@ -17,10 +17,7 @@ class General:
 
         self.serial_info = control.serial_info #####  얘가 빈공간으로 들어오고 ㅣㅇ씅 @@@@@@@ 음 그냥  init 이라서 한번만 받아오는거네.같은 데이터 공간이어도 계속 받아와야 하징자ㅓㄹㄴㅁㅇ러ㅣㄷ렁마ㅣㄴ
         
-
         self.temp_msg=Serial_Info()
-
-
 
         self.past_mode = control.past_mode
         self.lookahead = 4

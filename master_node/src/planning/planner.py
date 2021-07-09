@@ -16,7 +16,7 @@ from std_msgs.msg import Float32, Time, String, Int16
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
-from lib.planner_utils.mission_plan import MissonPlan
+from lib.planner_utils.mission_plan import MissionPlan
 
 class Planner:
     def __init__(self):

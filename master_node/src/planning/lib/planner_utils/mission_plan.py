@@ -2,7 +2,7 @@ from geometry_msgs.msg import Point32
 from math import hypot
 import time
 
-class MissonPlan:
+class MissionPlan:
     def __init__(self,planner, base, parking_lot):
         self.obstacles = planner.obstacles
         self.objects=planner.objects
@@ -34,6 +34,7 @@ class MissonPlan:
         if not planner.gpp_requested: # Parking
             self.mode = 'parking'
 
+        
         # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
         # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
         # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정

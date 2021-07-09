@@ -1,10 +1,13 @@
 import rospy
+import time
 
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
 # from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
+
+from lib.control_utils.uturn import Uturn
 
 """
 Serial_Info
@@ -25,13 +28,15 @@ Planning_Info
     Point32 point
 }
 """
-
+LEFT_MAX_STEER = 10
+RIGHT_MAX_STEER = -10
 
 class Control:
     def __init__(self):
         rospy.init_node("Control", anonymous=False)
 
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
+        # path_pub = rospy.Publisher("/path", )
         self.pub_msg = Serial_Info()
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
@@ -44,9 +49,10 @@ class Control:
         self.past_mode = None
 
         self.general = General(self)
-        avoidance = Avoidance(self)
+        self.avoidance = Avoidance(self)
         # emergency_stop = EmergencyStop(self)
         self.normal_stop = NormalStop(self)
+        self.uturn = Uturn()
         self.is_planning = False
 
         rate = rospy.Rate(50)  # 100hz
@@ -54,10 +60,12 @@ class Control:
         # main loop
         while not rospy.is_shutdown():
             # print(self.global_path)
-            print("##### general:", self.general.serial_info)
-            print("#####", self.serial_info)
             # rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
             # rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
+
+
+
+
 
             if self.is_planning:
                 if self.planning_info.mode == "general":
@@ -72,6 +80,30 @@ class Control:
                         # print(1)
                         self.pub_msg = self.general.driving()
                         print("### pub", self.pub_msg)
+
+            # endtime엔 한번만 넣게
+            endtime = time.time() + 3
+            if self.planning_info.mode == "general":
+
+                # steering value 를 serial로 넣어주기
+                self.pub_msg.steer = LEFT_MAX_STEER
+
+                # 3초간 유지
+                curtime = time.time()
+                if curtime < endtime:
+                    pass
+                else:
+                    self.planning_info_mode = "general"
+
+                    # 새로운 점 잡기
+                    new_idx = self.uturn.select_new_target(self.local, self.global_path)
+
+                    # GPP 경로 재 생성 (new idx 경유)
+
+                    
+
+
+
 
 
                 # elif self.planning_info.mode == "avoidance":
@@ -122,7 +154,8 @@ class Control:
         self.serial_info.brake = msg.brake
 
 
-        # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
+    # def missionCallback(self, msg):
+    #     self.
 
 
 control = Control()
