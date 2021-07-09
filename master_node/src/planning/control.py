@@ -54,7 +54,8 @@ class Control:
         # main loop
         while not rospy.is_shutdown():
             # print(self.global_path)
-
+            print("##### general:", self.general.serial_info)
+            print("#####", self.serial_info)
             # rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
             # rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
 
@@ -70,6 +71,7 @@ class Control:
                     if self.global_path.x:
                         # print(1)
                         self.pub_msg = self.general.driving()
+                        print("### pub", self.pub_msg)
 
 
                 # elif self.planning_info.mode == "avoidance":
@@ -110,7 +112,16 @@ class Control:
         self.is_planning = True
 
     def serialCallback(self, msg):
-        self.serial_info = msg
+        
+        self.serial_info.encoder = msg.encoder
+        self.serial_info.auto_manual = msg.auto_manual
+        self.serial_info.gear = msg.gear
+        self.serial_info.steer = msg.steer
+        self.serial_info.speed = msg.speed
+        self.serial_info.emergency_stop = msg.emergency_stop
+        self.serial_info.brake = msg.brake
+
+
         # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
 
 
