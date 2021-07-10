@@ -234,11 +234,13 @@ class GPP:
                 )
                 pyaw = (
                     globals()["Lane{}".format(path[i] + path[i + 1])]["yaw"][j]
-                    + 90
                 )
-                if pyaw >= 360:
-                    pyaw -= 360
+                
+                pyaw= (degrees(pyaw)+360) % 360
                 self.path.heading.append(pyaw)
+                self.path.k.append(
+                    globals()["Lane{}".format(path[i] + path[i + 1])]["k"][j]
+                )
 
         return self.path
         # 가장 가까운 노드를 시작 노드로 설정

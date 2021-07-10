@@ -1,7 +1,10 @@
 import rospy
 
-from master_node.msg import Path, Serial_Info, Planning_Info,Local  # 개발할 메세지 타입
+from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from lib.control_utils.general import General
+from lib.control_utils.avoidance import Avoidance
+# from lib.control_utils.emergency_stop import EmergencyStop
+from lib.control_utils.normal_stop import NormalStop
 
 """
 Serial_Info
@@ -23,6 +26,7 @@ Planning_Info
 }
 """
 
+
 class Control:
     def __init__(self):
         rospy.init_node("Control", anonymous=False)
@@ -30,56 +34,95 @@ class Control:
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
         self.pub_msg = Serial_Info()
 
-        rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
+        rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
         self.planning_info = Planning_Info()
-        self.local=Local()
-        self.serial_info = Serial_Info()
-        self.global_path=Path()
-        self.lookahead=4
+        self.serial_info = Serial_Info() # 위에서 받았는데 얘가 계속 초기화 되는거 아니가?? @@@@@@@@
+        self.local = Local()
+        self.global_path = Path()
+        self.lookahead = 4
+        self.past_mode = None
 
-        general=General(self)
-        self.is_planning=False
-
+        self.general = General(self)
+        avoidance = Avoidance(self)
+        # emergency_stop = EmergencyStop(self)
+        self.normal_stop = NormalStop(self)
+        self.is_planning = False
 
         rate = rospy.Rate(50)  # 100hz
 
         # main loop
         while not rospy.is_shutdown():
             # print(self.global_path)
+            print("##### general:", self.general.serial_info)
+            print("#####", self.serial_info)
+            # rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
+            # rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
+
             if self.is_planning:
-                if self.planning_info.mode=="general":
+                if self.planning_info.mode == "general":
                     if self.planning_info.path_x:
-                        self.global_path.x=self.planning_info.path_x
-                        self.global_path.y=self.planning_info.path_y
-                        self.global_path.heading=self.planning_info.path_heading
+                        self.global_path.x = self.planning_info.path_x
+                        self.global_path.y = self.planning_info.path_y
+                        self.global_path.heading = self.planning_info.path_heading
+                        self.global_path.k = self.planning_info.path_k
+                        print(self.global_path.x)
+
                     if self.global_path.x:
-                        self.pub_msg.steer=general.pure_pursuit()
-                        print(self.pub_msg.steer)
-                    self.pub_msg.speed=10
-                    self.pub_msg.brake=0
-                    self.pub_msg.encoder=0
-                    self.pub_msg.gear=0
-                    self.pub_msg.emergency_stop=0
-                    self.pub_msg.gear=0
-                    self.pub_msg.auto_manual=1
-                    
-            control_pub.publish(self.pub_msg)
-            rate.sleep()
+                        # print(1)
+                        self.pub_msg = self.general.driving()
+                        print("### pub", self.pub_msg)
+
+
+                # elif self.planning_info.mode == "avoidance":
+                #     self.pub_msg.steer = avoidance.pure_puresuit()
+                #     self.pub_msg.speed = 10
+                #     self.pub_msg.brake = 0
+                #     self.pub_msg.encoder = 0
+                #     self.pub_msg.gear = 0
+                #     self.pub_msg.emergency_stop = 0
+                #     self.pub_msg.auto_manual = 1
+
+                # elif self.planning_info.mode == "emergency_stop":
+                #     self.pub_msg.steer = 0
+                #     self.pub_msg.speed = 0
+                #     self.pub_msg.brake = 0
+                #     self.pub_msg.encoder = 0
+                #     self.pub_msg.gear = 0
+                #     self.pub_msg.emergency_stop = 1
+                #     self.pub_msg.auto_manual = 1
+
+                # elif self.planning_info.mode == "normal_stop":
+                #     self.normal_stop.run()
+
+                # elif self.planning_info.mode == "parking":
+
+                self.past_mode = self.planning_info.mode
+                control_pub.publish(self.pub_msg)
+                rate.sleep()
 
     # Callback Function
     def planningCallback(self, msg):
         self.planning_info = msg
-        self.local.x=msg.local.x
-        self.local.y=msg.local.y
-        self.local.heading=msg.local.heading
-
+        self.local.x = msg.local.x
+        self.local.y = msg.local.y
+        self.local.heading = msg.local.heading
 
         # print(self.planning_info)
-        self.is_planning=True
+        self.is_planning = True
 
     def serialCallback(self, msg):
-        self.serial_info = msg
+        
+        self.serial_info.encoder = msg.encoder
+        self.serial_info.auto_manual = msg.auto_manual
+        self.serial_info.gear = msg.gear
+        self.serial_info.steer = msg.steer
+        self.serial_info.speed = msg.speed
+        self.serial_info.emergency_stop = msg.emergency_stop
+        self.serial_info.brake = msg.brake
 
-    
-control=Control()
+
+        # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
+
+
+control = Control()
