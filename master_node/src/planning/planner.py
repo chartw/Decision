@@ -8,7 +8,7 @@ import sys
 import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
-# from darknet_ros_msgs.msg import BoundingBoxes
+from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time, String, Int16
@@ -46,7 +46,7 @@ class Planner:
         # subscriber 정의
         self.planning_msg = Planning_Info()
         self.obstacle_msg = Obstacles()
-        # self.object_msg = BoundingBoxes()
+        self.object_msg = BoundingBoxes()
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
         self.parking_msg=Int16()
@@ -60,7 +60,7 @@ class Planner:
         
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
-        # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
+        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
         
         rospy.Subscriber('/serial', Serial_Info, self.serialCallback)
         
@@ -147,6 +147,9 @@ class Planner:
         
     def serialCallback(self, msg):
         self.serial_msg = msg
+
+    def objectCallback(self,msg):
+        self.object_msg.
 
 
 if __name__ == "__main__":

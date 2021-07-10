@@ -20,8 +20,6 @@ class General:
 
         self.temp_msg=Serial_Info()
 
-
-
         self.past_mode = control.past_mode
         self.lookahead = 4
         self.speed_lookahead = 6

@@ -31,7 +31,7 @@ class MissonPlan:
     def decision(self, planner):  
         
         
-        if not planner.gpp_requested: # Parking
+        if : # Parking
             self.mode = 'parking'
 
         # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
@@ -70,11 +70,6 @@ class MissonPlan:
 
         elif self.mode=='backward-start' and abs(self.local.heading - self.temp_heading) < 5:
             self.mode='general'
-
-        
-
-
-
 
 
 
