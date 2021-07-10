@@ -8,13 +8,21 @@ import time
 
 class General:
     def __init__(self, control):
-        # 깊은 복사 수행
+        
+        # 참조 수행
         self.cur = control.local # local 좌표
         self.path = control.global_path # global_path
+        
         self.GeneralLookahead = control.lookahead #직진 주행시 lookahead
-        self.serial_info = control.serial_info
-        self.past_mode = control.past_mode
 
+        self.serial_info = control.serial_info #####  얘가 빈공간으로 들어오고 ㅣㅇ씅 @@@@@@@ 음 그냥  init 이라서 한번만 받아오는거네.같은 데이터 공간이어도 계속 받아와야 하징자ㅓㄹㄴㅁㅇ러ㅣㄷ렁마ㅣㄴ
+        
+
+        self.temp_msg=Serial_Info()
+
+
+
+        self.past_mode = control.past_mode
         self.lookahead = 4
         self.speed_lookahead = 6
         self.WB = 1.04
@@ -60,7 +68,7 @@ class General:
         heading_difference = (self.cur.heading - self.path.heading[self.target_index])
         if heading_difference > 10 :
             self.lookahead = self.GeneralLookahead/2 
-        print ("LookAhead : ",self.lookahead)
+        # print ("LookAhead : ",self.lookahead)
 
     def pure_pursuit(self):
         
@@ -112,7 +120,10 @@ class General:
         
         self.V_err_old = self.V_err
         self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
-        print(self.serial_info.speed)
+
+        # print('self.cur:',self.cur)
+        # print('self.path',self.path)
+        print('self.serial_info.speed:',self.serial_info)
 
         self.t_old = self.t_new
         self.t_new = time.time()
@@ -151,7 +162,7 @@ class General:
 
     def calc_velocity(self):
        
-        if self.past_mode != 'general':
+        if self.past_mode != 'general': # 미션이 바뀔 때에는 변수리셋.
             # 다른 미션에서 general로 왔을때 pid 변수초기화
             self.t_start = time.time()
             self.t_new = 0
@@ -176,13 +187,15 @@ class General:
         return int(V_in)
 
     def driving(self):
-        temp_msg=Serial_Info()
-        temp_msg.steer = self.pure_pursuit()
-        temp_msg.speed = self.calc_velocity()  # PID 추가
-        temp_msg.brake = 0
-        temp_msg.encoder = 0
-        temp_msg.gear = 0
-        temp_msg.emergency_stop = 0
-        temp_msg.auto_manual = 1
+        # self.temp_msg=Serial_Info()
+        # print('self.serial_info',self.serial_info.speed)
 
-        return temp_msg
+        self.temp_msg.steer = self.pure_pursuit()
+        self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데.. 
+        self.temp_msg.brake = 0
+        self.temp_msg.encoder = 0
+        self.temp_msg.gear = 0
+        self.temp_msg.emergency_stop = 0
+        self.temp_msg.auto_manual = 1
+
+        return self.temp_msg
