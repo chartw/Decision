@@ -68,36 +68,39 @@ def getMsg(msg):
 
 
     # ROI 실행 코드 부분 
-    # filter_axis = 'x'
-    # axis_min = 0
-    # axis_max = 10
-    # cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
-
-    # filter_axis = 'y'
-    # axis_min = -2
-    # axis_max =2
-    # cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
-
-    # filter_axis = 'z'
-    # axis_min = -0.5
-    # axis_max = 2
     filter_axis = 'x'
-    axis_min = 0
-    axis_max = 20
-    # axis_max = 2
-    # axis_max = 15
-    cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
-
-    filter_axis = 'y'
-    axis_min = -10
+    axis_min = 0.1
     axis_max = 10
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
-    filter_axis = 'z'
-    axis_min = -0.3
-    axis_max = 2
-
+    filter_axis = 'y'
+    axis_min = -2
+    axis_max =2
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
+
+    filter_axis = 'z'
+    axis_min = 0
+    axis_max = 2
+    cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
+
+
+    # filter_axis = 'x'
+    # axis_min = 0
+    # axis_max = 20
+    # # axis_max = 2
+    # # axis_max = 15
+    # cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
+
+    # filter_axis = 'y'
+    # axis_min = -10
+    # axis_max = 10
+    # cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
+
+    # filter_axis = 'z'
+    # axis_min = -0.3
+    # axis_max = 2
+
+    # cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
     print("Output :", cloud)
 
     test = PointCloud()

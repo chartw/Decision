@@ -74,11 +74,13 @@ class MissonPlan:
             mode='general'
 
         """
-        if planner.object_msg=="avoid":
+        if planner.object_msg.data=="avoid":
             return "avoidance"
-        elif planner.planning_info.mode=='avoidance' and hypot(planner.mission_goal.x-planner.local.x,planner.mission_goal.y-planner.local.y) < 1:
+        elif planner.planning_msg.mode=="avoidance" and hypot(planner.mission_goal.x-planner.local.x,planner.mission_goal.y-planner.local.y) < 0.5:
             planner.planning_msg.point=Point32()
             return "general"
+
+        
         
 
      
@@ -86,8 +88,8 @@ class MissonPlan:
         #     mode = 'normal_stop'
         #     self.mission_ing = True
             
-        elif self.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
-            return "normal_stop"
+        # elif self.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
+        #     return "normal_stop"
 
         # Dyanamic -- person stop at node 24    
         # elif hypot(self.local.x - 2.125, self.local.y - 43.617) < 1:
@@ -113,4 +115,4 @@ class MissonPlan:
         #     mode = 'general'
 
 
-        return "general"
+        return planner.planning_msg.mode

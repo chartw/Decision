@@ -70,7 +70,6 @@ class General:
     def pure_pursuit(self):
 
         # self.Dynamic_LookAhead() # 동적 lookAhead
-
         if len(self.path.x) == 0:
             return 0
         self.target_index = self.select_target(self.lookahead)
@@ -120,7 +119,7 @@ class General:
 
         # print('self.cur:',self.cur)
         # print('self.path',self.path)
-        print("self.serial_info.speed:", self.serial_info)
+        # print("self.serial_info.speed:", self.serial_info)
 
         self.t_old = self.t_new
         self.t_new = time.time()

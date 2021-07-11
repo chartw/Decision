@@ -81,11 +81,11 @@ class Planner:
         self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
-        self.mission_goal=Point32()
+        self.mission_goal = Point32()
 
         # gpp 변수 선언
         global_path_maker = GPP(self)
-        local_point_maker = LPP(self)
+        local_point_maker = LPP()
         misson_planner = MissonPlan(self)
 
         
@@ -102,7 +102,7 @@ class Planner:
                     self.planning_msg.path_y = self.global_path.y
                     self.planning_msg.path_heading = self.global_path.heading
                     self.planning_msg.path_k = self.global_path.k
-                    self.planning_msg.mode="global"
+                    self.planning_msg.mode="general"
                     self.gpp_requested = False
                     
                 else:
@@ -110,12 +110,11 @@ class Planner:
 
                     if self.planning_msg.mode=="avoidance":
                         if self.obstacle_msg.segments:
-                            self.planning_msg.point=local_point_maker.point_plan()
+                            self.planning_msg.point=local_point_maker.point_plan(self.obstacle_msg.segments)
                             point=self.planning_msg.point
                             theta=self.local.heading*pi/180
                             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
                             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
-
                 #     # elif self.planning_msg.mode=="parking-start":
                 #         # self.planning_msg.path=
                 
@@ -156,4 +155,3 @@ class Planner:
 
 if __name__ == "__main__":
     planner = Planner()
-    planner.run()

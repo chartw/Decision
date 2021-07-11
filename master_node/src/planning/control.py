@@ -46,35 +46,28 @@ class Control:
         self.past_mode = None
 
         general = General(self)
-        avoidance = Avoidance(self)
+        avoidance = Avoidance()
         # emergency_stop = EmergencyStop(self)
         normal_stop = NormalStop(self)
-        is_planning = False
+        self.is_planning = False
 
         rate = rospy.Rate(50)  # 100hz
 
         # main loop
         while not rospy.is_shutdown():
-            # print(self.global_path)
-            print("##### general:", self.general.serial_info)
-            print("#####", self.serial_info)
-            # rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
-            # rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
-
-            if self.is_planning:
-                if self.planning_info.mode=="global":
-                    self.global_path.x = self.planning_info.path_x
-                    self.global_path.y = self.planning_info.path_y
-                    self.global_path.heading = self.planning_info.path_heading
-                    self.global_path.k = self.planning_info.path_k
-
-                elif self.planning_info.mode == "general":
+            if self.is_planning:              
+                if self.planning_info.mode == "general":
+                    if self.planning_info.path_x:
+                        self.global_path.x = self.planning_info.path_x
+                        self.global_path.y = self.planning_info.path_y
+                        self.global_path.heading = self.planning_info.path_heading
+                        self.global_path.k = self.planning_info.path_k
                     if self.global_path.x:
                         self.control_msg = general.driving(self)
 
                 elif self.planning_info.mode == "avoidance":
-                    if self.local_point:
-                        self.control_msg=avoidance.driving()
+                    if self.local_point.x!=0 and self.local_point.y!=0:
+                        self.control_msg=avoidance.driving(self.local_point)
                     else:
                         self.control_msg=general.driving(self)
                 #     self.control_msg.steer = avoidance.pure_puresuit()
