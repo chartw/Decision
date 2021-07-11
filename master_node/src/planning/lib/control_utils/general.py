@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 from master_node.msg import Serial_Info  # 개발할 메세지 타입
 
 from math import degrees, atan2, sin, radians, sqrt
@@ -8,17 +8,16 @@ import time
 
 class General:
     def __init__(self, control):
-        
+
         # 참조 수행
-        self.cur = control.local # local 좌표
-        self.path = control.global_path # global_path
-        
-        self.GeneralLookahead = control.lookahead #직진 주행시 lookahead
+        self.cur = control.local  # local 좌표
+        self.path = control.global_path  # global_path
 
-        self.serial_info = control.serial_info #####  얘가 빈공간으로 들어오고 ㅣㅇ씅 @@@@@@@ 음 그냥  init 이라서 한번만 받아오는거네.같은 데이터 공간이어도 계속 받아와야 하징자ㅓㄹㄴㅁㅇ러ㅣㄷ렁마ㅣㄴ
-        
+        self.GeneralLookahead = control.lookahead  # 직진 주행시 lookahead
 
-        self.temp_msg=Serial_Info()
+        self.serial_info = control.serial_info  #####  얘가 빈공간으로 들어오고 ㅣㅇ씅 @@@@@@@ 음 그냥  init 이라서 한번만 받아오는거네.같은 데이터 공간이어도 계속 받아와야 하징자ㅓㄹㄴㅁㅇ러ㅣㄷ렁마ㅣㄴ
+
+        self.temp_msg = Serial_Info()
 
         self.past_mode = control.past_mode
         self.lookahead = 4
@@ -43,9 +42,9 @@ class General:
         self.V_err_deri = 0
 
         self.safety_factor = 0.8
-        self.V_ref_max = 12        
+        self.V_ref_max = 12
 
-    def select_target(self,lookahead):
+    def select_target(self, lookahead):
         valid_idx_list = []
 
         for i in range(self.target_index, len(self.path.x)):
@@ -60,19 +59,19 @@ class General:
         else:
             return valid_idx_list[len(valid_idx_list) - 1]
 
-    #Dynamic Lookahead
+    # Dynamic Lookahead
     def Dynamic_LookAhead(self):
         self.lookahead = self.GeneralLookahead
-        heading_difference = (self.cur.heading - self.path.heading[self.target_index])
-        if heading_difference > 10 :
-            self.lookahead = self.GeneralLookahead/2 
+        heading_difference = self.cur.heading - self.path.heading[self.target_index]
+        if heading_difference > 10:
+            self.lookahead = self.GeneralLookahead / 2
         # print ("LookAhead : ",self.lookahead)
 
     def pure_pursuit(self):
-        
-        # self.Dynamic_LookAhead() # 동적 lookAhead 
 
-        if len(self.path.x)==0: 
+        # self.Dynamic_LookAhead() # 동적 lookAhead
+
+        if len(self.path.x) == 0:
             return 0
         self.target_index = self.select_target(self.lookahead)
         # print(self.target_index)
@@ -112,16 +111,16 @@ class General:
 
             return delta
 
-###################조향 속도 구분선###################
+    ###################조향 속도 구분선###################
 
-    def PID(self,V_ref):
-        
+    def PID(self, V_ref):
+
         self.V_err_old = self.V_err
         self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
 
         # print('self.cur:',self.cur)
         # print('self.path',self.path)
-        print('self.serial_info.speed:',self.serial_info)
+        print("self.serial_info.speed:", self.serial_info)
 
         self.t_old = self.t_new
         self.t_new = time.time()
@@ -137,17 +136,15 @@ class General:
 
         return V_in
 
-
     def calc_k(self, k):
-        critical_k = ((self.safety_factor/self.V_ref_max)**2) * 19.071
+        critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
 
         if k < critical_k:
             V_ref = self.V_ref_max
         else:
-            V_ref = self.safety_factor * (sqrt(19.071/k))
+            V_ref = self.safety_factor * (sqrt(19.071 / k))
 
-        return V_ref # km/h
-
+        return V_ref  # km/h
 
     def calc_Vref(self):
         stidx = self.select_target(self.speed_lookahead)
@@ -157,10 +154,9 @@ class General:
 
         return int(V_ref)
 
-
     def calc_velocity(self):
-       
-        if self.past_mode != 'general': # 미션이 바뀔 때에는 변수리셋.
+
+        if self.past_mode != "general":  # 미션이 바뀔 때에는 변수리셋.
             # 다른 미션에서 general로 왔을때 pid 변수초기화
             self.t_start = time.time()
             self.t_new = 0
@@ -184,12 +180,16 @@ class General:
 
         return int(V_in)
 
-    def driving(self):
+    def driving(self, control):
         # self.temp_msg=Serial_Info()
         # print('self.serial_info',self.serial_info.speed)
+        if control.planning_info.mode == "general":
+            self.V_ref_max = 12
+        else:
+            self.V_ref_max = 8
 
         self.temp_msg.steer = self.pure_pursuit()
-        self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데.. 
+        self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
         self.temp_msg.brake = 0
         self.temp_msg.encoder = 0
         self.temp_msg.gear = 0
