@@ -1,3 +1,4 @@
+from master_node.src.planning.planner import Planner
 import rospy
 import time
 
@@ -29,8 +30,9 @@ Planning_Info
     Point32 point
 }
 """
-LEFT_MAX_STEER = 10
-RIGHT_MAX_STEER = -10
+LEFT_MAX_STEER = 10, RIGHT_MAX_STEER = -10
+BGEAR = 0x02, NGEAR = 0x01, FGEAR = 0x00
+MAX_BRAKE = 0x200
 
 class Control:
     def __init__(self):
@@ -53,7 +55,6 @@ class Control:
         avoidance = Avoidance()
         # emergency_stop = EmergencyStop(self)
         normal_stop = NormalStop(self)
-        self.uturn = Uturn()
         self.is_planning = False
 
         rate = rospy.Rate(50)  # 100hz
@@ -75,6 +76,37 @@ class Control:
                         self.control_msg=avoidance.driving(self.local_point)
                     else:
                         self.control_msg=general.driving(self)
+
+                elif self.planning_info.mode == "uturn":
+                    self.serial_info.steer = LEFT_MAX_STEER
+
+                # base에서 정지
+                elif self.planning_info.mode == "parking-base1" or self.planning_info.mode == "parking-base2":
+                    self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+
+                # base2로 이동
+                elif self.planning_info.mode == "parking2":
+                    self.serialParkingComm(0x30, 0x00, FGEAR)
+                
+                # 라이다에 쏴줄때 정지 - 없어도 될 수도
+                elif self.planning_info.mode == "parking-ready":
+                    self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+
+                # 주행
+                elif self.planning_info.mode == "parking-start":
+                    self.serialParkingComm(0x30, 0x00, FGEAR)
+
+                    # 정해진 노드 따라서 주행
+                    pass
+
+                # 전진 주차 끝 정지, 후진 기어
+                elif self.planning_info.mode == "parking-complete":
+                    self.serialParkingComm(0x00, MAX_BRAKE, BGEAR)
+
+                # 후진
+                elif self.planning_info.mode == "backward-start":
+                    self.serialParkingComm(0x30, 0x00, FGEAR)
+
                 #     self.control_msg.encoder = 0
                 #     self.control_msg.gear = 0
                 #     self.control_msg.emergency_stop = 0
@@ -100,6 +132,11 @@ class Control:
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.control_msg)
                 rate.sleep()
+
+    def serialParkingComm(self, speed, brake, gear):
+        self.serial_info.speed = speed
+        self.serial_info.brake = brake
+        self.serial_info.gear = gear
 
     # Callback Function
     def planningCallback(self, msg):

@@ -2,8 +2,14 @@ from geometry_msgs.msg import Point32
 from math import hypot
 import time
 
+from lib.control_utils.uturn import Uturn
+
 class MissonPlan:
     def __init__(self,planner):
+        self.time_count = 0
+        self.temp_heading = 0
+
+
         """     
         self.obstacle_msg = planner.obstacle_msg
         self.object_msg=planner.object_msg
@@ -29,14 +35,12 @@ class MissonPlan:
         self.temp_heading=0 
         """
 
-
     def decision(self, planner):  
         
         """        
         if : # Parking
             mode = 'parking'
 
-        
         # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
         # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
         # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정
@@ -75,11 +79,53 @@ class MissonPlan:
             mode='general'
 
         """
+
         if planner.object_msg.data=="avoid":
             return "avoidance"
         elif planner.planning_msg.mode=="avoidance" and hypot(planner.mission_goal.x-planner.local.x,planner.mission_goal.y-planner.local.y) < 0.5:
             planner.planning_msg.point=Point32()
             return "general"
+
+        if planner.object_msg.data == "pmission":
+            return "parking"
+        
+        elif planner.planning_msg.mode == "parking" and hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<1:
+            planner.planning_msg.mode = "parking-base1" 
+            self.time_count=time.time()
+
+        elif (planner.planning_msg.mode == "parking-base1" or planner.planning_msg.mode == "parking-base2") and self.time_count - time.time() > 3:
+            planner.planning_msg.mode = "parking-ready"
+        
+        elif planner.planning_msg.mode=='parking-ready':
+            if self.parking_msg!=-1:
+                planner.planning_msg.mode='parking-start'
+                self.temp_heading=self.local.heading
+
+            # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
+            elif self.parking_msg==-1:
+                planner.planning_msg.mode == 'parking2'
+
+        # 실제 주차 프로세스
+        elif planner.planning_msg.mode == "parking-start" and hypot(self.parking_lot[self.parking_msg].x-self.local.x, self.parking_lot[self.parking_msg].y-self.local.y) < 1:
+            planner.planning_msg.mode = "parking-complete"
+        
+        elif planner.planning_msg.mode == "parking-complete":
+            planner.planning_msg.mode = "backward-start"
+
+        elif planner.planning_msg.mode == "backward-start" and abs(self.local.heading - self.temp_heading) < 5:
+            planner.planning_msg.mode = 'general'
+
+        
+        # 유턴
+
+        if planner.object_msg.data == "uturn":
+            self.time_count = time.time()
+            return "uturn"
+        
+        # 3초 동안 유턴 후 다시 주행
+        elif planner.planning_msg.mode == "uturn" and self.time_count - time.time() > 3:
+            planner.planning_msg.mode = 'general'
+            
 
         
         

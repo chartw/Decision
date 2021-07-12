@@ -17,6 +17,7 @@ from std_msgs.msg import Float32, Time, String, Int16
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
 from lib.planner_utils.mission_plan import MissionPlan
+from lib.planner_utils.uturn import Uturn
 
 class Planner:
     def __init__(self):
@@ -88,6 +89,9 @@ class Planner:
         local_point_maker = LPP()
         misson_planner = MissonPlan(self)
 
+        # mission 클래스 선언
+        uturnClass = Uturn()
+
         
 
         rate = rospy.Rate(50)  # 100hz
@@ -115,6 +119,17 @@ class Planner:
                             theta=self.local.heading*pi/180
                             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
                             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+
+                    # mission_plan에서 받은 msg가 주차 일 경우
+                    if self.planning_msg.mode=="parking":
+                        pass
+                        # 넣을게 없는데?
+
+                    if self.planning_msg.mode =="uturn":
+                        # new_node_idx = uturnClass.select_new_target()
+                        self.gpp_requested = True
+                        # 
+                        
                 #     # elif self.planning_msg.mode=="parking-start":
                 #         # self.planning_msg.path=
                 
