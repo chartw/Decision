@@ -88,7 +88,7 @@ class Control:
                 self.pub_msg.auto_manual = 1
 
             elif self.planning_info.mode is 'normal_stop':
-                is_first = (self.past_mode == 'normal_stop')
+                is_first = (self.past_mode != 'normal_stop')
                 self.normal_stop.run(is_first)
 
 
