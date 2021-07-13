@@ -6,6 +6,8 @@ from lib.control_utils.avoidance import Avoidance
 # from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
 
+from time import time
+
 """
 Serial_Info
 {
@@ -48,6 +50,8 @@ class Control:
         # emergency_stop = EmergencyStop(self)
         self.normal_stop = NormalStop(self)
         self.is_planning = False
+        self.start_time = time.time()
+        self.current_time = time.time()
 
         rate = rospy.Rate(50)  # 100hz
 
@@ -72,34 +76,36 @@ class Control:
                         # print(1)
                         self.pub_msg = self.general.driving()
                         print("### pub", self.pub_msg)
+                        
+                        
+            if self.planning_info.mode is 'emergency_stop':                                    
+                self.pub_msg.steer = 0
+                self.pub_msg.speed = 0
+                self.pub_msg.brake = 0
+                self.pub_msg.encoder = 0
+                self.pub_msg.gear = 0
+                self.pub_msg.emergency_stop = 1
+                self.pub_msg.auto_manual = 1
+
+            elif self.planning_info.mode is 'normal_stop':
+                is_first = (self.past_mode == 'normal_stop')
+                self.normal_stop.run(is_first)
 
 
-                # elif self.planning_info.mode == "avoidance":
-                #     self.pub_msg.steer = avoidance.pure_puresuit()
-                #     self.pub_msg.speed = 10
-                #     self.pub_msg.brake = 0
-                #     self.pub_msg.encoder = 0
-                #     self.pub_msg.gear = 0
-                #     self.pub_msg.emergency_stop = 0
-                #     self.pub_msg.auto_manual = 1
+            # elif self.planning_info.mode == "avoidance":
+            #     self.pub_msg.steer = avoidance.pure_puresuit()
+            #     self.pub_msg.speed = 10
+            #     self.pub_msg.brake = 0
+            #     self.pub_msg.encoder = 0
+            #     self.pub_msg.gear = 0
+            #     self.pub_msg.emergency_stop = 0
+            #     self.pub_msg.auto_manual = 1
 
-                # elif self.planning_info.mode == "emergency_stop":
-                #     self.pub_msg.steer = 0
-                #     self.pub_msg.speed = 0
-                #     self.pub_msg.brake = 0
-                #     self.pub_msg.encoder = 0
-                #     self.pub_msg.gear = 0
-                #     self.pub_msg.emergency_stop = 1
-                #     self.pub_msg.auto_manual = 1
+            # elif self.planning_info.mode == "parking":
 
-                # elif self.planning_info.mode == "normal_stop":
-                #     self.normal_stop.run()
-
-                # elif self.planning_info.mode == "parking":
-
-                self.past_mode = self.planning_info.mode
-                control_pub.publish(self.pub_msg)
-                rate.sleep()
+            self.past_mode = self.planning_info.mode
+            control_pub.publish(self.pub_msg)
+            rate.sleep()
 
     # Callback Function
     def planningCallback(self, msg):

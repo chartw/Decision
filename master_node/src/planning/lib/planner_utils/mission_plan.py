@@ -27,16 +27,24 @@ class MissonPlan:
 
         self.time_count=0
         self.temp_heading=0
+        
+        self.start_time = time.time()
+        self.current_time = time.time()
 
 
     def decision(self, planner):  
         
         if self.object_msg is 'person':
             self.mode = 'emergency_stop'
+            self.mission_ing = True
+            self.start_time = time.time()
             
         elif self.object_msg is 'normal_stop':
             self.mode = 'normal_stop'
-        
+            self.mission_ing = True
+            
+            
+            
         
         if not planner.gpp_requested: # Parking
             self.mode = 'parking'
@@ -119,6 +127,15 @@ class MissonPlan:
 
 
         return self.mode
+
+    def end_check(self, planner):
+        if self.mode is 'emergency_stop':
+            return time.time() - self.start_time > 3 # Return True/False
+
+        elif self.mode is 'normal_stop':
+            return self.serial_msg.speed < 0.01
+        
+
 
     def calc_dis(self, nx, ny):
         # print(nx, ny, )
