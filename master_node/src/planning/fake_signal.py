@@ -25,7 +25,7 @@ class FakeSignal:
                 self.pub_detection.publish('person')
             
             
-            elif self.input == 9:
+            elif self.input == '9':
                 print("==EXIT==")
                 break
             

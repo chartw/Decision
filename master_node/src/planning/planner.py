@@ -16,7 +16,7 @@ from std_msgs.msg import Float32, Time, String, Int16
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
-from lib.planner_utils.mission_plan import MissonPlan
+from lib.planner_utils.mission_plan import MissionPlan
 
 class Planner:
     def __init__(self):
@@ -47,6 +47,7 @@ class Planner:
         self.planning_msg = Planning_Info()
         self.obstacle_msg = Obstacles()
         # self.object_msg = BoundingBoxes()
+        self.object_msg = String() #temporary setting for development
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
         self.parking_msg=Int16()
@@ -59,9 +60,9 @@ class Planner:
         rospy.Subscriber("/pose", Odometry, self.localCallback)
         
         # Vision - Object
-        # def objectCallback(self, msg): self.object_msg = msg
         # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
-        
+        rospy.Subscriber("/object_detection", String, self.objectCallback)   
+       
         rospy.Subscriber('/serial', Serial_Info, self.serialCallback)
         
         # Vision - Surface
@@ -104,19 +105,32 @@ class Planner:
                     self.planning_msg.mode="general"
                     self.gpp_requested = False
                     
-                # else:
-                #     self.planning_msg.mode=misson_planner.decision(self)
+                else:
+                    self.planning_msg.mode=MissionPlan.decision(self)
 
-                #     if self.planning_msg.mode=="avoidance":
-                #         if len(self.obstacle_msg.segments) !=0:
-                #             self.planning_msg.point=local_point_maker.point_plan()
-                #             point=self.planning_msg.point
-                #             theta=self.local.heading*pi/180
-                #             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                #             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
 
-                #     # elif self.planning_msg.mode=="parking-start":
-                #         # self.planning_msg.path=
+                    if self.planning_msg.mode=="emergency_stop":
+                            
+                        
+
+
+
+
+
+
+
+
+
+                    # if self.planning_msg.mode=="avoidance":
+                    #     if len(self.obstacle_msg.segments) !=0:
+                    #         self.planning_msg.point=local_point_maker.point_plan()
+                    #         point=self.planning_msg.point
+                    #         theta=self.local.heading*pi/180
+                    #         self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
+                    #         self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+
+                    # elif self.planning_msg.mode=="parking-start":
+                        # self.planning_msg.path=
                 
 
                 self.planning_msg.local=self.local
@@ -147,6 +161,9 @@ class Planner:
         
     def serialCallback(self, msg):
         self.serial_msg = msg
+
+    def objectCallback(self, msg):
+        self.object_msg = msg
 
 
 if __name__ == "__main__":

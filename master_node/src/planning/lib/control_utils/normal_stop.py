@@ -23,7 +23,4 @@ class NormalStop():
         else:
             self.pub_msg.emergency_stop = 1
             self.des_brake = 30
-            
         
-
-

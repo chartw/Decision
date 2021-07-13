@@ -10,6 +10,7 @@ class MissonPlan:
         self.surface_msg = planner.surface_msg
         self.serial_msg = planner.serial_msg
         self.parking_msg=planner.parking_msg
+        self.object_msg=planner.object_msg
         self.mode=planner.planning_msg.mode
         self.mission_ing = planner.mission_ing # True / False
 
@@ -29,7 +30,14 @@ class MissonPlan:
 
 
     def decision(self, planner):  
+        
+        if self.object_msg is 'person':
+            self.mode = 'emergency_stop'
             
+        elif self.object_msg is 'normal_stop':
+            self.mode = 'normal_stop'
+        
+        
         if not planner.gpp_requested: # Parking
             self.mode = 'parking'
 
