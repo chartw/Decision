@@ -112,7 +112,8 @@ class Control:
         self.is_planning = True
 
     def serialCallback(self, msg):
-        
+        #=연산자 오버로딩이 되어있지 않으므로 self.serial_info=msg 가 되지않음 이렇게 사용하려면 serial_info를 선언과 동시에 초기화하면 참조할수 있음
+        #예로 general.py에 있는 serial_info() , 아래와같이 각기 다른 주소(변수)에 값만 복사 해서 전달해야함
         self.serial_info.encoder = msg.encoder
         self.serial_info.auto_manual = msg.auto_manual
         self.serial_info.gear = msg.gear
@@ -120,9 +121,6 @@ class Control:
         self.serial_info.speed = msg.speed
         self.serial_info.emergency_stop = msg.emergency_stop
         self.serial_info.brake = msg.brake
-
-
-        # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
 
 
 control = Control()
