@@ -1,7 +1,9 @@
+from master_node.src.planning.planner import Planner
 import rospy
 import time
 
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
+from geometry_msgs.msg import Point32
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
 # from lib.control_utils.emergency_stop import EmergencyStop
@@ -28,16 +30,16 @@ Planning_Info
     Point32 point
 }
 """
-LEFT_MAX_STEER = 10
-RIGHT_MAX_STEER = -10
+LEFT_MAX_STEER = 10, RIGHT_MAX_STEER = -10
+BGEAR = 0x02, NGEAR = 0x01, FGEAR = 0x00
+MAX_BRAKE = 0x200
 
 class Control:
     def __init__(self):
         rospy.init_node("Control", anonymous=False)
 
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
-        # path_pub = rospy.Publisher("/path", )
-        self.pub_msg = Serial_Info()
+        self.control_msg = Serial_Info()
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
@@ -45,29 +47,21 @@ class Control:
         self.serial_info = Serial_Info() # 위에서 받았는데 얘가 계속 초기화 되는거 아니가?? @@@@@@@@
         self.local = Local()
         self.global_path = Path()
+        self.local_point=Point32()
         self.lookahead = 4
         self.past_mode = None
 
-        self.general = General(self)
-        self.avoidance = Avoidance(self)
+        general = General(self)
+        avoidance = Avoidance()
         # emergency_stop = EmergencyStop(self)
-        self.normal_stop = NormalStop(self)
-        self.uturn = Uturn()
+        normal_stop = NormalStop(self)
         self.is_planning = False
 
         rate = rospy.Rate(50)  # 100hz
 
         # main loop
         while not rospy.is_shutdown():
-            # print(self.global_path)
-            # rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
-            # rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
-
-
-
-
-
-            if self.is_planning:
+            if self.is_planning:              
                 if self.planning_info.mode == "general":
                     if self.planning_info.path_x:
                         self.global_path.x = self.planning_info.path_x
@@ -93,25 +87,43 @@ class Control:
             endtime = time.time() + 3
             if self.planning_info.mode == "general":
 
-                # steering value 를 serial로 넣어주기
-                self.pub_msg.steer = LEFT_MAX_STEER
+                elif self.planning_info.mode == "uturn":
+                    self.serial_info.steer = LEFT_MAX_STEER
 
-                # 3초간 유지
-                curtime = time.time()
-                if curtime < endtime:
+                # base에서 정지
+                elif self.planning_info.mode == "parking-base1" or self.planning_info.mode == "parking-base2":
+                    self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+
+                # base2로 이동
+                elif self.planning_info.mode == "parking2":
+                    self.serialParkingComm(0x30, 0x00, FGEAR)
+                
+                # 라이다에 쏴줄때 정지 - 없어도 될 수도
+                elif self.planning_info.mode == "parking-ready":
+                    self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+
+                # 주행
+                elif self.planning_info.mode == "parking-start":
+                    self.serialParkingComm(0x30, 0x00, FGEAR)
+
+                    # 정해진 노드 따라서 주행
                     pass
-                else:
-                    self.planning_info_mode = "general"
 
-                    # 새로운 점 잡기
-                    new_idx = self.uturn.select_new_target(self.local, self.global_path)
+                # 전진 주차 끝 정지, 후진 기어
+                elif self.planning_info.mode == "parking-complete":
+                    self.serialParkingComm(0x00, MAX_BRAKE, BGEAR)
 
-                    # GPP 경로 재 생성 (new idx 경유)
+                # 후진
+                elif self.planning_info.mode == "backward-start":
+                    self.serialParkingComm(0x30, 0x00, FGEAR)
 
-                    
-
-
-
+                #     self.control_msg.encoder = 0
+                #     self.control_msg.gear = 0
+                #     self.control_msg.emergency_stop = 0
+                #     self.control_msg.auto_manual = 1
+                #     self.control_msg.steer = avoidance.pure_puresuit()
+                #     self.control_msg.speed = 10
+                #     self.control_msg.brake = 0
 
 
             timetime=time.time()+3
@@ -145,13 +157,13 @@ class Control:
                 #     self.pub_msg.auto_manual = 1
 
                 # elif self.planning_info.mode == "emergency_stop":
-                #     self.pub_msg.steer = 0
-                #     self.pub_msg.speed = 0
-                #     self.pub_msg.brake = 0
-                #     self.pub_msg.encoder = 0
-                #     self.pub_msg.gear = 0
-                #     self.pub_msg.emergency_stop = 1
-                #     self.pub_msg.auto_manual = 1
+                #     self.control_msg.steer = 0
+                #     self.control_msg.speed = 0
+                #     self.control_msg.brake = 0
+                #     self.control_msg.encoder = 0
+                #     self.control_msg.gear = 0
+                #     self.control_msg.emergency_stop = 1
+                #     self.control_msg.auto_manual = 1
 
                 # elif self.planning_info.mode == "normal_stop":
                 #     self.normal_stop.run()
@@ -163,9 +175,15 @@ class Control:
                 control_pub.publish(self.pub_msg)
                 rate.sleep()'''
 
+    def serialParkingComm(self, speed, brake, gear):
+        self.serial_info.speed = speed
+        self.serial_info.brake = brake
+        self.serial_info.gear = gear
+
     # Callback Function
     def planningCallback(self, msg):
         self.planning_info = msg
+        self.local_point=msg.point
         self.local.x = msg.local.x
         self.local.y = msg.local.y
         self.local.heading = msg.local.heading

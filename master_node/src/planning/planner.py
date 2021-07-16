@@ -17,6 +17,7 @@ from std_msgs.msg import Float32, Time, String, Int16
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
 from lib.planner_utils.mission_plan import MissionPlan
+from lib.planner_utils.uturn import Uturn
 
 class Planner:
     def __init__(self):
@@ -46,13 +47,14 @@ class Planner:
         # subscriber 정의
         self.planning_msg = Planning_Info()
         self.obstacle_msg = Obstacles()
+        self.object_msg=String()
         # self.object_msg = BoundingBoxes()
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
         self.parking_msg=Int16()
         
         # LiDAR      
-        # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
         # rospy.Subscriber("/parking",Int16, self.parkingCallback)
 
         # Localization        
@@ -60,7 +62,7 @@ class Planner:
         
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
-        # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
+        rospy.Subscriber("/darknet_ros/bounding_boxes", String, self.objectCallback)   
         
         rospy.Subscriber('/serial', Serial_Info, self.serialCallback)
         
@@ -80,12 +82,15 @@ class Planner:
         self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
-        self.mission_goal=Point32()
+        self.mission_goal = Point32()
 
         # gpp 변수 선언
         global_path_maker = GPP(self)
-        # local_point_maker = LPP(self)
-        # misson_planner = MissonPlan(self)
+        local_point_maker = LPP()
+        misson_planner = MissonPlan(self)
+
+        # mission 클래스 선언
+        uturnClass = Uturn()
 
         
 
@@ -104,17 +109,27 @@ class Planner:
                     self.planning_msg.mode="general"
                     self.gpp_requested = False
                     
-                # else:
-                #     self.planning_msg.mode=misson_planner.decision(self)
+                else:
+                    self.planning_msg.mode=misson_planner.decision(self)
 
-                #     if self.planning_msg.mode=="avoidance":
-                #         if len(self.obstacle_msg.segments) !=0:
-                #             self.planning_msg.point=local_point_maker.point_plan()
-                #             point=self.planning_msg.point
-                #             theta=self.local.heading*pi/180
-                #             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                #             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+                    if self.planning_msg.mode=="avoidance":
+                        if self.obstacle_msg.segments:
+                            self.planning_msg.point=local_point_maker.point_plan(self.obstacle_msg.segments)
+                            point=self.planning_msg.point
+                            theta=self.local.heading*pi/180
+                            self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
+                            self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
 
+                    # mission_plan에서 받은 msg가 주차 일 경우
+                    if self.planning_msg.mode=="parking":
+                        pass
+                        # 넣을게 없는데?
+
+                    if self.planning_msg.mode =="uturn":
+                        # new_node_idx = uturnClass.select_new_target()
+                        self.gpp_requested = True
+                        # 
+                        
                 #     # elif self.planning_msg.mode=="parking-start":
                 #         # self.planning_msg.path=
                 
@@ -133,10 +148,11 @@ class Planner:
 
     # Callback Function
     def obstacleCallback(self, msg): 
-        self.obstacle_msg = msg  
+        self.obstacle_msg.segments = msg.segments
+        self.obstacle_msg.circles = msg.circles
+        self.obstacle_msg.circle_number = msg.circle_number
     
     def localCallback(self, msg):
-        # print(self.local)
         self.local.x = msg.pose.pose.position.x
         self.local.y = msg.pose.pose.position.y
         self.local.heading = msg.twist.twist.angular.z
@@ -148,7 +164,9 @@ class Planner:
     def serialCallback(self, msg):
         self.serial_msg = msg
 
+    def objectCallback(self,msg):
+        self.object_msg.data=msg.data
+
 
 if __name__ == "__main__":
     planner = Planner()
-    planner.run()

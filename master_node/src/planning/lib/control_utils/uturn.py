@@ -1,6 +1,5 @@
 from os import O_NOATIME
 
-
 MAX_VALUE = 10000
 
 class Uturn:

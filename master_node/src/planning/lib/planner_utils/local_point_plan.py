@@ -1,14 +1,13 @@
 import numpy as np
 from math import cos, sin
+from geometry_msgs.msg import Point32
 
 
 class LPP:
-    def __init__(self, planner):
-        self.segments = planner.obstacles.segments
-
-    def point_plan(self):
-        closest = self.segments[0]
-        for segment in self.segments:
+    def point_plan(self, segments):
+        point=Point32()
+        closest = segments[0]
+        for segment in segments:
             if segment.last_point.x < segment.first_point.x:
                 temp = segment.last_point
                 segment.last_point = segment.first_point
@@ -18,11 +17,14 @@ class LPP:
                 closest = segment
 
         if closest.first_point.x < 1:
-            return 1, 0
+            point=Point32(1,0,0)
+            return point
         d = 1.5
         rad = np.arctan2(closest.last_point.y - closest.first_point.y, closest.last_point.x - closest.first_point.x)
         # print(rad)
-        return closest.last_point.x + (d * cos(rad)), closest.last_point.y + (d * sin(rad))
+        point.x= closest.last_point.x + (d * cos(rad))
+        point.y= closest.last_point.y + (d * sin(rad))
+        return point
 
     def calc_dis(self, nx, ny):
         distance = ((nx - 0 ** 2) + (ny - 0) ** 2) ** 0.5
