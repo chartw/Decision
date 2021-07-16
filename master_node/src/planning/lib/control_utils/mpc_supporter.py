@@ -19,7 +19,7 @@ class SupportFilesCar:
         Car=33000
         lf=2
         lr=3
-        Ts=0.02
+        Ts=0.1
 
         # Parameters for the lane change: [psi_ref 0;0 Y_ref]
         # Higher psi reduces the overshoot
@@ -30,9 +30,9 @@ class SupportFilesCar:
 
         outputs=2 # number of outputs
         hz = 20 # horizon period
-        x_dot=20 # car's longitudinal velocity
-        lane_width=7 # [m]
-        nr_lanes=5 # 6 lanes [m]
+        x_dot= 10 # car's longitudinal velocity
+        lane_width= 7 # [m]
+        nr_lanes= 5 # 6 lanes [m]
         # r=14*np.random.randint(2)-7 # amplitude for sinusoidal functions
         # f=0.01*np.random.randint(2)+0.01 # frequency
         r=4

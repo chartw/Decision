@@ -2,9 +2,11 @@ import rospy
 
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from lib.control_utils.general import General
+from lib.control_utils.general_MPC import General_MPC
 from lib.control_utils.avoidance import Avoidance
 # from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
+from lib.control_utils.mpc_supporter import SupportFilesCar
 
 """
 Serial_Info
@@ -44,6 +46,7 @@ class Control:
         self.past_mode = None
 
         general = General(self)
+        general_mpc = General_MPC(self)
         avoidance = Avoidance(self)
         # emergency_stop = EmergencyStop(self)
         self.normal_stop = NormalStop(self)
@@ -61,11 +64,15 @@ class Control:
                         self.global_path.y = self.planning_info.path_y
                         self.global_path.heading = self.planning_info.path_heading
                         self.global_path.k = self.planning_info.path_k
-                        print(self.global_path.x)
+                        # print(self.global_path.x)
                     if self.global_path.x:
-                        # print(1)
-                        self.pub_msg = general.driving()
-                        print(self.serial_info.steering)
+                        if self.serial_info.speed>8 and self.serial_info.speed<12:
+                            self.pub_msg = general_mpc.driving()
+                        else:
+                            self.pub_msg = general.driving()
+                            # print(1)
+                        # print(self.pub_msg)
+                        # print(self.serial_info.steering)
                         # print(self.pub_msg)
 
                 # elif self.planning_info.mode == "avoidance":
@@ -106,7 +113,14 @@ class Control:
         self.is_planning = True
 
     def serialCallback(self, msg):
-        self.serial_info = msg
+        # self.serial_info = msg
+
+        self.serial_info.auto_manual = msg.auto_manual
+        self.serial_info.gear = msg.gear
+        self.serial_info.speed = msg.speed
+        self.serial_info.steer = msg.steer
+        self.serial_info.brake = msg.brake
+        self.serial_info.encoder = msg.encoder
         # print(self.serial_info.speed)
 
 

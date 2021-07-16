@@ -171,16 +171,23 @@ class GPP:
                     globals()["Lane{}".format(tmp_name)]["y"].append(
                         float(line[1])
                     )
-                    if math.degrees(float(line[2])) < 0:
-                        deg_yaw = math.degrees(float(line[2])) + 360
-                    else:
-                        deg_yaw = math.degrees(float(line[2]))
-                    if deg_yaw > 90 and deg_yaw <= 360:
-                        deg_yaw -= 90
-                    else:
-                        deg_yaw += 270
+                    ''' # 민쿠야 이거 빼야 됑 ㅎㅅㅎ
+                    # if math.degrees(float(line[2])) < 0:
+                    #     deg_yaw = math.degrees(float(line[2])) + 360
+                    # else:
+                    #     deg_yaw = math.degrees(float(line[2]))
+                    
+                    # # yaw value 이게 맞는ㄷ스 ?? 
+                    # if deg_yaw > 90 and deg_yaw <= 360:
+                    #     deg_yaw -= 90
+                    # else:
+                    #     deg_yaw += 270
 
-                    globals()["Lane{}".format(tmp_name)]["yaw"].append(deg_yaw)
+                    # globals()["Lane{}".format(tmp_name)]["yaw"].append(deg_yaw)'''
+
+
+
+                    globals()["Lane{}".format(tmp_name)]["yaw"].append(float(line[2]))
                     globals()["Lane{}".format(tmp_name)]["k"].append(
                         float(line[3])
                     )
@@ -238,6 +245,9 @@ class GPP:
                 
                 pyaw= (degrees(pyaw)+360) % 360
                 self.path.heading.append(pyaw)
+                
+                # print('heading:',self.path.heading)
+
                 self.path.k.append(
                     globals()["Lane{}".format(path[i] + path[i + 1])]["k"][j]
                 )
