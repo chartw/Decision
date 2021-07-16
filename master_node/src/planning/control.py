@@ -74,12 +74,20 @@ class Control:
                         self.global_path.y = self.planning_info.path_y
                         self.global_path.heading = self.planning_info.path_heading
                         self.global_path.k = self.planning_info.path_k
-                        print(self.global_path.x)
+                        # print(self.global_path.x)
 
                     if self.global_path.x:
                         # print(1)
                         self.pub_msg = self.general.driving()
-                        print("### pub", self.pub_msg)
+                        print("driving에서 온거:", self.pub_msg.speed)
+
+
+                        # print(self.pub_msg)
+                        control_pub.publish(self.pub_msg)
+                        rate.sleep()
+                    self.past_mode = self.planning_info.mode
+                        
+            '''
 
             # endtime엔 한번만 넣게
             endtime = time.time() + 3
@@ -101,6 +109,27 @@ class Control:
                     # GPP 경로 재 생성 (new idx 경유)
 
                     
+
+
+
+
+
+            timetime=time.time()+3
+            if self.planning_info.mode == "uturn":
+
+
+                steering value 를 serial로 넣어주기
+                self.pub_msg.steer = LEFT_MAX_STEER
+
+                
+                
+                # 3초간 유지
+                curtime=time.time()
+                if(curtime<time):
+                # 새로운 점 잡기
+                new_idx = self.uturn.select_new_target(self.local, self.global_path)
+
+                # GPP 경로 재 생성 (new idx 경유)
 
 
 
@@ -130,8 +159,9 @@ class Control:
                 # elif self.planning_info.mode == "parking":
 
                 self.past_mode = self.planning_info.mode
+                # print(self.pub_msg)
                 control_pub.publish(self.pub_msg)
-                rate.sleep()
+                rate.sleep()'''
 
     # Callback Function
     def planningCallback(self, msg):

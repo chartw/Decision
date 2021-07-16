@@ -45,6 +45,7 @@ class Serial_Node:
             rate.sleep()
 
     def serialRead(self):
+        
         while True:
             packet = self.ser.readline()
             if len(packet) == 18:

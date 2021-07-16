@@ -120,7 +120,7 @@ class General:
 
         # print('self.cur:',self.cur)
         # print('self.path',self.path)
-        print('self.serial_info.speed:',self.serial_info)
+        print('self.serial_info.speed:',self.serial_info.speed)
 
         self.t_old = self.t_new
         self.t_new = time.time()
