@@ -175,6 +175,7 @@ class General:
         return int(V_in)
 
     def driving(self):
+        print('driving')
         temp_msg=Serial_Info()
         temp_msg.steer = self.pure_pursuit()
         temp_msg.speed = self.calc_velocity()  # PID 추가
