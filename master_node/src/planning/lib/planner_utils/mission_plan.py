@@ -2,7 +2,7 @@ from geometry_msgs.msg import Point32
 from math import hypot
 import time
 
-class MissonPlan:
+class MissionPlan:
     def __init__(self,planner):
         
         self.obstacle_msg = planner.obstacle_msg
@@ -12,7 +12,6 @@ class MissonPlan:
         self.serial_msg = planner.serial_msg
         self.parking_msg=planner.parking_msg
         self.object_msg=planner.object_msg
-        self.mode=planner.planning_msg.mode
         self.mission_ing = planner.mission_ing # True / False
 
         
@@ -33,17 +32,35 @@ class MissonPlan:
         self.start_time = time.time()
         self.current_time = time.time()
 
-
+    def state_check(self,planner):
+        min_dist=999999
+        for circle in msg.circles:
+            dist = hypot(0- circle.center.x, 0-circle.center.y)
+            if min_dist > dist:
+                min_dist=dist
+        ##거리 체크해보자
+        if min_dist < 2:
+            return 3
+        elif min_dist<4:
+            return 2
+        elif min_dist<6:
+            return 1
+        else:
+            return 0
+            
     def decision(self, planner):  
         
-        if self.object_msg is 'person':
-            self.mode = 'emergency_stop'
-            self.mission_ing = True
-            self.start_time = time.time()
             
-        elif self.object_msg is 'normal_stop':
-            self.mode = 'normal_stop'
+        if planner.object_msg.data == "normal_stop":
+            self.mode = "normal_stop"
             self.mission_ing = True
+
+        elif planner.object_msg.data == "avoid":
+            self.mode="avoidance"
+            self.mission_ing = True
+        else:
+            self.mode = "general"
+
         """        
         if : # Parking
             mode = 'parking'
@@ -86,20 +103,7 @@ class MissonPlan:
             mode='general'
 
         """
-        if planner.object_msg.data=="avoid":
-            return "avoidance"
-        elif planner.planning_msg.mode=="avoidance" and hypot(planner.mission_goal.x-planner.local.x,planner.mission_goal.y-planner.local.y) < 0.5:
-            planner.planning_msg.point=Point32()
-            return "general"
 
-
-
-
-
-
-        elif self.mode=='avoidance' and hypot(planner.mission_goal.x-self.local.x,planner.mission_goal.y-self.local.y) < 1:
-            self.mode='general'
-        
         
 
      
@@ -131,18 +135,18 @@ class MissonPlan:
         # elif 4 is 4: 
         #     self.mission_ing = True
         
-        # else:
-        #     mode = 'general'
 
 
-        return self.mode
+
+        return self.mode, self.mission_ing
 
     def end_check(self, planner):
-        if self.mode is 'emergency_stop':
-            return time.time() - self.start_time > 3 # Return True/False
+        if planner.planning_msg.mode == 'normal_stop':
+            return self.serial_msg.speed > 0.01
 
-        elif self.mode is 'normal_stop':
-            return self.serial_msg.speed < 0.01
+        elif planner.planning_msg.mode=="avoidance":
+            return hypot(planner.mission_goal.x-planner.local.x,planner.mission_goal.y-planner.local.y) > 0.5
+
         
 
 

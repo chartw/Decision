@@ -42,7 +42,7 @@ class Planner:
         """
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        point_pub=rospy.Publisher("/local_point",PointCloud,queue_size=1)
+        self.point_pub=rospy.Publisher("/local_point",PointCloud,queue_size=1)
 
         # subscriber 정의
         self.planning_msg = Planning_Info()
@@ -87,9 +87,9 @@ class Planner:
         self.mission_goal = Point32()
 
         # gpp 변수 선언
-        global_path_maker = GPP(self)
-        local_point_maker = LPP()
-        misson_planner = MissonPlan(self)
+        self.global_path_maker = GPP(self)
+        self.local_point_maker = LPP()
+        self.misson_planner = MissionPlan(self)
 
         self.localpoint=PointCloud()
         self.localpoint.header.frame_id='world'
@@ -102,7 +102,7 @@ class Planner:
         while not rospy.is_shutdown() and self.is_local:
             # GPP
             if self.gpp_requested:
-                self.global_path = global_path_maker.path_plan()
+                self.global_path = self.global_path_maker.path_plan()
                 self.planning_msg.path_x = self.global_path.x
                 self.planning_msg.path_y = self.global_path.y
                 self.planning_msg.path_heading = self.global_path.heading
@@ -120,15 +120,19 @@ class Planner:
             self.planning_msg.local=self.local
 
             # Mission Decision
+
+            # if planning_msg.condition:
+            #     self.planning_msg.mode = self.misson_planner.emergency_check(self)
+
+            print(self.mission_ing)
             if not self.mission_ing:
-                self.planning_msg.mode=MissionPlan.decision(self)                      
+                self.planning_msg.mode, self.mission_ing=self.misson_planner.decision(self)                      
             else:
-                self.mission_ing=MissionPlan.end_check() #return True/False
-                
-                ##
+                self.mission_ing=self.misson_planner.end_check(self) #return True/False
+
             if self.planning_msg.mode=="avoidance":
                 if self.obstacle_msg.segments:
-                    self.planning_msg.point=local_point_maker.point_plan(self.obstacle_msg.segments)
+                    self.planning_msg.point=self.local_point_maker.point_plan(self.obstacle_msg.segments)
                     point=self.planning_msg.point
                     theta=self.local.heading*pi/180
                     self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
@@ -137,7 +141,7 @@ class Planner:
                 #######
                 self.localpoint.points.append(self.planning_msg.point)
                 self.localpoint.header.stamp=rospy.Time.now()
-                point_pub.publish(self.localpoint)
+                self.point_pub.publish(self.localpoint)
                 #######
                 
             self.planning_info_pub.publish(self.planning_msg)
@@ -169,3 +173,4 @@ class Planner:
 
 if __name__ == "__main__":
     planner = Planner()
+    planner.run()

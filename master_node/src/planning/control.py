@@ -7,7 +7,7 @@ from lib.control_utils.avoidance import Avoidance
 # from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
 
-from time import time
+import time
 
 """
 Serial_Info
@@ -68,7 +68,7 @@ class Control:
                         self.global_path.k = self.planning_info.path_k
                     if self.global_path.x:
                         self.pub_msg = general.driving(self)
-            if self.planning_info.mode is 'emergency_stop':                                    
+            if self.planning_info.mode == 'emergency_stop':                                    
                 self.pub_msg.steer = 0
                 self.pub_msg.speed = 0
                 self.pub_msg.brake = 0
@@ -82,7 +82,7 @@ class Control:
                     self.pub_msg=avoidance.driving(self.local_point)
                 else:
                     self.pub_msg=general.driving(self)
-            elif self.planning_info.mode is 'normal_stop':
+            elif self.planning_info.mode == 'normal_stop':
                 is_first = (self.past_mode != 'normal_stop')
                 self.normal_stop.run(is_first)
 
