@@ -523,7 +523,8 @@ class Controller:
                 self.speed= self.calc_velocity()
                 # 곡선일때는 alpha 가보자. @@@@@@@22
                 if self.curve_flag ==True:
-                    self.speed=int(30) # 
+                    self.speed=int(30) 
+                    print('speed:',self.speed)
                 # print('speed:',speed)
                 
 
