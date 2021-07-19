@@ -2,62 +2,71 @@ from geometry_msgs.msg import Point32
 from math import hypot
 import time
 
+
 class MissionPlan:
-    def __init__(self,planner):
-        
+    def __init__(self, planner):
+
         self.obstacle_msg = planner.obstacle_msg
-        self.object_msg=planner.object_msg
-        self.local=planner.local
+        self.object_msg = planner.object_msg
+        self.local = planner.local
         self.surface_msg = planner.surface_msg
         self.serial_msg = planner.serial_msg
-        self.parking_msg=planner.parking_msg
-        self.object_msg=planner.object_msg
-        self.mission_ing = planner.mission_ing # True / False
+        self.parking_msg = planner.parking_msg
+        self.object_msg = planner.object_msg
+        self.mission_ing = planner.mission_ing  # True / False
+        self.state = 0
 
-        
-        self.base=[]
-        self.base.append(Point32(22.760400877965,41.7303388307402,0))
-        self.base.append(Point32(17.978170358155626,34.84945192598553,0))
+        self.base = []
+        self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
+        self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
 
-        self.parking_lot=[]
-        self.parking_lot.append(Point32(17.623907356361915,41.175622253568505,0))
-        self.parking_lot.append(Point32(15.85266480396189,38.844924089730185,0))
-        self.parking_lot.append(Point32(14.16998329088652,36.736197374027405,0))
-        self.parking_lot.append(Point32(12.398738836681156,34.405499957494584,0))
-        self.parking_lot.append(Point32(10.716055698028432,32.18578849457638,0))
+        self.parking_lot = []
+        self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
+        self.parking_lot.append(Point32(15.85266480396189, 38.844924089730185, 0))
+        self.parking_lot.append(Point32(14.16998329088652, 36.736197374027405, 0))
+        self.parking_lot.append(Point32(12.398738836681156, 34.405499957494584, 0))
+        self.parking_lot.append(Point32(10.716055698028432, 32.18578849457638, 0))
 
-        self.time_count=0
-        self.temp_heading=0
-        
+        self.time_count = 0
+        self.temp_heading = 0
+
         self.start_time = time.time()
         self.current_time = time.time()
 
-    def state_check(self,planner):
-        min_dist=999999
-        for circle in msg.circles:
-            dist = hypot(0- circle.center.x, 0-circle.center.y)
+    def state_check(self, planner):
+        min_dist = 999999
+        for circle in planner.obstacle_msg.circles:
+            dist = hypot(0 - circle.center.x, 0 - circle.center.y)
             if min_dist > dist:
-                min_dist=dist
+                min_dist = dist
         ##거리 체크해보자
         if min_dist < 2:
-            return 3
-        elif min_dist<4:
-            return 2
-        elif min_dist<6:
-            return 1
+            self.state = 3
+        elif min_dist < 4:
+            self.state = 2
+        elif min_dist < 6:
+            self.state = 1
         else:
-            return 0
-            
-    def decision(self, planner):  
-        
-            
+            self.state = 0
+
+        if planner.past_state != self.state:
+            self.start_time = time.time()
+
+        return self.state
+
+    def decision(self, planner):
+
         if planner.object_msg.data == "normal_stop":
             self.mode = "normal_stop"
             self.mission_ing = True
 
         elif planner.object_msg.data == "avoid":
-            self.mode="avoidance"
+            self.mode = "avoidance"
             self.mission_ing = True
+        elif self.state and time.time() - self.start_time > 3:
+            self.mode = "avoidance"
+            self.mission_ing = True
+
         else:
             self.mode = "general"
 
@@ -104,54 +113,44 @@ class MissionPlan:
 
         """
 
-        
-
-     
         # elif planner.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
         #     mode = 'normal_stop'
         #     self.mission_ing = True
-            
+
         # elif self.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
         #     return "normal_stop"
 
-
-        # Dyanamic -- person stop at node 24    
+        # Dyanamic -- person stop at node 24
         # elif hypot(self.local.x - 2.125, self.local.y - 43.617) < 1:
         #     mode = 'emergency_stop'
         #     self.mission_ing = True
-            
+
         # # Static -- cone avoidance at node 16
-        # elif hypot(self.local.x - 29.757, self.local.y - 35.737) < 1: 
+        # elif hypot(self.local.x - 29.757, self.local.y - 35.737) < 1:
         #     mode = 'avoidance'
         #     self.mission_ing = True
         # elif self.local.x is coordinate: # Dyanamic -- person
         #     mode = 'emergency_stop'
         #     self.mission_ing = True
-        
+
         # elif self.local.x is 3: # Static -- cone
         #     mode = 'avoidance'
         #     self.mission_ing = True
 
-        # elif 4 is 4: 
+        # elif 4 is 4:
         #     self.mission_ing = True
-        
-
-
 
         return self.mode, self.mission_ing
 
     def end_check(self, planner):
-        if planner.planning_msg.mode == 'normal_stop':
+        if planner.planning_msg.mode == "normal_stop":
             return self.serial_msg.speed > 0.01
 
-        elif planner.planning_msg.mode=="avoidance":
-            return hypot(planner.mission_goal.x-planner.local.x,planner.mission_goal.y-planner.local.y) > 0.5
-
-        
-
+        elif planner.planning_msg.mode == "avoidance":
+            return hypot(planner.mission_goal.x - planner.local.x, planner.mission_goal.y - planner.local.y) > 0.5
 
     def calc_dis(self, nx, ny):
         # print(nx, ny, )
-        distance = hypot((nx - self.local.x),(ny - self.local.y))
+        distance = hypot((nx - self.local.x), (ny - self.local.y))
 
         return distance

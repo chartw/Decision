@@ -94,6 +94,8 @@ class Planner:
         self.localpoint=PointCloud()
         self.localpoint.header.frame_id='world'
 
+        self.past_state=0
+
         
 
     def run(self):
@@ -121,10 +123,8 @@ class Planner:
 
             # Mission Decision
 
-            # if planning_msg.condition:
-            #     self.planning_msg.mode = self.misson_planner.emergency_check(self)
+            self.planning_msg.state = self.misson_planner.emergency_check(self)
 
-            print(self.mission_ing)
             if not self.mission_ing:
                 self.planning_msg.mode, self.mission_ing=self.misson_planner.decision(self)                      
             else:
@@ -145,6 +145,7 @@ class Planner:
                 #######
                 
             self.planning_info_pub.publish(self.planning_msg)
+            self.past_state=self.planning_msg.state
             rate.sleep()
 
 

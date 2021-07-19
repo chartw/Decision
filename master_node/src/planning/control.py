@@ -106,6 +106,15 @@ class Control:
 
             # elif self.planning_info.mode == "parking":
 
+            if not self.planning_info.mode=="avoidance":
+                if self.planning_info.state==1:
+                    self.pub_msg.speed*=0.6
+                elif self.planning_info.state==2:
+                    self.pub_msg.speed*=0.4
+                elif self.planning_info.state==3:
+                    self.pub_msg.speed=0
+                    self.pub_msg.brake=80                                      
+
             self.past_mode = self.planning_info.mode
             control_pub.publish(self.pub_msg)
             rate.sleep()

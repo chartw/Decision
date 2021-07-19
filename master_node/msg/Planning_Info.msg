@@ -1,4 +1,5 @@
 string mode
+int16 state
 Local local
 float64[] path_x
 float64[] path_y
