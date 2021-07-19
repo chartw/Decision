@@ -126,21 +126,19 @@ class Planner:
                 self.mission_ing=MissionPlan.end_check() #return True/False
                 
                 ##
-                    if self.planning_msg.mode=="avoidance":
-                        if self.obstacle_msg.segments:
-                            self.planning_msg.point=local_point_maker.point_plan(self.obstacle_msg.segments)
-                            point=self.planning_msg.point
-                            theta=self.local.heading*pi/180
-                            self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                            self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+            if self.planning_msg.mode=="avoidance":
+                if self.obstacle_msg.segments:
+                    self.planning_msg.point=local_point_maker.point_plan(self.obstacle_msg.segments)
+                    point=self.planning_msg.point
+                    theta=self.local.heading*pi/180
+                    self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
+                    self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
 
-                        #######
-                        self.localpoint.points.append(self.planning_msg.point)
-                        self.localpoint.header.stamp=rospy.Time.now()
-                        point_pub.publish(self.localpoint)
-                        #######
-                #     # elif self.planning_msg.mode=="parking-start":
-                #         # self.planning_msg.path=
+                #######
+                self.localpoint.points.append(self.planning_msg.point)
+                self.localpoint.header.stamp=rospy.Time.now()
+                point_pub.publish(self.localpoint)
+                #######
                 
             self.planning_info_pub.publish(self.planning_msg)
             rate.sleep()

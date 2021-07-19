@@ -35,7 +35,7 @@ class Control:
         rospy.init_node("Control", anonymous=False)
 
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
-        self.control_msg = Serial_Info()
+        self.pub_msg = Serial_Info()
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
@@ -67,7 +67,7 @@ class Control:
                         self.global_path.heading = self.planning_info.path_heading
                         self.global_path.k = self.planning_info.path_k
                     if self.global_path.x:
-                        self.control_msg = general.driving(self)
+                        self.pub_msg = general.driving(self)
             if self.planning_info.mode is 'emergency_stop':                                    
                 self.pub_msg.steer = 0
                 self.pub_msg.speed = 0
@@ -77,11 +77,11 @@ class Control:
                 self.pub_msg.emergency_stop = 1
                 self.pub_msg.auto_manual = 1
 
-                elif self.planning_info.mode == "avoidance":
-                    if self.local_point.x!=0 and self.local_point.y!=0:
-                        self.control_msg=avoidance.driving(self.local_point)
-                    else:
-                        self.control_msg=general.driving(self)
+            elif self.planning_info.mode == "avoidance":
+                if self.local_point.x!=0 and self.local_point.y!=0:
+                    self.pub_msg=avoidance.driving(self.local_point)
+                else:
+                    self.pub_msg=general.driving(self)
             elif self.planning_info.mode is 'normal_stop':
                 is_first = (self.past_mode != 'normal_stop')
                 self.normal_stop.run(is_first)
@@ -109,10 +109,6 @@ class Control:
             self.past_mode = self.planning_info.mode
             control_pub.publish(self.pub_msg)
             rate.sleep()
-
-                self.past_mode = self.planning_info.mode
-                control_pub.publish(self.control_msg)
-                rate.sleep()
 
     # Callback Function
     def planningCallback(self, msg):
