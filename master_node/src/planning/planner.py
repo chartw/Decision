@@ -42,6 +42,7 @@ class Planner:
         """
 
         planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
+        point_pub=rospy.Publisher("/local_point",PointCloud,queue_size=1)
 
         # subscriber 정의
         self.planning_msg = Planning_Info()
@@ -68,6 +69,7 @@ class Planner:
         # Vision - Surface
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
+
         # 상태 flag
         self.is_local = False
         self.is_obstacle = False
@@ -87,6 +89,9 @@ class Planner:
         global_path_maker = GPP(self)
         local_point_maker = LPP()
         misson_planner = MissonPlan(self)
+
+        self.localpoint=PointCloud()
+        self.localpoint.header.frame_id='world'
 
         
 
@@ -115,6 +120,12 @@ class Planner:
                             theta=self.local.heading*pi/180
                             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
                             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+
+                        #######
+                        self.localpoint.points.append(self.planning_msg.point)
+                        self.localpoint.header.stamp=rospy.Time.now()
+                        point_pub.publish(self.localpoint)
+                        #######
                 #     # elif self.planning_msg.mode=="parking-start":
                 #         # self.planning_msg.path=
                 
