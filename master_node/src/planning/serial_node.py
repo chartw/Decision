@@ -78,6 +78,9 @@ class Serial_Node:
     def serialWrite(self):
         if self.control_input.speed > 20:
             self.control_input.speed = 20
+            
+        if self.control_input.brake > 200:
+            self.control_input.brake = 200
 
         # print(self.control_input.speed)
         result = struct.pack(

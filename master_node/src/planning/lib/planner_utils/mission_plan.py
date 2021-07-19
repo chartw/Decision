@@ -10,6 +10,7 @@ class MissonPlan:
         self.surface_msg = planner.surface_msg
         self.serial_msg = planner.serial_msg
         self.parking_msg=planner.parking_msg
+        self.object_msg=planner.object_msg
         self.mode=planner.planning_msg.mode
         self.mission_ing = planner.mission_ing # True / False
 
@@ -26,10 +27,24 @@ class MissonPlan:
 
         self.time_count=0
         self.temp_heading=0
+        
+        self.start_time = time.time()
+        self.current_time = time.time()
 
 
     def decision(self, planner):  
         
+        if self.object_msg is 'person':
+            self.mode = 'emergency_stop'
+            self.mission_ing = True
+            self.start_time = time.time()
+            
+        elif self.object_msg is 'normal_stop':
+            self.mode = 'normal_stop'
+            self.mission_ing = True
+            
+            
+            
         
         if not planner.gpp_requested: # Parking
             self.mode = 'parking'
@@ -71,11 +86,6 @@ class MissonPlan:
         elif self.mode=='backward-start' and abs(self.local.heading - self.temp_heading) < 5:
             self.mode='general'
 
-        
-
-
-
-
 
 
         elif self.mode=='avoidance' and hypot(planner.mission_goal.x-self.local.x,planner.mission_goal.y-self.local.y) < 1:
@@ -90,6 +100,7 @@ class MissonPlan:
         elif self.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
             self.mode = 'normal_stop'
             self.mission_ing = True
+
 
         # Dyanamic -- person stop at node 24    
         elif hypot(self.local.x - 2.125, self.local.y - 43.617) < 1:
@@ -117,8 +128,17 @@ class MissonPlan:
 
         return self.mode
 
+    def end_check(self, planner):
+        if self.mode is 'emergency_stop':
+            return time.time() - self.start_time > 3 # Return True/False
+
+        elif self.mode is 'normal_stop':
+            return self.serial_msg.speed < 0.01
+        
+
+
     def calc_dis(self, nx, ny):
         # print(nx, ny, )
-        distance = ((nx - self.local.x)**2 +  (ny - self.local.y)**2)**0.5
+        distance = hypot((nx - self.local.x),(ny - self.local.y))
 
         return distance

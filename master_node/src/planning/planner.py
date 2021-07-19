@@ -16,7 +16,7 @@ from std_msgs.msg import Float32, Time, String, Int16
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
-from lib.planner_utils.mission_plan import MissonPlan
+from lib.planner_utils.mission_plan import MissionPlan
 
 class Planner:
     def __init__(self):
@@ -41,12 +41,13 @@ class Planner:
         }
         """
 
-        planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
+        self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
 
         # subscriber 정의
         self.planning_msg = Planning_Info()
         self.obstacle_msg = Obstacles()
         # self.object_msg = BoundingBoxes()
+        self.object_msg = String() #temporary setting for development
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
         self.parking_msg=Int16()
@@ -59,9 +60,9 @@ class Planner:
         rospy.Subscriber("/pose", Odometry, self.localCallback)
         
         # Vision - Object
-        # def objectCallback(self, msg): self.object_msg = msg
         # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
-        
+        rospy.Subscriber("/object_detection", String, self.objectCallback)   
+       
         rospy.Subscriber('/serial', Serial_Info, self.serialCallback)
         
         # Vision - Surface
@@ -87,51 +88,41 @@ class Planner:
         # local_point_maker = LPP(self)
         # misson_planner = MissonPlan(self)
 
-        
-
+    def run(self):
         rate = rospy.Rate(50)  # 100hz
 
-        while not rospy.is_shutdown():
-    
-            if self.is_local:
-                # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
-                if self.gpp_requested:
-                    self.global_path = global_path_maker.path_plan()
-                    self.planning_msg.path_x = self.global_path.x
-                    self.planning_msg.path_y = self.global_path.y
-                    self.planning_msg.path_heading = self.global_path.heading
-                    self.planning_msg.path_k = self.global_path.k
-                    self.planning_msg.mode="general"
-                    self.gpp_requested = False
-                    
-                # else:
-                #     self.planning_msg.mode=misson_planner.decision(self)
+        while not rospy.is_shutdown() and self.is_local:
+            # GPP
+            if self.gpp_requested:
+                self.global_path = global_path_maker.path_plan()
+                self.planning_msg.path_x = self.global_path.x
+                self.planning_msg.path_y = self.global_path.y
+                self.planning_msg.path_heading = self.global_path.heading
+                self.planning_msg.path_k = self.global_path.k
+                self.planning_msg.mode="general"
+                self.gpp_requested = False
+            else: #gpp not requested
+                self.planning_msg.path_x = []
+                self.planning_msg.path_y = []
+                self.planning_msg.path_heading = []
+                self.planning_msg.path_k = []
+            
+             
+            #Localization Information
+            self.planning_msg.local=self.local
 
-                #     if self.planning_msg.mode=="avoidance":
-                #         if len(self.obstacle_msg.segments) !=0:
-                #             self.planning_msg.point=local_point_maker.point_plan()
-                #             point=self.planning_msg.point
-                #             theta=self.local.heading*pi/180
-                #             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                #             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
-
-                #     # elif self.planning_msg.mode=="parking-start":
-                #         # self.planning_msg.path=
+            # Mission Decision
+            if not self.mission_ing:
+                self.planning_msg.mode=MissionPlan.decision(self)                      
+            else:
+                self.mission_ing=MissionPlan.end_check() #return True/False
                 
-
-                self.planning_msg.local=self.local
-                planning_info_pub.publish(self.planning_msg)
-
-                if not self.gpp_requested:
-                    self.planning_msg.path_x = []
-                    self.planning_msg.path_y = []
-                    self.planning_msg.path_heading = []
-                    self.planning_msg.path_k = []
-                    
-                rate.sleep()
+            self.planning_info_pub.publish(self.planning_msg)
+            rate.sleep()
 
 
-    # Callback Function
+
+    # Callback Functions
     def obstacleCallback(self, msg): 
         self.obstacle_msg = msg  
     
@@ -147,6 +138,9 @@ class Planner:
         
     def serialCallback(self, msg):
         self.serial_msg = msg
+
+    def objectCallback(self, msg):
+        self.object_msg = msg
 
 
 if __name__ == "__main__":
