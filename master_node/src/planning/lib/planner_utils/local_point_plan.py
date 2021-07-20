@@ -21,7 +21,7 @@ class LPP:
             return point
         d = 1.0
         rad = np.arctan2(closest.last_point.y - closest.first_point.y, closest.last_point.x - closest.first_point.x)
-        # print(rad)
+        print(rad)
         point.x= closest.last_point.x + (d * cos(rad))
         point.y= closest.last_point.y + (d * sin(rad))
         return point

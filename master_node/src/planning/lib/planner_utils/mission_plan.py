@@ -40,11 +40,11 @@ class MissionPlan:
             if min_dist > dist:
                 min_dist = dist
         ##거리 체크해보자
-        if min_dist < 2:
+        if min_dist < 5:
             self.state = 3
-        elif min_dist < 4:
-            self.state = 2
         elif min_dist < 6:
+            self.state = 2
+        elif min_dist < 7.5:
             self.state = 1
         else:
             self.state = 0

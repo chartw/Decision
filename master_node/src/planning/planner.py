@@ -101,52 +101,54 @@ class Planner:
     def run(self):
         rate = rospy.Rate(50)  # 100hz
 
-        while not rospy.is_shutdown() and self.is_local:
-            # GPP
-            if self.gpp_requested:
-                self.global_path = self.global_path_maker.path_plan()
-                self.planning_msg.path_x = self.global_path.x
-                self.planning_msg.path_y = self.global_path.y
-                self.planning_msg.path_heading = self.global_path.heading
-                self.planning_msg.path_k = self.global_path.k
-                self.planning_msg.mode="general"
-                self.gpp_requested = False
-            else: #gpp not requested
-                self.planning_msg.path_x = []
-                self.planning_msg.path_y = []
-                self.planning_msg.path_heading = []
-                self.planning_msg.path_k = []
-            
-             
-            #Localization Information
-            self.planning_msg.local=self.local
+        while not rospy.is_shutdown():
+            if self.is_local:
+                # GPP
+                if self.gpp_requested:
 
-            # Mission Decision
-
-            self.planning_msg.state = self.misson_planner.emergency_check(self)
-
-            if not self.mission_ing:
-                self.planning_msg.mode, self.mission_ing=self.misson_planner.decision(self)                      
-            else:
-                self.mission_ing=self.misson_planner.end_check(self) #return True/False
-
-            if self.planning_msg.mode=="avoidance":
-                if self.obstacle_msg.segments:
-                    self.planning_msg.point=self.local_point_maker.point_plan(self.obstacle_msg.segments)
-                    point=self.planning_msg.point
-                    theta=self.local.heading*pi/180
-                    self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                    self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
-
-                #######
-                self.localpoint.points.append(self.planning_msg.point)
-                self.localpoint.header.stamp=rospy.Time.now()
-                self.point_pub.publish(self.localpoint)
-                #######
+                    self.global_path = self.global_path_maker.path_plan()
+                    self.planning_msg.path_x = self.global_path.x
+                    self.planning_msg.path_y = self.global_path.y
+                    self.planning_msg.path_heading = self.global_path.heading
+                    self.planning_msg.path_k = self.global_path.k
+                    self.planning_msg.mode="general"
+                    self.gpp_requested = False
+                else: #gpp not requested
+                    self.planning_msg.path_x = []
+                    self.planning_msg.path_y = []
+                    self.planning_msg.path_heading = []
+                    self.planning_msg.path_k = []
                 
-            self.planning_info_pub.publish(self.planning_msg)
-            self.past_state=self.planning_msg.state
-            rate.sleep()
+                
+                #Localization Information
+                self.planning_msg.local=self.local
+
+                # Mission Decision
+
+                self.planning_msg.state = self.misson_planner.state_check(self)
+
+                if not self.mission_ing:
+                    self.planning_msg.mode, self.mission_ing=self.misson_planner.decision(self)                      
+                else:
+                    self.mission_ing=self.misson_planner.end_check(self) #return True/False
+
+                if self.planning_msg.mode=="avoidance":
+                    if self.obstacle_msg.segments:
+                        self.planning_msg.point=self.local_point_maker.point_plan(self.obstacle_msg.segments)
+                        point=self.planning_msg.point
+                        theta=self.local.heading*pi/180
+                        self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
+                        self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+
+                    #######
+                    self.localpoint.points.append(self.planning_msg.point)
+                    self.localpoint.header.stamp=rospy.Time.now()
+                    self.point_pub.publish(self.localpoint)
+                    #######
+                    
+                self.planning_info_pub.publish(self.planning_msg)
+                self.past_state=self.planning_msg.state
+                rate.sleep()
 
 
 

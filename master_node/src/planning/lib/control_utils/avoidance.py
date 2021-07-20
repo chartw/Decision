@@ -5,7 +5,6 @@ from master_node.msg import Serial_Info
 class Avoidance:
 
     def pure_pursuit(self, point):
-        print(point)
         tmp_th = degrees(atan2((point.y - 0), (point.x - 0)))
         tmp_th = tmp_th%360
 

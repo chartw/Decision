@@ -40,6 +40,7 @@ class Serial_Node:
         while not rospy.is_shutdown():
             # print("----------loop!")
             # self.serialRead()
+            print(self.control_input)
             self.serial_pub.publish(self.serial_msg)
             self.serialWrite()
             rate.sleep()
