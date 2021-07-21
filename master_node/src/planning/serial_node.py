@@ -40,7 +40,7 @@ class Serial_Node:
         while not rospy.is_shutdown():
             # print("----------loop!")
             # self.serialRead()
-            print(self.control_input)
+            # print(self.control_input)
             self.serial_pub.publish(self.serial_msg)
             self.serialWrite()
             rate.sleep()
@@ -73,7 +73,7 @@ class Serial_Node:
                     # print("encoder", tmp1[0])
 
                     self.alive = struct.unpack("B", packet[15:16])[0]
-                    print(self.alive)
+                    # print(self.alive)
             self.serial_pub.publish(self.serial_msg)
 
     def serialWrite(self):
@@ -84,6 +84,9 @@ class Serial_Node:
             self.control_input.brake = 200
 
         # print(self.control_input.speed)
+        print("#######################")
+        print(self.control_input.auto_manual)
+        # a = input()
         result = struct.pack(
             ">BBBBBBHhBBBB",
             0x53,

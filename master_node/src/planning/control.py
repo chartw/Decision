@@ -107,7 +107,7 @@ class Control:
             # elif self.planning_info.mode == "parking":
 
             if not self.planning_info.mode=="avoidance":
-                print(self.planning_info.state)
+                # print(self.planning_info.state)
                 if self.planning_info.state==1:
                     self.pub_msg.speed=0
                     self.pub_msg.brake=20                                     

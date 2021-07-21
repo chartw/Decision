@@ -149,8 +149,3 @@ class MissionPlan:
         elif planner.planning_msg.mode == "avoidance":
             return hypot(planner.mission_goal.x - planner.local.x, planner.mission_goal.y - planner.local.y) > 0.5
 
-    def calc_dis(self, nx, ny):
-        # print(nx, ny, )
-        distance = hypot((nx - self.local.x), (ny - self.local.y))
-
-        return distance
