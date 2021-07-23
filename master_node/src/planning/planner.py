@@ -133,8 +133,8 @@ class Planner:
                     self.mission_ing=self.misson_planner.end_check(self) #return True/False
 
                 if self.planning_msg.mode=="avoidance":
-                    if self.obstacle_msg.segments:
-                        self.planning_msg.point=self.local_point_maker.point_plan(self.obstacle_msg.segments)
+                    if self.obstacle_msg.circles:
+                        self.planning_msg.point=self.local_point_maker.point_plan(self.obstacle_msg.circles)
                         point=self.planning_msg.point
                         theta=self.local.heading*pi/180
                         self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
