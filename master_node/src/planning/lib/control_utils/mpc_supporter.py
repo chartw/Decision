@@ -13,24 +13,25 @@ class SupportFilesCar:
         ''' Load the constants that do not change'''
 
         # Constants
-        m=1500
-        Iz=3000
+        m=500
+        Iz=1000
         Caf=19000
         Car=33000
-        lf=2
-        lr=3
+        lf=0.6
+        lr=0.4
         Ts=0.1
 
         # Parameters for the lane change: [psi_ref 0;0 Y_ref]
         # Higher psi reduces the overshoot
         # Matrix weights for the cost function (They must be diagonal)
-        Q=np.matrix('100 0;0 1') # weights for outputs (all samples, except the last one)
-        S=np.matrix('100 0;0 1') # weights for the final horizon period outputs
-        R=np.matrix('100') # weights for inputs (only 1 input in our case)
+        Q=np.matrix('100 0;0 50') # weights for outputs (all samples, except the last one)
+        S=np.matrix('0.1 0;0 0.1') # weights for the final horizon period outputs
+        R=np.matrix('500') # weights for inputs (only 1 input in our case)
+
 
         outputs=2 # number of outputs
-        hz = 20 # horizon period
-        x_dot= 10 # car's longitudinal velocity
+        hz = 50 # horizon period
+        x_dot= 20 # car's longitudinal velocity
         lane_width= 7 # [m]
         nr_lanes= 5 # 6 lanes [m]
         # r=14*np.random.randint(2)-7 # amplitude for sinusoidal functions

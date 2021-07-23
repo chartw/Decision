@@ -29,6 +29,9 @@ class General_MPC:
         self.t_new = 0
         self.t = 0
 
+        self.old_t = 0
+        self.new_t = 0
+
         self.steering = 0
 
         self.cur_idx = 0
@@ -104,6 +107,7 @@ class General_MPC:
         #     C_Y_opt[i-3][i+4*(i-3)]=1
 
         # Generate the discrete state space matrices
+
         self.Ad,self.Bd,self.Cd,self.Dd=self.support.state_space()
 
 
@@ -155,8 +159,8 @@ class General_MPC:
         # Update the real inputs
         
         self.steering= radians(-self.serial_info.steer) + (du[0][0])
-        print(self.r[0], self.cur.heading-self.path_heading)
-        print(degrees(du[0][0]))
+        # print(self.r[0], self.cur.heading-self.path_heading)
+        # print(degrees(du[0][0]))
 
         # Establish the limits for the real inputs (max: pi/6 radians)
 
@@ -186,6 +190,9 @@ class General_MPC:
         #states 프사이,y값만 현재상태로 바꿔줌
         self.states[1] = radians(self.cur.heading)  
         self.states[3] = self.cur.y
+        self.old_t = self.new_t
+        self.new_t = time.time()
+        # print(self.old_t - self.new_t)
 
 
 
@@ -240,7 +247,7 @@ class General_MPC:
     def driving(self):
         temp_msg=Serial_Info()
         temp_msg.steer = self.steering_mpc()
-        temp_msg.speed = 10
+        temp_msg.speed = 20
         temp_msg.brake = 0
         temp_msg.encoder = 0
         temp_msg.gear = 0

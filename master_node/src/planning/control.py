@@ -52,7 +52,7 @@ class Control:
         self.normal_stop = NormalStop(self)
         self.is_planning = False
 
-        rate = rospy.Rate(50)  # 100hz
+        rate = rospy.Rate(10)  # 100hz
 
         # main loop
         while not rospy.is_shutdown():
@@ -66,7 +66,7 @@ class Control:
                         self.global_path.k = self.planning_info.path_k
                         # print(self.global_path.x)
                     if self.global_path.x:
-                        if self.serial_info.speed>8 and self.serial_info.speed<12:
+                        if self.serial_info.speed>5:
                             self.pub_msg = general_mpc.driving()
                         else:
                             self.pub_msg = general.driving()
@@ -97,6 +97,8 @@ class Control:
                 #     self.normal_stop.run()
 
                 # elif self.planning_info.mode == "parking":
+
+
 
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.pub_msg)

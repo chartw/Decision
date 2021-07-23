@@ -38,7 +38,7 @@ class General:
         self.V_err_deri = 0
 
         self.safety_factor = 0.8
-        self.V_ref_max = 12        
+        self.V_ref_max = 20        
 
     def select_target(self,lookahead):
         valid_idx_list = []
