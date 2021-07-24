@@ -48,7 +48,7 @@ class Control:
         self.past_mode = None
 
         general = General(self)
-        avoidance = Avoidance()
+        avoidance = Avoidance(self)
         # emergency_stop = EmergencyStop(self)
         normal_stop = NormalStop(self)
         self.is_planning = False

@@ -83,7 +83,7 @@ class Serial_Node:
         if self.control_input.brake > 200:
             self.control_input.brake = 200
 
-        # print(self.control_input.speed)
+        print(self.control_input)
         print("#######################")
         print(self.control_input.auto_manual)
         # a = input()

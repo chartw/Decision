@@ -134,17 +134,16 @@ class Planner:
 
                 if self.planning_msg.mode=="avoidance":
                     if self.obstacle_msg.circles:
-                        self.planning_msg.point=self.local_point_maker.point_plan(self.obstacle_msg.circles)
-                        point=self.planning_msg.point
-                        theta=self.local.heading*pi/180
-                        self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                        self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+                        point=self.local_point_maker.point_plan(self.obstacle_msg.circles)
+                        theta=radians(self.local.heading)
+                        self.planning_msg.point.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
+                        self.planning_msg.point.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
 
-                    #######
-                    self.localpoint.points.append(self.planning_msg.point)
-                    self.localpoint.header.stamp=rospy.Time.now()
-                    self.point_pub.publish(self.localpoint)
-                    #######
+                        #######
+                        self.localpoint.points.append(point)
+                        self.localpoint.header.stamp=rospy.Time.now()
+                        self.point_pub.publish(self.localpoint)
+                        #######
                     
                 self.planning_info_pub.publish(self.planning_msg)
                 self.past_state=self.planning_msg.state

@@ -10,12 +10,13 @@ class LPP:
     def point_plan(self, circles):
 
         closest = circles[0]
-
+        dist=0
         for circle in circles:
             if hypot(closest.center.x, closest.center.y) > hypot(circle.center.x, circle.center.y):
                 closest = circle
 
-        d = 2
+        dist=hypot(closest.center.x, closest.center.y)
+        d = 6/dist
         rad = np.arctan2(closest.center.y, closest.center.x)
         if closest.center.y > 0:
             rad -= pi / 2

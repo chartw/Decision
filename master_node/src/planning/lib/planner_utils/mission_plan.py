@@ -147,5 +147,5 @@ class MissionPlan:
             return self.serial_msg.speed > 0.01
 
         elif planner.planning_msg.mode == "avoidance":
-            return hypot(planner.mission_goal.x - planner.local.x, planner.mission_goal.y - planner.local.y) > 0.5
+            return hypot(planner.planning_msg.point.x - planner.local.x, planner.planning_msg.point.y - planner.local.y) > 0.5
 

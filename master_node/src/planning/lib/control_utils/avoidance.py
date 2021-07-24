@@ -3,36 +3,42 @@ from master_node.msg import Serial_Info
 
 
 class Avoidance:
+    def __init__(self, control):
+        self.local=control.local
+        self.WB = 1.04
+
 
     def pure_pursuit(self, point):
-        tmp_th = degrees(atan2((point.y - 0), (point.x - 0)))
-        tmp_th = tmp_th%360
 
-        alpha =  0 - tmp_th
+        tmp_th = degrees(atan2((point.y - self.local.y), (point.x - self.local.x)))
 
-        if abs(alpha)>180:
-            if (alpha < 0) :
+        tmp_th = tmp_th % 360
+
+        alpha = self.local.heading - tmp_th
+        if abs(alpha) > 180:
+            if alpha < 0:
                 alpha += 360
-            else :
+            else:
                 alpha -= 360
 
-        alpha = max(alpha,  -90)
-        alpha = min(alpha,  90)
+        alpha = max(alpha, -90)
+        alpha = min(alpha, 90)
 
         delta = alpha
 
-        if abs(delta)>180:
-            if (delta < 0) :
+        if abs(delta) > 180:
+            if delta < 0:
                 delta += 360
-            else :
+            else:
                 delta -= 360
-        # print("delta", delta)
-        if abs(delta)>=27.7:
+
+        if abs(delta) >= 27.7:
             if delta > 0:
                 return 27.7
-            else :
+            else:
                 return -27.7
         else:
+
             return delta
 
     def driving(self, point):
