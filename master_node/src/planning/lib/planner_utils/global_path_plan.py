@@ -10,7 +10,7 @@ import os
 import csv
 import math
 
-from math import cos
+from math import cos, hypot
 from math import atan2
 from math import sin
 from math import degrees
@@ -137,7 +137,6 @@ class GPP:
         return None  # 목적지 까지 경로가 없을때 아무것도 출력하지 않음
 
     def lane_set(self, mapname):
-
         # 만약 g나 h값을 코드상에 미리 넣어서 계산해준다면 모든 csv파일을 읽어올 필요는 없음.
         global files
         files = os.listdir("./map/" + mapname + "_lane/")
@@ -208,6 +207,7 @@ class GPP:
                 )
 
     def path_plan(self):
+        print(self.cur)
         start_id = self.select_start_node()
         goal_ids = self.goal_id.split("/")
         path = self.astar_search(graph, self.nodelist, start_id, goal_ids[0])
@@ -254,14 +254,8 @@ class GPP:
         temp_dis = 9999
 
         for node in nodelist:
-            temp_dis = self.calc_dis(nodelist[node].x, nodelist[node].y)
+            temp_dis = hypot(self.cur.x-nodelist[node].x, self.cur.y-nodelist[node].y)
             if temp_dis < min_dis:
                 min_dis = temp_dis
                 min_idx = node
-
         return min_idx
-
-    def calc_dis(self, nx, ny):
-        distance = ((nx - self.cur.x ** 2) + (ny - self.cur.y) ** 2)
-
-        return distance

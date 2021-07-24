@@ -1,31 +1,30 @@
 import numpy as np
-from math import cos, sin
+from math import cos, sin, hypot, pi
 from geometry_msgs.msg import Point32
 
 
 class LPP:
-    def point_plan(self, segments):
-        point=Point32()
-        closest = segments[0]
-        for segment in segments:
-            if segment.last_point.x < segment.first_point.x:
-                temp = segment.last_point
-                segment.last_point = segment.first_point
-                segment.first_point = temp
+    def __init__(self):
+        self.point = Point32()
 
-            if self.calc_dis(closest.first_point.x, closest.first_point.y) > self.calc_dis(segment.first_point.x, segment.first_point.y):
-                closest = segment
+    def point_plan(self, circles):
 
-        if closest.first_point.x < 1:
-            point=Point32(1.5,0,0)
-            return point
-        d = 1.0
-        rad = np.arctan2(closest.last_point.y - closest.first_point.y, closest.last_point.x - closest.first_point.x)
-        # print(rad)
-        point.x= closest.last_point.x + (d * cos(rad))
-        point.y= closest.last_point.y + (d * sin(rad))
-        return point
+        closest = circles[0]
+        dist=0
+        for circle in circles:
+            if hypot(closest.center.x, closest.center.y) > hypot(circle.center.x, circle.center.y):
+                closest = circle
 
-    def calc_dis(self, nx, ny):
-        distance = ((nx - 0 ** 2) + (ny - 0) ** 2) ** 0.5
-        return distance
+        dist=hypot(closest.center.x, closest.center.y)
+        d = 6/dist
+        rad = np.arctan2(closest.center.y, closest.center.x)
+        if closest.center.y > 0:
+            rad -= pi / 2
+        else:
+            rad += pi / 2
+
+        self.point.x = closest.center.x + (d * cos(rad))
+        self.point.y = closest.center.y + (d * sin(rad))
+        # print(self.point.x, self.point.y, rad)
+
+        return self.point
