@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-from master_node.msg import Serial_Info  # 개발할 메세지 타입
+from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info #@@@
 
-from math import degrees, atan2, sin, radians, sqrt
-import time
+from math import degrees, atan2, sin,cos, radians, sqrt ,hypot
+import time ,rospy #@@@
+from sensor_msgs.msg import PointCloud #@@@
+from geometry_msgs.msg import Point32 #@@@
 
 
 class General:
@@ -25,6 +27,25 @@ class General:
         self.WB = 1.04
         self.target_index = 0
 
+
+
+
+
+        # For static_mission # @@@@  
+        self.obstacle_msg = Obstacles() 
+        rospy.init_node("General", anonymous=False)  # @@@@
+        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback) # @@@@
+        self.head.x,self.head.y = 0,0
+        # rviz for gpaths @@@@
+        self.gpaths=PointCloud()
+        self.gpaths.header.frame_id='world'
+        self.pub_gp=rospy.Publisher('/gpath',PointCloud,queue_size=1)
+        self.emergency = False
+
+
+
+
+        ########## 종제어 
         self.t_start = 0
         self.t_delta = 0
         self.t_old = 0
@@ -43,8 +64,12 @@ class General:
 
         self.safety_factor = 0.8
         self.V_ref_max = 12
+        #####################
 
-    def select_target(self, lookahead):
+
+
+
+    def select_target(self, lookahead): # 여기서 사용하는 self.path 관련정보를 바꾸면 됨. 여기서바꿔야하나? 
         valid_idx_list = []
 
         for i in range(self.target_index, len(self.path.x)):
@@ -59,20 +84,66 @@ class General:
         else:
             return valid_idx_list[len(valid_idx_list) - 1]
 
-    # Dynamic Lookahead
-    def Dynamic_LookAhead(self):
-        self.lookahead = self.GeneralLookahead
-        heading_difference = self.cur.heading - self.path.heading[self.target_index]
-        if heading_difference > 10:
-            self.lookahead = self.GeneralLookahead / 2
-        # print ("LookAhead : ",self.lookahead)
+    # # Dynamic Lookahead
+    # def Dynamic_LookAhead(self):
+    #     self.lookahead = self.GeneralLookahead
+    #     heading_difference = self.cur.heading - self.path.heading[self.target_index]
+    #     if heading_difference > 10:
+    #         self.lookahead = self.GeneralLookahead / 2
+    #     # print ("LookAhead : ",self.lookahead)
+
+
+    def lane_push(self): # push 된 lane 으로 개정. @@@@@@
+
+        self.head.x = self.cur.x + 1.5*cos(radians(self.cur.heading))
+        self.head.y = self.cur.y + 1.5*cos(radians(self.cur.heading))
+        
+        emergency_d = hypot(self.head.x - self.obstacle_msg.circles[-1].x, 
+                            self.head.y - self.obstacle_msg.circles[-1].y )
+        # 그 점과 ( obstacle_msg.circles[-1].x ,obstacle_msg.circles[-1].y ) 가장 멀리있는 (?) 장애물의 좌표 사이 거리를 'emergency_d' 로.
+        
+        if emergency_d < 0.5: # 무조건 stop. -> 이후엔 수동으로 원상복귀 할거.
+            self.emergency = True 
+
+        else:   # 여기에 추후에 차선정보도 포함시켜야 할듯. 
+            self.emergency = False
+
+            if 오른쪽에 있을때:
+                pushed_path_x = ~~
+                pushed_path_y = ~~
+            elif 왼쪽 or 가운데 있을때:
+                pushed_path_x = ~~
+                pushed_path_y = ~~
+        
+        return  pushed_path_x, pushed_path_y
+
 
     def pure_pursuit(self):
 
+        # if self.path_mission == 'static': # kcity csv의 마지막 부분 작업 이후에.축가.
+        if self.obstacle_msg.circles: ## @@@
+            self.path.x, self.path.y = self.lane_push()
+			
+            ## path_ rviz 도 여기서만 송출-----------느리면 일부만. -----------@@@@
+            for i in range(len(self.path_x)): 
+                gpath = Point32()
+                gpath.x=self.path.x[i]
+                gpath.y=self.path.y[i]
+                self.gpaths.points.append(gpath)
+            self.gpaths.header.stamp=rospy.Time.now()
+            self.pub_gp.publish(self.gpaths)
+            print('gpaths published.')
+            #-------------------------------------------------------------
+
+
         # self.Dynamic_LookAhead() # 동적 lookAhead
-        if len(self.path.x) == 0:
+
+        if len(self.path.x) == 0: # 굳이 이거 왜써뒀지. @@@@
             return 0
+        
         self.target_index = self.select_target(self.lookahead)
+
+
         # print(self.target_index)
         # print(self.cur.x, self.cur.y)
 
@@ -110,7 +181,20 @@ class General:
 
             return delta
 
-    ###################조향 속도 구분선###################
+
+    # Callback Functions
+    def obstacleCallback(self, msg): #@@@@
+        self.obstacle_msg.segments = msg.segments
+        self.obstacle_msg.circles = msg.circles
+        self.obstacle_msg.circle_number = msg.circle_number
+
+
+
+
+
+
+
+    ###################속도 종제어.################################3
 
     def PID(self, V_ref):
 
@@ -179,14 +263,24 @@ class General:
 
         return int(V_in)
 
+
+##################################################3
+
+
+
+
+
+
+
     def driving(self, control):
-        # self.temp_msg=Serial_Info()
-        # print('self.serial_info',self.serial_info.speed)
+        # 미션별 최고속도. 여기에 ??
         if control.planning_info.mode == "general":
             self.V_ref_max = 12
         else:
             self.V_ref_max = 8
+        ########################### 
 
+        
         self.temp_msg.steer = self.pure_pursuit()
         self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
         self.temp_msg.brake = 0
@@ -194,5 +288,9 @@ class General:
         self.temp_msg.gear = 0
         self.temp_msg.emergency_stop = 0
         self.temp_msg.auto_manual = 1
+        
+        # prerequisite 
+        if self.emergency:
+            self.temp_msg.emergency_stop = 1
 
         return self.temp_msg

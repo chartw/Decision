@@ -61,13 +61,17 @@ class Control:
         while not rospy.is_shutdown():
             if self.is_planning:              
                 if self.planning_info.mode == "general":
-                    if self.planning_info.path_x:
+                    if self.planning_info.path_x: # 보내줄때만 담을거.
                         self.global_path.x = self.planning_info.path_x
                         self.global_path.y = self.planning_info.path_y
                         self.global_path.heading = self.planning_info.path_heading
                         self.global_path.k = self.planning_info.path_k
                     if self.global_path.x:
+
+                        # path 정보. rviz 로  Publish 추가.
+                        # 
                         self.pub_msg = general.driving(self)
+
             if self.planning_info.mode == 'emergency_stop':                                    
                 self.pub_msg.steer = 0
                 self.pub_msg.speed = 0
@@ -144,7 +148,6 @@ class Control:
         self.serial_info.brake = msg.brake
 
 
-        # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
 
 
 control = Control()

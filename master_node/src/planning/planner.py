@@ -96,6 +96,13 @@ class Planner:
 
         self.past_state=0
 
+
+        ### local_ rviz##### @@@
+        self.cur_points=PointCloud()
+        self.cur_points.header.frame_id = 'world'
+        self.pub_c=rospy.Publisher('/cur_xy',PointCloud,queue_size=1)
+
+        ######################
         
 
     def run(self):
@@ -113,7 +120,7 @@ class Planner:
                     self.planning_msg.path_k = self.global_path.k
                     self.planning_msg.mode="general"
                     self.gpp_requested = False
-                else: #gpp not requested
+                else: #gpp not requested 
                     self.planning_msg.path_x = []
                     self.planning_msg.path_y = []
                     self.planning_msg.path_heading = []
@@ -139,7 +146,7 @@ class Planner:
                         self.planning_msg.point.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
                         self.planning_msg.point.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
 
-                        #######
+                        ####### rviz
                         self.localpoint.points.append(point)
                         self.localpoint.header.stamp=rospy.Time.now()
                         self.point_pub.publish(self.localpoint)
@@ -162,6 +169,18 @@ class Planner:
         self.local.y = msg.pose.pose.position.y
         self.local.heading = msg.twist.twist.angular.z
         self.is_local = True
+
+        ## local_ rviz ## --------------------------------------------@@@@---------
+        cur_point = Point32()
+        cur_point.x = self.local.x
+        cur_point.y = self.local.y
+        self.cur_points.points.append(cur_point)
+        self.cur_points.header.stamp = rospy.Time.now()
+        self.pub_c.publish(self.cur_points)
+        #--------------------------------------------------------
+
+
+
 
     def surfaceCallback(self, msg): 
         self.surface_msg = msg
