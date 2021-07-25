@@ -15,6 +15,7 @@ class MovAvgFilter:
             self.xBuf.put(input)
         # 참조할 데이터의 갯수를 저장합니다.
         self.n = _n
+        self.prevAvg=input
     
     def movAvgFilter(self, input):
         # 큐의 front 값은 x_(k-n) 에 해당합니다.
@@ -22,7 +23,12 @@ class MovAvgFilter:
         # 이번 스텝에 입력 받은 값을 큐에 넣습니다.
         self.xBuf.put(input)
         
-        avg = Point32(self.prevAvg.x + (input.x - front.x) / self.n,self.prevAvg.y + (input.y - front.y) / self.n,0)     
+        avg = Point32(self.prevAvg.x + (input.x - front.x) / self.n, self.prevAvg.y + (input.y - front.y) / self.n,0)
+        # print("prevAvg")
+        # print(self.prevAvg)
+        # print("avg")
+        # print(avg)
+        # print("input")
+        # print(input)
         self.prevAvg = avg
-        
         return avg

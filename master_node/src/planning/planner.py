@@ -45,8 +45,8 @@ class Planner:
         """
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
-        self.obs_pub = rospy.Publisher("/obs_pub", PointCloud, queue_size=1)
+        self.local_path_pub = rospy.Publisher("/local_path2", PointCloud, queue_size=1)
+        self.obs_pub = rospy.Publisher("/obs_pub2", PointCloud, queue_size=1)
         self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
         self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
 
@@ -148,8 +148,8 @@ class Planner:
                         self.is_avoidance_ing = True
                         self.local_path_maker.start(self)
 
-                    if self.obstacle_msg.circles:
-                        self.local_path = self.local_path_maker.path_plan(self.obstacle_msg.circles)
+                    points=self.map_maker.showObstacleMap().points
+                    self.local_path = self.local_path_maker.path_plan(points)
 
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
@@ -171,7 +171,7 @@ class Planner:
                 # self.localpoint.header.stamp=rospy.Time.now()
                 # self.point_pub.publish(self.localpoint)
 
-                self.obs.points.append = self.map_maker.showObstacleMap().points
+                self.obs.points= self.map_maker.showObstacleMap().points
                 self.obs.header.stamp = rospy.Time.now()
                 self.obs_pub.publish(self.obs)
 
@@ -190,7 +190,7 @@ class Planner:
         self.obstacle_msg.circles = msg.circles
         self.obstacle_msg.circle_number = msg.circle_number
 
-        self.map_maker.mapping(msg.circles)
+        self.map_maker.mapping(self,msg.circles)
 
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x

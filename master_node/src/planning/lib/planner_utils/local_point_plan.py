@@ -20,19 +20,14 @@ class LPP:
         self.target_point_dict={}
         self.global_path=planner.global_path
         self.base_index=planner.veh_index
-        print(self.base_index)
         self.base=Point32(self.global_path.x[self.base_index],self.global_path.y[self.base_index],0)
 
-    def path_plan(self,circles):
+    def path_plan(self,obstacles):
 
         theta=radians(self.local.heading)
-        for circle in circles:
+        for obstacle in obstacles:
             # 장애물 절대좌표 변환
-            x=circle.center.x*cos(theta)+circle.center.y*-sin(theta) + self.local.x
-            y=circle.center.x*sin(theta)+circle.center.y*cos(theta) + self.local.y
 
-            if circle.center.x<0.5 and abs(circle.center.y)<3: 
-                continue
             min_dist=-1
             min_index = 0
             # base_index = avoidance가 시작된 시점의 차량의 위치와 가장 가까운 global path index
@@ -40,12 +35,11 @@ class LPP:
             # min_dist < dist인 경우, 가장 가까운 index를 지나쳤다고 판단하여 break
             end_index=min(self.base_index+300, len(self.global_path.x)-1)
             for i in range(self.base_index,end_index):
-                dist=hypot(self.global_path.x[i]-x, self.global_path.y[i]-y)
+                dist=hypot(self.global_path.x[i]-obstacle.x, self.global_path.y[i]-obstacle.y)
                 if min_dist==-1 or min_dist > dist:
                     min_dist=dist
                     min_index = i
 
-            print(min_index)
 
 
             # dist -> 0 : 2 // dist -> inf : 0 식을 이용
@@ -57,30 +51,18 @@ class LPP:
             # r=sqrt(-2/5*min_dist + 4)
             # r=1/(min_dist+1/3)
             # 경로의 반대쪽에 point를 찍음
-            rad=np.arctan2(y-self.global_path.y[min_index], x-self.global_path.x[min_index]) + pi
+            rad=np.arctan2(obstacle.y-self.global_path.y[min_index], obstacle.x-self.global_path.x[min_index]) + pi
             point=Point32()
             point.x = self.global_path.x[min_index] + (r * cos(rad))
             point.y = self.global_path.y[min_index] + (r * sin(rad))
 
-            # 간이 mapping - 수정 필요
-            exist=False
-            for i in range(min_index-6,min_index+6):
-
-                if i in self.target_point_dict:
-                    temp=self.target_point_dict[i]
-                    del self.target_point_dict[i]
-                    self.target_point_dict[int((i+min_index)/2)]=temp
-                    exist=True
-                    break
-            if not exist:
-                self.target_point_dict[min_index]=point
+            self.target_point_dict[min_index]=point
 
         # target point를 key로 정렬 -> tuple로 이루어진 list[(index, point), (index, point) ... ]
         target_point_list=sorted(self.target_point_dict.items())
         if len(target_point_list) ==0:
             return self.local_path
 
-        print(target_point_list)
         # 마지막 target point로부터 20 index 만큼 떨어진 점을 마지막으로 추가함
         # out of index 방지 위해 min 활용
         last_index=min(target_point_list[-1][0]+50, len(self.global_path.x)-1)
