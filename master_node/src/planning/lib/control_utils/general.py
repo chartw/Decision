@@ -17,7 +17,7 @@ class General:
 
         self.GeneralLookahead = control.lookahead  # 직진 주행시 lookahead
 
-        self.serial_info = control.serial_info  #####  얘가 빈공간으로 들어오고 ㅣㅇ씅 @@@@@@@ 음 그냥  init 이라서 한번만 받아오는거네.같은 데이터 공간이어도 계속 받아와야 하징자ㅓㄹㄴㅁㅇ러ㅣㄷ렁마ㅣㄴ
+        self.serial_info = control.serial_info  # 10* km/h 상태.
 
         self.temp_msg = Serial_Info()
 
@@ -97,32 +97,48 @@ class General:
 
         self.head.x = self.cur.x + 1.5*cos(radians(self.cur.heading))
         self.head.y = self.cur.y + 1.5*cos(radians(self.cur.heading))
+        # 넘 길어서 여기만 지역변수로 .        
+        center_x = self.obstacle_msg.circles[-1].center.x # 가장 마지막에 인식된 장애물 중심좌표. _ 가가운것도 이미 되있겠지? _ 확인요망
+        center_y = self.obstacle_msg.circles[-1].center.y   
+        radius   = self.obstacle_msg.circles[-1].radius     
+
         
-        emergency_d = hypot(self.head.x - self.obstacle_msg.circles[-1].x, 
-                            self.head.y - self.obstacle_msg.circles[-1].y )
-        # 그 점과 ( obstacle_msg.circles[-1].x ,obstacle_msg.circles[-1].y ) 가장 멀리있는 (?) 장애물의 좌표 사이 거리를 'emergency_d' 로.
-        
-        if emergency_d < 0.5: # 무조건 stop. -> 이후엔 수동으로 원상복귀 할거.
+        '''
+            emergency_d :  차 앞부분과 최근인식된 장애물중점 사이 거리 - 장애물반지름 
+            temp_rad    :  emergency_d line 의 각도 = 차량 앞부분에서 장애물까지 선이 이르는 각도  [0~ 2pi]
+            safe_d      :  1m 이하일때만 실행! (멀리서 막 실행하지 않도록) 
+            d[m]        :  push 길이 
+            L[m]        :  쪼가리의 길이
+        '''
+        emergency_d = hypot(self.head.x - center_x, self.head.y - center_y ) - radius
+        temp_rad = atan2( center_y - self.head.y , center_x - self.head.x) % 360 
+        safe_d = emergency_d * sin(radians( abs(self.cur.heading - degrees(temp_rad)) ) - radius 
+        d = 1.5 + 0.5/emergency_d  # 현속도 (self.serial_info.speed), circle.radius , emergency_d 에 맞게 수정 하기.
+        L = 1.5                    # 일단 고정 / >> 속도 빠르면 멀면 길게잘라
+
+        if emergency_d < 0.5:   # 무조건 stop. -> 이후엔 수동으로 원상복귀 할거.
             self.emergency = True 
 
-        else:   # 여기에 추후에 차선정보도 포함시켜야 할듯. 
+        else:                   # 여기에 추후에 차선정보도 포함시켜야 할듯. 
             self.emergency = False
 
-            if 오른쪽에 있을때:
-                pushed_path_x = ~~
-                pushed_path_y = ~~
-            elif 왼쪽 or 가운데 있을때:
-                pushed_path_x = ~~
-                pushed_path_y = ~~
-        
-        return  pushed_path_x, pushed_path_y
+            if safe_d < 1:
+                for i in range( L*10 ): 
+
+                    if True: #오른쪽에 있을때(중앙포함) 왼쪽으로 push   
+                        self.path.x[ self.target_index + i ] -= d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+                        self.path.y[ self.target_index + i ] += d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+                    elif 왼쪽 있을때 오른쪽으로 push:
+                        self.path.x[ self.target_index + i ] += d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+                        self.path.y[ self.target_index + i ] -= d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+
 
 
     def pure_pursuit(self):
 
         # if self.path_mission == 'static': # kcity csv의 마지막 부분 작업 이후에.축가.
         if self.obstacle_msg.circles: ## @@@
-            self.path.x, self.path.y = self.lane_push()
+            self.lane_push() # class 전역변수만 바꿔줌 (근데 safe_d >1 이면 아무것도 안함.)
 			
             ## path_ rviz 도 여기서만 송출-----------느리면 일부만. -----------@@@@
             for i in range(len(self.path_x)): 
@@ -199,7 +215,7 @@ class General:
     def PID(self, V_ref):
 
         self.V_err_old = self.V_err
-        self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
+        self.V_err = V_ref - self.serial_info.speed  ## pid  이상할땐, 여기 10 곱해진 상태.
 
         # print('self.cur:',self.cur)
         # print('self.path',self.path)
@@ -232,10 +248,9 @@ class General:
     def calc_Vref(self):
         stidx = self.select_target(self.speed_lookahead)
         target_k = abs(self.path.k[stidx])
-        # print(target_k)
-        V_ref = self.calc_k(target_k)
+        V_ref = self.calc_k(target_k) # km/h
 
-        return int(V_ref)
+        return 10 * int(V_ref)
 
     def calc_velocity(self):
 
@@ -254,14 +269,14 @@ class General:
             self.V_err_deri = 0
             self.V_err_pro = 0
 
-        V_ref = self.calc_Vref()
-        V_in = self.PID(V_ref)
-        if V_in > 20:
-            V_in = 20
+        V_ref = self.calc_Vref() # 10*km/h
+        V_in = self.PID(V_ref) # 10*km/h
+        if V_in > 200:
+            V_in = 200
         elif V_in < V_ref:
             V_in = V_ref
 
-        return int(V_in)
+        return int(V_in) # 10* km/h
 
 
 ##################################################3
@@ -282,7 +297,7 @@ class General:
 
         
         self.temp_msg.steer = self.pure_pursuit()
-        self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
+        self.temp_msg.speed = self.calc_velocity()  # PID 추가 # 
         self.temp_msg.brake = 0
         self.temp_msg.encoder = 0
         self.temp_msg.gear = 0
