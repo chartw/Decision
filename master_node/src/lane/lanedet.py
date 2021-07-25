@@ -67,7 +67,7 @@ class Controller:
         self.vision_lane_data = lane()
         self.lidar_lane_data = lane()
         self.corn_flag = True
-        self.ser = serial.Serial('/dev/ttyUSB0',115200) # USB 권한 주
+        self.ser = serial.Serial('/dev/ttyUSB2',115200) # USB 권한 주
 
         self.drive_mode = 'normal'
 
@@ -104,7 +104,7 @@ class Controller:
         self.V_err_deri = 0
 
         self.safety_factor = 0.8
-        self.V_ref_max = 12 #[km/h] ####@@@@@@ 정현아이게 비젼운행시 최고속도야 ( 높여줘. )
+        self.V_ref_max = 10 #[km/h] ####@@@@@@ 정현아이게 비젼운행시 최고속도야 ( 높여줘. )
         self.curve_flag = False # 직선에서 출발 @@@@@@@2
         # encoder
         self.e = 0
@@ -232,8 +232,8 @@ class Controller:
         if self.lane_flag == 1:
             return self.steering_angle(cur_x, cur_y, cur_yaw, self.goal_x, self.goal_y)
         else:
-            self.goal_x = self.goal_x_buffer
-            self.goal_y = self.goal_y_buffer
+            # self.goal_x = self.goal_x_buffer
+            # self.goal_y = self.goal_y_buffer
             return self.steering_angle(cur_x, cur_y, cur_yaw, self.goal_x, self.goal_y)
 
     def steering_angle(self,  cur_x, cur_y, cur_yaw, target_x, target_y):
@@ -252,7 +252,7 @@ class Controller:
         alpha = max(alpha,  -90)
         alpha = min(alpha,  90)
         # print("alpha final : ",alpha)
-        
+        print("x, y", target_x, target_y)
         
         #PUREPURSUIT
 
@@ -268,7 +268,7 @@ class Controller:
             
             delta = alpha  #  이게 문제가 아닐까아러아러아러ㅏㅇ러ㅏㅇㄹㅇ
         # print('curve_flag',self.curve_flag)
-
+        # print("len : ", len(lane)
         print('alpha, delta [deg] : ',alpha,delta)
 
 
@@ -348,21 +348,21 @@ class Controller:
         # print(left_x,right_x)
         # print(right_y,left_y)
 
-        if len(lane_data.left) != 0:
-            l_a, l_b = self.line_detect(lane_data.left)
-            left_first.x = min(left_x)
-            left_first.y = min(left_x) * l_a + l_b
-            left_last.x = max(left_x)
-            left_last.y = max(left_x) * l_a + l_b # - 0.2
-            # left_last.x = 2
-            # left_last.y = 2 * l_a + l_b
+        # if len(lane_data.left) != 0:
+        #     l_a, l_b = self.line_detect(lane_data.left)
+        #     left_first.x = min(left_x)
+        #     left_first.y = min(left_x) * l_a + l_b
+        #     left_last.x = max(left_x)
+        #     left_last.y = max(left_x) * l_a + l_b # - 0.2
+        #     # left_last.x = 2
+        #     # left_last.y = 2 * l_a + l_b
 
-        else:
-            l_a, l_b = 0, 0
-            left_first.x = 0
-            left_first.y = 0
-            left_last.x = 0
-            left_last.y = 0
+        # else:
+        #     l_a, l_b = 0, 0
+        #     left_first.x = 0
+        #     left_first.y = 0
+        #     left_last.x = 0
+        #     left_last.y = 0
 
         # right is not empty
         if len(lane_data.right) != 0:
@@ -379,51 +379,60 @@ class Controller:
             right_last.y = 0
 
 
-        c_a = (l_a + r_a) / 2
-        c_b = 0.0
+        # c_a = (l_a + r_a) / 2
+        # c_b = 0.0
         
 
-        center_first.x = 0.0
-        center_first.y = 0.0
-        center_last.x = 1.0
-        center_last.y = 1.0 * c_a + c_b
+        # center_first.x = 0.0
+        # center_first.y = 0.0
+        # center_last.x = 1.0
+        # center_last.y = 1.0 * c_a + c_b
         
-        left_last.x, right_last.x = max(left_last.x, right_last.x), max(left_last.x, right_last.x)
-        left_last.y, right_last.y = left_last.x * l_a + l_b, right_last.x * r_a + r_b
+        # left_last.x, right_last.x = max(left_last.x, right_last.x), max(left_last.x, right_last.x)
+        # left_last.y, right_last.y = left_last.x * l_a + l_b, right_last.x * r_a + r_b
 
-        d=1.1 # 디디디 거리디디디디디디디디디
+        # left_last.x, left_last.y = max(left_last.x, right_last.x), left_last.x * l_a + l_b
+        # , right_last.y = left_last.x * l_a + l_b, right_last.x * r_a + r_b
 
+        # 디디디디디디
+        d = 1.3
         # print("number :", len(lane_data.left), len(lane_data.right))
-        l_rad=np.arctan2(left_last.y - left_first.y, left_last.x - left_first.x) - pi / 2
+        # l_rad=np.arctan2(left_last.y - left_first.y, left_last.x - left_first.x) - pi / 2
         r_rad=np.arctan2(right_last.y - right_first.y, right_last.x - right_first.x) +pi / 2
 
-        if len(lane_data.left)!= 0 and len(lane_data.right) != 0:
-            self.goal_x, self.goal_y = (left_last.x + right_last.x)/2 , (left_last.y + right_last.y)/2
+        if len(lane_data.right)!= 0:
+            # self.goal_x, self.goal_y = 1, l_a
+            self.goal_x, self.goal_y = right_first.x + (d*cos(r_rad)), right_first.y + (d*sin(r_rad))
             # print(left_last.x, right_last.x, right_last.y, right_last.y)
 
-        elif len(lane_data.left) == 0 and len(lane_data.right) == 0:
-            self.goal_x, self.goal_y = 1, 0
+        elif len(lane_data.right) == 0:
+            print("do?")
+            self.goal_x, self.goal_y = 2, -1
+            # print(left_last.x, right_last.x, right_last.y, right_last.y)
+        print("len : ", len(lane_data.right))
+        # elif len(lane_data.left) == 0:
+        #     self.goal_x, self.goal_y = 5, 1
             
-        elif len(lane_data.left) != 0 and len(lane_data.right) == 0:
-            # print("left_deg : ",np.rad2deg(rad2))
-            self.goal_x = left_last.x + (d*cos(l_rad))
-            self.goal_y = left_last.y + (d*sin(l_rad))
-            # self.goal_x, self.goal_y = 1, -1
+        # elif len(lane_data.left) != 0 and len(lane_data.right) == 0:
+        #     # print("left_deg : ",np.rad2deg(rad2))
+        #     self.goal_x = left_last.x + (d*cos(l_rad))
+        #     self.goal_y = left_last.y + (d*sin(l_rad))
+        #     # self.goal_x, self.goal_y = 1, -1
 
-        elif len(lane_data.left) == 0 and len(lane_data.right) != 0:
-            # print("right_deg : ",np.rad2deg(r_rad))
-            self.goal_x = right_last.x + (d*cos(r_rad))
-            self.goal_y = right_last.y + (d*sin(r_rad))
-            # self.goal_x, self.goal_y = 1, 19
+        # elif len(lane_data.left) == 0 and len(lane_data.right) != 0:
+        #     # print("right_deg : ",np.rad2deg(r_rad))
+        #     self.goal_x = right_last.x + (d*cos(r_rad))
+        #     self.goal_y = right_last.y + (d*sin(r_rad))
+        #     # self.goal_x, self.goal_y = 1, 19
 
-        l_line = self.line_marker(left_first, left_last, "left", 0)
-        r_line = self.line_marker(right_first, right_last, "right", 1)
+        r_line = self.line_marker(right_first, right_last, "left", 0)
+        # r_line = self.line_marker(right_first, right_last, "right", 1)
 
         # if len(left_x) == 0 and len(right_x) == 0:
         #     self.serWrite(self.speed,int(self.control_data['steering']), self.cnt)
         self.right_line_pub.publish(r_line)
         
-        if len(left_x) == 0 and len(right_x) == 0: #both empty array
+        if len(right_x) == 0: #both empty array
             self.lane_flag = 0
 
         else: 
@@ -446,24 +455,24 @@ class Controller:
         self.goal_pt.header.stamp = rospy.Time.now()
         
         #시각화
-        for i in range(len(left_x)):
-            path = Point32()
-            path.x = left_x[i]
-            path.y = left_y[i]
-            self.paths_left.points.append(path)
-
         for i in range(len(right_x)):
             path = Point32()
             path.x = right_x[i]
             path.y = right_y[i]
             self.paths_right.points.append(path)
+
+        # for i in range(len(right_x)):
+        #     path = Point32()
+        #     path.x = right_x[i]
+        #     path.y = right_y[i]
+        #     self.paths_right.points.append(path)
         
         goal = Point32()
         goal.x = self.goal_x
         goal.y = self.goal_y
         self.goal_pt.points.append(goal)
 
-        self.pub_pl.publish(self.paths_left)
+        # self.pub_pl.publish(self.paths_right)
         self.pub_pr.publish(self.paths_right)
         self.pub_g.publish(self.goal_pt)
         
@@ -492,7 +501,7 @@ class Controller:
 
 
         packet = self.ser.readline()
-        # print(packet)
+        # print(packet) 
         if len(packet) == 18:
             header = packet[0:3].decode()
 
@@ -521,9 +530,10 @@ class Controller:
                 self.speed= int(45)    
             elif self.cur_state == "vision_lane":
                 self.speed= self.calc_velocity()
+                # self.speed= int(45)
                 # 곡선일때는 alpha 가보자. @@@@@@@22
                 if self.curve_flag ==True:
-                    self.speed=int(30) 
+                    self.speed=int(40) 
                     print('speed:',self.speed)
                 # print('speed:',speed)
                 
@@ -531,7 +541,6 @@ class Controller:
             # print("현재 속도", self.velocity_enc)
             # self.cnt=0
             self.serWrite(self.speed,int(self.control_data['steering']), self.cnt)
-            
             self.past_state = self.cur_state # 바로전 모드 기록 _ 종제어 용
 
 
@@ -560,7 +569,7 @@ class Controller:
         V_ref = self.calc_Vref() # 10 곱해서 준 값. 
         
         # @@@@@@@ 곡선일때 True 로 ㄴ
-        if V_ref!=(self.V_ref_max)*10:
+        if V_ref != (self.V_ref_max)*10:
             self.curve_flag =True
         else:
             self.curve_flag =False
