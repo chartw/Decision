@@ -17,6 +17,7 @@ class LPP:
         self.target_point_dict={}
 
     def start(self,planner):
+        self.target_point_dict={}
         self.global_path=planner.global_path
         self.base_index=planner.veh_index
         print(self.base_index)
@@ -58,8 +59,8 @@ class LPP:
             # 경로의 반대쪽에 point를 찍음
             rad=np.arctan2(y-self.global_path.y[min_index], x-self.global_path.x[min_index]) + pi
             point=Point32()
-            point.x = x + (r * cos(rad))
-            point.y = y + (r * sin(rad))
+            point.x = self.global_path.x[min_index] + (r * cos(rad))
+            point.y = self.global_path.y[min_index] + (r * sin(rad))
 
             # 간이 mapping - 수정 필요
             exist=False
