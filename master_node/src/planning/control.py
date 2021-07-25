@@ -1,4 +1,5 @@
 import rospy
+from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info #@@@
 
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from geometry_msgs.msg import Point32
@@ -39,6 +40,10 @@ class Control:
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
+        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback) # @@@@
+        self.obstacle_msg = Obstacles() # @@@
+
+
         self.planning_info = Planning_Info()
         self.serial_info = Serial_Info() # 위에서 받았는데 얘가 계속 초기화 되는거 아니가?? @@@@@@@@
         self.local = Local()
@@ -146,6 +151,11 @@ class Control:
         self.serial_info.speed = msg.speed
         self.serial_info.emergency_stop = msg.emergency_stop
         self.serial_info.brake = msg.brake
+
+    def obstacleCallback(self, msg): #@@@@
+        # self.obstacle_msg.segments = msg.segments
+        self.obstacle_msg.circles = msg.circles
+        self.obstacle_msg.circle_number = msg.circle_number
 
 
 

@@ -13,7 +13,7 @@ class General:
 
         # 참조 수행
         self.cur = control.local  # local 좌표
-        self.path = control.global_path  # global_path
+        self.path = control.global_path  # global_path # 한번만 받아오는거. 
 
         self.GeneralLookahead = control.lookahead  # 직진 주행시 lookahead
 
@@ -28,14 +28,17 @@ class General:
         self.target_index = 0
 
 
+        # For static_mission  # @@@@  control 에서 callback 받을 때마다 보내줘 여기로. # 계속 받아와야해서 init 말고 driving 에 있으면 될듯. ???#@@@@@@@@@@@
+        self.obstacle_msg = Obstacles()
+        # self.obstacle_msg.circles = [] # 메시지 지정만 하면 초기화 안해놔도 되겟지??? 
+        # self.obstacle_msg.circle_number = 0
 
 
 
-        # For static_mission # @@@@  
-        self.obstacle_msg = Obstacles() 
-        rospy.init_node("General", anonymous=False)  # @@@@
-        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback) # @@@@
-        self.head.x,self.head.y = 0,0
+
+
+
+        self.head_x,self.head_y = 0,0
         # rviz for gpaths @@@@
         self.gpaths=PointCloud()
         self.gpaths.header.frame_id='world'
@@ -94,9 +97,9 @@ class General:
 
 
     def lane_push(self): # push 된 lane 으로 개정. @@@@@@
-
-        self.head.x = self.cur.x + 1.5*cos(radians(self.cur.heading))
-        self.head.y = self.cur.y + 1.5*cos(radians(self.cur.heading))
+        
+        self.head_x = self.cur.x + 1.5*cos(radians(self.cur.heading))
+        self.head_y = self.cur.y + 1.5*cos(radians(self.cur.heading))
         # 넘 길어서 여기만 지역변수로 .        
         center_x = self.obstacle_msg.circles[-1].center.x # 가장 마지막에 인식된 장애물 중심좌표. _ 가가운것도 이미 되있겠지? _ 확인요망
         center_y = self.obstacle_msg.circles[-1].center.y   
@@ -110,10 +113,10 @@ class General:
             d[m]        :  push 길이 
             L[m]        :  쪼가리의 길이
         '''
-        emergency_d = hypot(self.head.x - center_x, self.head.y - center_y ) - radius
-        temp_rad = atan2( center_y - self.head.y , center_x - self.head.x) % 360 
-        safe_d = emergency_d * sin(radians( abs(self.cur.heading - degrees(temp_rad)) ) - radius 
-        d = 1.5 + 0.5/emergency_d  # 현속도 (self.serial_info.speed), circle.radius , emergency_d 에 맞게 수정 하기.
+        emergency_d = hypot(self.head_x - center_x, self.head_y - center_y ) - radius
+        temp_rad = atan2( center_y - self.head_y , center_x - self.head_x) % 360 
+        safe_d = emergency_d * sin(radians( abs(self.cur.heading - degrees(temp_rad)) )) - radius 
+        d = 1.5 + 0.5/emergency_d  # 현속도 (self.serial_info.speed), circle.radius , eme               rgency_d 에 맞게 수정 하기.
         L = 1.5                    # 일단 고정 / >> 속도 빠르면 멀면 길게잘라
 
         if emergency_d < 0.5:   # 무조건 stop. -> 이후엔 수동으로 원상복귀 할거.
@@ -128,9 +131,9 @@ class General:
                     if True: #오른쪽에 있을때(중앙포함) 왼쪽으로 push   
                         self.path.x[ self.target_index + i ] -= d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
                         self.path.y[ self.target_index + i ] += d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
-                    elif 왼쪽 있을때 오른쪽으로 push:
-                        self.path.x[ self.target_index + i ] += d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
-                        self.path.y[ self.target_index + i ] -= d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+                    # elif 왼쪽 있을때 오른쪽으로 push:
+                        # self.path.x[ self.target_index + i ] += d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+                        # self.path.y[ self.target_index + i ] -= d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
 
 
 
@@ -196,13 +199,6 @@ class General:
         else:
 
             return delta
-
-
-    # Callback Functions
-    def obstacleCallback(self, msg): #@@@@
-        self.obstacle_msg.segments = msg.segments
-        self.obstacle_msg.circles = msg.circles
-        self.obstacle_msg.circle_number = msg.circle_number
 
 
 
@@ -288,6 +284,11 @@ class General:
 
 
     def driving(self, control):
+        # @@@@
+        self.obstacle_msg.circles = control.obstacle_msg.circles
+        self.obstacle_msg.circle_number = control.obstacle_msg.circle_number 
+
+
         # 미션별 최고속도. 여기에 ??
         if control.planning_info.mode == "general":
             self.V_ref_max = 12

@@ -97,10 +97,11 @@ class Planner:
         self.past_state=0
 
 
-        ### local_ rviz##### @@@
-        self.cur_points=PointCloud()
-        self.cur_points.header.frame_id = 'world'
-        self.pub_c=rospy.Publisher('/cur_xy',PointCloud,queue_size=1)
+        # ### local_ rviz
+        # # pri#####@@@
+        # self.cur_points=PointCloud()
+        # self.cur_points.header.frame_id = 'world'
+        # self.pub_c=rospy.Publisher('/cur_xy',PointCloud,queue_size=1)
 
         ######################
         
@@ -171,13 +172,15 @@ class Planner:
         self.is_local = True
 
         ## local_ rviz ## --------------------------------------------@@@@---------
-        cur_point = Point32()
-        cur_point.x = self.local.x
-        cur_point.y = self.local.y
-        self.cur_points.points.append(cur_point)
-        self.cur_points.header.stamp = rospy.Time.now()
-        self.pub_c.publish(self.cur_points)
-        #--------------------------------------------------------
+        
+        # cur_point = Point32()
+        # cur_point.x = self.local.x
+        # cur_point.y = self.local.y
+        # print(cur_point)
+        # self.cur_points.points.append(cur_point)
+        # self.cur_points.header.stamp = rospy.Time.now()
+        # self.pub_c.publish(self.cur_points)
+        # #--------------------------------------------------------
 
 
 
