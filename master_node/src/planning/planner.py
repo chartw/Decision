@@ -42,7 +42,10 @@ class Planner:
         """
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        self.point_pub=rospy.Publisher("/local_point",PointCloud,queue_size=1)
+        self.local_path_pub=rospy.Publisher("/local_path",PointCloud,queue_size=1)
+        self.obs_pub=rospy.Publisher("/obs_pub",PointCloud,queue_size=1)
+        self.pose_pub=rospy.Publisher("/pose_pub",PointCloud,queue_size=1)
+        self.global_path_pub=rospy.Publisher("/global_path",PointCloud,queue_size=1)
 
         # subscriber 정의
         self.planning_msg = Planning_Info()
@@ -78,23 +81,37 @@ class Planner:
         self.gpp_requested = True
         self.is_global_path_pub = False
         self.mission_ing = False
+        self.is_avoidance_ing=False
 
         # data 변수 선언
         self.global_path = Path()
+        self.local_path=Path()
         self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
         self.mission_goal = Point32()
 
+        self.veh_index=0
+        self.target_index=0
+
         # gpp 변수 선언
         self.global_path_maker = GPP(self)
-        self.local_point_maker = LPP()
+        self.local_path_maker = LPP(self)
         self.misson_planner = MissionPlan(self)
 
-        self.localpoint=PointCloud()
-        self.localpoint.header.frame_id='world'
-
         self.past_state=0
+
+        self.vis_local_path=PointCloud()
+        self.vis_local_path.header.frame_id='world'
+
+        self.vis_global_path=PointCloud()
+        self.vis_global_path.header.frame_id='world'
+
+        self.obs=PointCloud()
+        self.obs.header.frame_id='world'
+
+        self.pose=PointCloud()
+        self.pose.header.frame_id='world'
 
         
 
@@ -107,24 +124,14 @@ class Planner:
                 if self.gpp_requested:
 
                     self.global_path = self.global_path_maker.path_plan()
-                    self.planning_msg.path_x = self.global_path.x
-                    self.planning_msg.path_y = self.global_path.y
-                    self.planning_msg.path_heading = self.global_path.heading
-                    self.planning_msg.path_k = self.global_path.k
                     self.planning_msg.mode="general"
                     self.gpp_requested = False
-                else: #gpp not requested
-                    self.planning_msg.path_x = []
-                    self.planning_msg.path_y = []
-                    self.planning_msg.path_heading = []
-                    self.planning_msg.path_k = []
                 
                 
                 #Localization Information
                 self.planning_msg.local=self.local
 
                 # Mission Decision
-
                 self.planning_msg.state = self.misson_planner.state_check(self)
 
                 if not self.mission_ing:
@@ -132,18 +139,53 @@ class Planner:
                 else:
                     self.mission_ing=self.misson_planner.end_check(self) #return True/False
 
-                if self.planning_msg.mode=="avoidance":
-                    if self.obstacle_msg.circles:
-                        point=self.local_point_maker.point_plan(self.obstacle_msg.circles)
-                        theta=radians(self.local.heading)
-                        self.planning_msg.point.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                        self.planning_msg.point.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
+                if self.planning_msg.mode=="general":
+                    self.planning_msg.path=self.global_path
+                    self.target_index,self.planning_msg.point=self.global_path_maker.point_plan(self,4)
+                    
+                elif self.planning_msg.mode=="avoidance":
+                    if self.is_avoidance_ing == False:
+                        self.is_avoidance_ing = True
+                        self.local_path_maker.start(self)
 
-                        #######
-                        self.localpoint.points.append(point)
-                        self.localpoint.header.stamp=rospy.Time.now()
-                        self.point_pub.publish(self.localpoint)
-                        #######
+                    if self.obstacle_msg.circles:
+                        self.local_path =self.local_path_maker.path_plan(self.obstacle_msg.circles)
+
+                    if self.local_path.x:
+                        self.planning_msg.path=self.local_path
+                        self.planning_msg.point=self.local_path_maker.point_plan(self,2)
+
+                self.vis_local_path.points=[]
+                for i in range(len(self.local_path.x)):
+                    self.vis_local_path.points.append(Point32(self.local_path.x[i],self.local_path.y[i],0))
+                self.vis_local_path.header.stamp=rospy.Time.now()
+                self.local_path_pub.publish(self.vis_local_path)
+
+                if len(self.vis_global_path.points) == 0:
+                    for i in range(len(self.global_path.x)):
+                        self.vis_global_path.points.append(Point32(self.global_path.x[i],self.global_path.y[i],0))
+                        self.vis_global_path.header.stamp=rospy.Time.now()
+                self.global_path_pub.publish(self.vis_global_path)
+
+                # self.localpoint.points.append(self.planning_msg.point)
+                # self.localpoint.header.stamp=rospy.Time.now()
+                # self.point_pub.publish(self.localpoint)
+                
+                theta=radians(self.local.heading)
+                self.obs.points=[]
+                for circle in self.obstacle_msg.circles:
+                    # 장애물 절대좌표 변환
+                    x=circle.center.x*cos(theta)+circle.center.y*-sin(theta) + self.local.x
+                    y=circle.center.x*sin(theta)+circle.center.y*cos(theta) + self.local.y
+                    self.obs.points.append(Point32(x,y,0))
+                self.obs.header.stamp=rospy.Time.now()
+                self.obs_pub.publish(self.obs)
+
+                self.pose.points=[]
+                self.pose.points.append(Point32(self.local.x, self.local.y,0))
+                self.pose.header.stamp=rospy.Time.now()
+                self.pose_pub.publish(self.pose)
+
                     
                 self.planning_info_pub.publish(self.planning_msg)
                 self.past_state=self.planning_msg.state

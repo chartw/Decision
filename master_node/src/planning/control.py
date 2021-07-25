@@ -59,13 +59,10 @@ class Control:
 
         # main loop
         while not rospy.is_shutdown():
-            if self.is_planning:              
+            if self.is_planning:
                 if self.planning_info.mode == "general":
-                    if self.planning_info.path_x:
-                        self.global_path.x = self.planning_info.path_x
-                        self.global_path.y = self.planning_info.path_y
-                        self.global_path.heading = self.planning_info.path_heading
-                        self.global_path.k = self.planning_info.path_k
+                    if self.planning_info.path.x:
+                        self.global_path = self.planning_info.path
                     if self.global_path.x:
                         self.pub_msg = general.driving(self)
             if self.planning_info.mode == 'emergency_stop':                                    
@@ -124,7 +121,11 @@ class Control:
 
     # Callback Function
     def planningCallback(self, msg):
-        self.planning_info = msg
+        self.planning_info=msg
+        self.global_path.x = msg.path.x
+        self.global_path.y = msg.path.y
+        self.global_path.heading = msg.path.heading
+        self.global_path.k = msg.path.k
         self.local_point=msg.point
         self.local.x = msg.local.x
         self.local.y = msg.local.y
