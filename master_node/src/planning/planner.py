@@ -70,6 +70,7 @@ class Planner:
         # self.objects = BoundingBoxes()
         self.is_person = False
         self.mission_goal = Point32()
+        self.target_map={}
 
         self.veh_index = 0
         self.target_index = 0
@@ -161,8 +162,7 @@ class Planner:
                         self.local_path_maker.start(self)
                         self.map_maker = Mapping(self)
 
-                    points=self.map_maker.showObstacleMap().points
-                    self.local_path = self.local_path_maker.path_plan(points)
+                    self.local_path = self.local_path_maker.path_plan(self.target_map)
 
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
@@ -180,10 +180,16 @@ class Planner:
                         self.vis_global_path.header.stamp = rospy.Time.now()
                 self.global_path_pub.publish(self.vis_global_path)
 
+                # self.target.points=[]
+                # self.target.points.append(Point32(self.global_path.x[self.veh_index],self.global_path.y[self.veh_index],0))
+                # self.target.header.stamp=rospy.Time.now()
+                # self.target_pub.publish(self.target)
+
                 self.target.points=[]
                 self.target.points.append(self.planning_msg.point)
                 self.target.header.stamp=rospy.Time.now()
                 self.target_pub.publish(self.target)
+
 
                 self.map.points= self.map_maker.showObstacleMap().points
                 self.map.header.stamp = rospy.Time.now()
@@ -215,6 +221,7 @@ class Planner:
         self.obstacle_msg.circle_number = msg.circle_number
 
         self.map_maker.mapping(self,msg.circles)
+        self.target_map=self.map_maker.gpath_min_check(self)
 
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x

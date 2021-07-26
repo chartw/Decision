@@ -289,9 +289,7 @@ class GPP:
 
         theta = radians(self.local.heading - self.global_path.heading[self.target_index])
         proj_dist = lookahead * cos(radians(theta))
-        planner.veh_index = self.target_index - int(proj_dist * 10)
-        if planner.veh_index < 0:
-            planner.veh_index=0
+        planner.veh_index = max(0,self.target_index - int(proj_dist * 10))
 
         target_point=Point32(self.global_path.x[self.target_index],self.global_path.y[self.target_index],0)
         return self.target_index, target_point

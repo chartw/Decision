@@ -35,21 +35,29 @@ class MissionPlan:
 
     def state_check(self, planner):
         min_dist = 999999
-        for circle in planner.obstacle_msg.circles:
-            dist = hypot(0 - circle.center.x, 0 - circle.center.y)
-            if min_dist > dist:
-                min_dist = dist
+        id=-1
+        for min_index, target in planner.target_map.items():
+            if target.min_dist < 1.5:
+                dist = (min_index-planner.veh_index)/10
+                if min_dist > dist:
+                    id=min_index
+                    min_dist = dist
+
+        print(min_dist)
+        if id == -1:
+            self.state=0
         ##거리 체크해보자
-        if min_dist < 5:
-            self.state = 4
-        elif min_dist < 6:
-            self.state = 3
-        elif min_dist < 8:
-            self.state = 2
-        elif min_dist < 12:
-            self.state = 1
         else:
-            self.state = 0
+            if min_dist < 5:
+                self.state = 4
+            elif min_dist < 6:
+                self.state = 3
+            elif min_dist < 8:
+                self.state = 2
+            elif min_dist < 12:
+                self.state = 1
+            else:
+                self.state = 0
 
         if planner.past_state != self.state:
             self.start_time = time.time()
@@ -66,7 +74,7 @@ class MissionPlan:
             self.mode = "avoidance"
             self.mission_ing = True
             planner.is_avoidance_ing=False
-        elif self.state==4 and time.time() - self.start_time > 3:
+        elif self.state and time.time() - self.start_time > 3:
             self.mode = "avoidance"
             self.mission_ing = True
             planner.is_avoidance_ing=False

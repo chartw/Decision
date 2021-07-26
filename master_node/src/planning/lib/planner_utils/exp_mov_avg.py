@@ -2,7 +2,7 @@ import queue
 from math import hypot
 from geometry_msgs.msg import Point32
 
-class ExpMovAbgFilter:
+class ExpMovAvgFilter:
     # 이전 스텝의 평균
     expAvg=Point32()
 
