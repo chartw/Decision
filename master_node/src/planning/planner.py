@@ -44,11 +44,14 @@ class Planner:
         }
         """
 
-        self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        self.local_path_pub = rospy.Publisher("/local_path2", PointCloud, queue_size=1)
-        self.obs_pub = rospy.Publisher("/obs_pub2", PointCloud, queue_size=1)
-        self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
-        self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
+        # 상태 flag
+        self.is_local = False
+        self.is_obstacle = False
+        self.is_object = False
+        self.gpp_requested = True
+        self.is_global_path_pub = False
+        self.mission_ing = False
+        self.is_avoidance_ing = False
 
         # subscriber 정의
         self.planning_msg = Planning_Info()
@@ -59,31 +62,6 @@ class Planner:
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
         self.parking_msg = Int16()
-
-        # LiDAR
-        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        # rospy.Subscriber("/parking",Int16, self.parkingCallback)
-
-        # Localization
-        rospy.Subscriber("/pose", Odometry, self.localCallback)
-
-        # Vision - Object
-        # def objectCallback(self, msg): self.object_msg = msg
-        rospy.Subscriber("/darknet_ros/bounding_boxes", String, self.objectCallback)
-
-        rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
-
-        # Vision - Surface
-        rospy.Subscriber("/surface", String, self.surfaceCallback)
-
-        # 상태 flag
-        self.is_local = False
-        self.is_obstacle = False
-        self.is_object = False
-        self.gpp_requested = True
-        self.is_global_path_pub = False
-        self.mission_ing = False
-        self.is_avoidance_ing = False
 
         # data 변수 선언
         self.global_path = Path()
@@ -110,11 +88,39 @@ class Planner:
         self.vis_global_path = PointCloud()
         self.vis_global_path.header.frame_id = "world"
 
+        self.map = PointCloud()
+        self.map.header.frame_id = "world"
+
         self.obs = PointCloud()
         self.obs.header.frame_id = "world"
 
         self.pose = PointCloud()
         self.pose.header.frame_id = "world"
+
+        self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
+        self.local_path_pub = rospy.Publisher("/local_path2", PointCloud, queue_size=1)
+        self.map_pub = rospy.Publisher("/map_pub", PointCloud, queue_size=1)
+        self.obs_pub = rospy.Publisher("/obs_pub", PointCloud, queue_size=1)
+        self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
+        self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
+
+ 
+
+        # LiDAR
+        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        # rospy.Subscriber("/parking",Int16, self.parkingCallback)
+
+        # Localization
+        rospy.Subscriber("/pose", Odometry, self.localCallback)
+
+        # Vision - Object
+        # def objectCallback(self, msg): self.object_msg = msg
+        rospy.Subscriber("/darknet_ros/bounding_boxes", String, self.objectCallback)
+
+        rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
+
+        # Vision - Surface
+        rospy.Subscriber("/surface", String, self.surfaceCallback)
 
     def run(self):
         rate = rospy.Rate(50)  # 100hz
@@ -171,8 +177,18 @@ class Planner:
                 # self.localpoint.header.stamp=rospy.Time.now()
                 # self.point_pub.publish(self.localpoint)
 
-                self.obs.points= self.map_maker.showObstacleMap().points
-                self.obs.header.stamp = rospy.Time.now()
+                self.map.points= self.map_maker.showObstacleMap().points
+                self.map.header.stamp = rospy.Time.now()
+                self.map_pub.publish(self.map)
+
+                theta=radians(self.local.heading)
+                self.obs.points=[]
+                for circle in self.obstacle_msg.circles:
+                    # 장애물 절대좌표 변환
+                    x=circle.center.x*cos(theta)+circle.center.y*-sin(theta) + self.local.x
+                    y=circle.center.x*sin(theta)+circle.center.y*cos(theta) + self.local.y
+                    self.obs.points.append(Point32(x,y,0))
+                self.obs.header.stamp=rospy.Time.now()
                 self.obs_pub.publish(self.obs)
 
                 self.pose.points = []

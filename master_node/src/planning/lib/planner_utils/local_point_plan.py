@@ -17,14 +17,13 @@ class LPP:
         self.target_point_dict={}
 
     def start(self,planner):
-        self.target_point_dict={}
+        # self.target_point_dict={}
         self.global_path=planner.global_path
         self.base_index=planner.veh_index
         self.base=Point32(self.global_path.x[self.base_index],self.global_path.y[self.base_index],0)
 
     def path_plan(self,obstacles):
-
-        theta=radians(self.local.heading)
+        self.target_point_dict={}
         for obstacle in obstacles:
             # 장애물 절대좌표 변환
 
@@ -45,10 +44,12 @@ class LPP:
             # dist -> 0 : 2 // dist -> inf : 0 식을 이용
             # 경로와 가까울때는 최대 2정도의 거리만큼 떨어져서 주행
             # 경로와 멀때는 거의 0에 가까운 거리만큼 떨어져서 주행
-
-            min_dist=min(min_dist, 10)
-            r=sqrt(-9/10*min_dist + 9)
+            min_dist=min(min_dist, 2)
+            # r=sqrt(-9/10*min_dist + 9)
             # r=sqrt(-2/5*min_dist + 4)
+            # r=sqrt(-3/4*min_dist + 9/4)
+            r=-3*min_dist/4 + 3/2
+            
             # r=1/(min_dist+1/3)
             # 경로의 반대쪽에 point를 찍음
             rad=np.arctan2(obstacle.y-self.global_path.y[min_index], obstacle.x-self.global_path.x[min_index]) + pi
