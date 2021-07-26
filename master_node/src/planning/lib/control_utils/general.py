@@ -109,7 +109,7 @@ class General:
         '''
             emergency_d :  차 앞부분과 최근인식된 장애물중점 사이 거리 - 장애물반지름 
             temp_rad    :  emergency_d line 의 각도 = 차량 앞부분에서 장애물까지 선이 이르는 각도  [0~ 2pi]
-            safe_d      :  1m 이하일때만 실행! (멀리서 막 실행하지 않도록) 
+            safe_d      :  1m 이하일때만 실행! (멀리서 막 실행하지 않도록)_ 그 빗변삼각형의 높이 부분. 
             d[m]        :  push 길이 
             L[m]        :  쪼가리의 길이
         '''
@@ -139,8 +139,9 @@ class General:
 
     def pure_pursuit(self):
 
-        # if self.path_mission == 'static': # kcity csv의 마지막 부분 작업 이후에.축가.
-        if self.obstacle_msg.circles: ## @@@
+        # if self.path_mission == 'static': # kcity csv의 마지막 부분 작업 이후에.추가.
+
+        if self.obstacle_msg.circles: ## control에서 오는거에 장애물이 담겨있으면,
             self.lane_push() # class 전역변수만 바꿔줌 (근데 safe_d >1 이면 아무것도 안함.)
 			
             ## path_ rviz 도 여기서만 송출-----------느리면 일부만. -----------@@@@
@@ -151,7 +152,8 @@ class General:
                 self.gpaths.points.append(gpath)
             self.gpaths.header.stamp=rospy.Time.now()
             self.pub_gp.publish(self.gpaths)
-            print('gpaths published.')
+
+            print('gpaths published._ in general.py')
             #-------------------------------------------------------------
 
 
@@ -284,7 +286,7 @@ class General:
 
 
     def driving(self, control):
-        # @@@@
+        # @@@@ control에서 callback받아서 , 계속 여기로 전해줄거.
         self.obstacle_msg.circles = control.obstacle_msg.circles
         self.obstacle_msg.circle_number = control.obstacle_msg.circle_number 
 

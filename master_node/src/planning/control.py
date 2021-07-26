@@ -37,11 +37,11 @@ class Control:
 
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
         self.pub_msg = Serial_Info()
+        self.obstacle_msg = Obstacles() # @@@
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback) # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback) # @@@@
-        self.obstacle_msg = Obstacles() # @@@
 
 
         self.planning_info = Planning_Info()
