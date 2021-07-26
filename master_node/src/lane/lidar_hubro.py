@@ -96,7 +96,7 @@ def getMsg(msg):
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
-    axis_min = -0.3
+    axis_min = -0.1
     axis_max = 2
 
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
@@ -118,7 +118,7 @@ def getMsg(msg):
         seo.x = p[0]
         seo.y = p[1]
         seo.z = 0
-        if ((seo.x ** 2 + seo.y ** 2) ** 0.5) < min_value:
+        if ((seo.x ** 2 + seo.y ** 2) ** 0.5) < min_value and seo.y > 0:
             min_value = ((seo.x ** 2 + seo.y ** 2) ** 0.5)
         if seo.y > 0:
             temp_left.append(seo)

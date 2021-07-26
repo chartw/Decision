@@ -121,6 +121,7 @@ class Controller:
         self.goal_x_buffer = 0
         self.goal_y_buffer = 0
         
+        self.avoid_steer = False
 
         self.paths_right = PointCloud()
         # self.paths_right.header= Header()
@@ -193,6 +194,13 @@ class Controller:
         # self.lidar_lane_data = lane()
         # print("get lidar lane~~~")
         self.lidar_lane_data = msg
+        if msg.curvature > 0.5:
+            self.avoid_steer = False
+        
+        if self.curve_flag is True:
+            if msg.curvature < 0.5:
+                self.avoid_steer = True
+        
         ##라이다에서 들어오는 정보 없으면 차선으로 돌리는 부분인데 확인 함 필요해 보임더~~~
         
 
@@ -265,7 +273,6 @@ class Controller:
         
         # 곡선일때는 alpha 가보자. @@@@@@@22
         if self.curve_flag ==True:
-            
             delta = alpha  #  이게 문제가 아닐까아러아러아러ㅏㅇ러ㅏㅇㄹㅇ
         # print('curve_flag',self.curve_flag)
         # print("len : ", len(lane)
@@ -279,13 +286,16 @@ class Controller:
             else :
                 delta -= 360
         # print("delta", delta)
+
+        if self.avoid_steer is True:
+            delta += 50
+
         if abs(delta)>30:
             if delta > 0:
                 return 1999
             else :
                 return -1999
-        else :
-            
+        else :    
             delta = 71*delta
         # print("delta", delta)
 
@@ -377,6 +387,9 @@ class Controller:
             right_first.y = 0
             right_last.x = 0
             right_last.y = 0
+            
+
+
 
 
         # c_a = (l_a + r_a) / 2
@@ -406,8 +419,9 @@ class Controller:
             # print(left_last.x, right_last.x, right_last.y, right_last.y)
 
         elif len(lane_data.right) == 0:
-            print("do?")
-            self.goal_x, self.goal_y = 2, -1
+            self.goal_x, self.goal_y = 3, -1
+            self.curve_flag =True
+            
             # print(left_last.x, right_last.x, right_last.y, right_last.y)
         print("len : ", len(lane_data.right))
         # elif len(lane_data.left) == 0:
@@ -534,8 +548,10 @@ class Controller:
                 # 곡선일때는 alpha 가보자. @@@@@@@22
                 if self.curve_flag ==True:
                     self.speed=int(40) 
+                    self.curve_flag =False
+
                     print('speed:',self.speed)
-                # print('speed:',speed)
+                    # print('speed:',speed)
                 
 
             # print("현재 속도", self.velocity_enc)
@@ -568,11 +584,11 @@ class Controller:
 
         V_ref = self.calc_Vref() # 10 곱해서 준 값. 
         
-        # @@@@@@@ 곡선일때 True 로 ㄴ
-        if V_ref != (self.V_ref_max)*10:
-            self.curve_flag =True
-        else:
-            self.curve_flag =False
+        # @@@@ 양쪽 곡률 있을 때.
+        # if V_ref != (self.V_ref_max)*10:
+        #     self.curve_flag =True
+        # else:
+        #     self.curve_flag =False
 
 
         V_in = self.PID(V_ref)
