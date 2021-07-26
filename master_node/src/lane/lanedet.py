@@ -67,7 +67,7 @@ class Controller:
         self.vision_lane_data = lane()
         self.lidar_lane_data = lane()
         self.corn_flag = True
-        self.ser = serial.Serial('/dev/ttyUSB2',115200) # USB 권한 주
+        self.ser = serial.Serial('/dev/ttyUSB0',115200) # USB 권한 주
 
         self.drive_mode = 'normal'
 
@@ -104,7 +104,7 @@ class Controller:
         self.V_err_deri = 0
 
         self.safety_factor = 0.8
-        self.V_ref_max = 10 #[km/h] ####@@@@@@ 정현아이게 비젼운행시 최고속도야 ( 높여줘. )
+        self.V_ref_max = 8 #[km/h] ####@@@@@@ 정현아이게 비젼운행시 최고속도야 ( 높여줘. )
         self.curve_flag = False # 직선에서 출발 @@@@@@@2
         # encoder
         self.e = 0
@@ -194,11 +194,11 @@ class Controller:
         # self.lidar_lane_data = lane()
         # print("get lidar lane~~~")
         self.lidar_lane_data = msg
-        if msg.curvature > 0.5:
+        if msg.curvature > 1.5:
             self.avoid_steer = False
-        
+        print(self.curve_flag)
         if self.curve_flag is True:
-            if msg.curvature < 0.5:
+            if msg.curvature < 1.5:
                 self.avoid_steer = True
         
         ##라이다에서 들어오는 정보 없으면 차선으로 돌리는 부분인데 확인 함 필요해 보임더~~~
@@ -276,7 +276,7 @@ class Controller:
             delta = alpha  #  이게 문제가 아닐까아러아러아러ㅏㅇ러ㅏㅇㄹㅇ
         # print('curve_flag',self.curve_flag)
         # print("len : ", len(lane)
-        print('alpha, delta [deg] : ',alpha,delta)
+        
 
 
         
@@ -288,7 +288,9 @@ class Controller:
         # print("delta", delta)
 
         if self.avoid_steer is True:
-            delta += 50
+            delta += 5
+
+        print('alpha, delta [deg] : ',alpha,delta)
 
         if abs(delta)>30:
             if delta > 0:
@@ -408,14 +410,17 @@ class Controller:
         # , right_last.y = left_last.x * l_a + l_b, right_last.x * r_a + r_b
 
         # 디디디디디디
-        d = 1.3
+        d = 1
         # print("number :", len(lane_data.left), len(lane_data.right))
         # l_rad=np.arctan2(left_last.y - left_first.y, left_last.x - left_first.x) - pi / 2
         r_rad=np.arctan2(right_last.y - right_first.y, right_last.x - right_first.x) +pi / 2
 
         if len(lane_data.right)!= 0:
+            self.curve_flag =False # 다시 잡힐 때ㄱ ㄱ 
+
             # self.goal_x, self.goal_y = 1, l_a
-            self.goal_x, self.goal_y = right_first.x + (d*cos(r_rad)), right_first.y + (d*sin(r_rad))
+            # self.goal_x, self.goal_y = (right_first.x+right_last.x)/2 + (d*cos(r_rad)), (right_first.y + right_last.y)/2 + (d*sin(r_rad))
+            self.goal_x, self.goal_y = (right_first.x+right_last.x)/2 , (right_first.y + right_last.y)/2 + d
             # print(left_last.x, right_last.x, right_last.y, right_last.y)
 
         elif len(lane_data.right) == 0:
@@ -504,6 +509,7 @@ class Controller:
                     steering, break_val, self.cnt, 0x0D, 0x0A )    # big endian 방식으로 타입에 맞춰서 pack   
         self.ser.write(result)
 
+
     def getOdoMsg(self,  msg):
         # print(self.cur_state)
         if len(self.lidar_lane_data.left) == 0 and len(self.lidar_lane_data.right) == 0:
@@ -547,8 +553,7 @@ class Controller:
                 # self.speed= int(45)
                 # 곡선일때는 alpha 가보자. @@@@@@@22
                 if self.curve_flag ==True:
-                    self.speed=int(40) 
-                    self.curve_flag =False
+                    self.speed=int(40)
 
                     print('speed:',self.speed)
                     # print('speed:',speed)

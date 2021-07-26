@@ -87,16 +87,16 @@ def getMsg(msg):
     # ROI 실행 코드 부분
     filter_axis = 'x'
     axis_min = 0.2
-    axis_max = 2
+    axis_max = 1.7
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'y'
-    axis_min = -1.5
-    axis_max = 1.5
+    axis_min = 0
+    axis_max = 1.1
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
-    axis_min = -0.1
+    axis_min = 0
     axis_max = 2
 
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
