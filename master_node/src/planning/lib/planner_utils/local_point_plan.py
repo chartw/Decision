@@ -18,6 +18,7 @@ class LPP:
 
     def start(self,planner):
         # self.target_point_dict={}
+        self.local_path=Path()
         self.global_path=planner.global_path
         self.base_index=planner.veh_index
         self.base=Point32(self.global_path.x[self.base_index],self.global_path.y[self.base_index],0)
@@ -39,7 +40,8 @@ class LPP:
                     min_dist=dist
                     min_index = i
 
-
+            if min_dist > 3:
+                continue                
 
             # dist -> 0 : 2 // dist -> inf : 0 식을 이용
             # 경로와 가까울때는 최대 2정도의 거리만큼 떨어져서 주행
@@ -48,7 +50,8 @@ class LPP:
             # r=sqrt(-9/10*min_dist + 9)
             # r=sqrt(-2/5*min_dist + 4)
             # r=sqrt(-3/4*min_dist + 9/4)
-            r=-3*min_dist/4 + 3/2
+            # r=-3*min_dist/4 + 3/2
+            r=-min_dist+2
             
             # r=1/(min_dist+1/3)
             # 경로의 반대쪽에 point를 찍음
@@ -106,7 +109,7 @@ class LPP:
         if valid_idx_list:
             self.target_index = valid_idx_list[len(valid_idx_list) - 1]
         else:
-            self.target_index=min(min_idx,len(self.local_path.x)-1)
+            self.target_index=min(min_idx+10,len(self.local_path.x)-1)
         # print(self.target_index)
         target_point=Point32(self.local_path.x[self.target_index],self.local_path.y[self.target_index],0)
         return target_point

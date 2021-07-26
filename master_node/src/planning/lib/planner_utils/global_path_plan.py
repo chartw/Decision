@@ -285,7 +285,7 @@ class GPP:
         if valid_idx_list:
             self.target_index = valid_idx_list[len(valid_idx_list) - 1]
         else:
-            self.target_index=min(min_idx,len(self.global_path.x)-1)
+            self.target_index=min(min_idx+40,len(self.global_path.x)-1)
 
         theta = radians(self.local.heading - self.global_path.heading[self.target_index])
         proj_dist = lookahead * cos(radians(theta))

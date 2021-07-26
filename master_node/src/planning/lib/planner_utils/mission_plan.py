@@ -41,10 +41,12 @@ class MissionPlan:
                 min_dist = dist
         ##거리 체크해보자
         if min_dist < 5:
-            self.state = 3
+            self.state = 4
         elif min_dist < 6:
+            self.state = 3
+        elif min_dist < 8:
             self.state = 2
-        elif min_dist < 7.5:
+        elif min_dist < 12:
             self.state = 1
         else:
             self.state = 0
@@ -63,9 +65,11 @@ class MissionPlan:
         elif planner.object_msg.data == "avoid":
             self.mode = "avoidance"
             self.mission_ing = True
-        elif self.state and time.time() - self.start_time > 3:
+            planner.is_avoidance_ing=False
+        elif self.state==4 and time.time() - self.start_time > 3:
             self.mode = "avoidance"
             self.mission_ing = True
+            planner.is_avoidance_ing=False
 
         else:
             self.mode = "general"
@@ -146,6 +150,6 @@ class MissionPlan:
         if planner.planning_msg.mode == "normal_stop":
             return self.serial_msg.speed > 0.01
 
-        elif planner.planning_msg.mode == "avoidance":
-            return hypot(planner.planning_msg.point.x - planner.local.x, planner.planning_msg.point.y - planner.local.y) > 0.5
+        elif planner.planning_msg.mode == "avoidance" and len(planner.local_path.x)!=0:
+            return hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 2
 

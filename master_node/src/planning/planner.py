@@ -97,12 +97,17 @@ class Planner:
         self.pose = PointCloud()
         self.pose.header.frame_id = "world"
 
+        self.target=PointCloud()
+        self.target.header.frame_id = "world"
+
+
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        self.local_path_pub = rospy.Publisher("/local_path2", PointCloud, queue_size=1)
+        self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
         self.map_pub = rospy.Publisher("/map_pub", PointCloud, queue_size=1)
         self.obs_pub = rospy.Publisher("/obs_pub", PointCloud, queue_size=1)
         self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
         self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
+        self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
 
  
 
@@ -128,6 +133,7 @@ class Planner:
         while not rospy.is_shutdown():
             if self.is_local:
                 # GPP
+                # print(self.planning_msg.mode)
                 if self.gpp_requested:
 
                     self.global_path = self.global_path_maker.path_plan()
@@ -153,6 +159,7 @@ class Planner:
                     if self.is_avoidance_ing == False:
                         self.is_avoidance_ing = True
                         self.local_path_maker.start(self)
+                        self.map_maker = Mapping(self)
 
                     points=self.map_maker.showObstacleMap().points
                     self.local_path = self.local_path_maker.path_plan(points)
@@ -173,9 +180,10 @@ class Planner:
                         self.vis_global_path.header.stamp = rospy.Time.now()
                 self.global_path_pub.publish(self.vis_global_path)
 
-                # self.localpoint.points.append(self.planning_msg.point)
-                # self.localpoint.header.stamp=rospy.Time.now()
-                # self.point_pub.publish(self.localpoint)
+                self.target.points=[]
+                self.target.points.append(self.planning_msg.point)
+                self.target.header.stamp=rospy.Time.now()
+                self.target_pub.publish(self.target)
 
                 self.map.points= self.map_maker.showObstacleMap().points
                 self.map.header.stamp = rospy.Time.now()

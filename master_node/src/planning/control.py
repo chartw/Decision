@@ -106,14 +106,16 @@ class Control:
             if not self.planning_info.mode=="avoidance":
                 # print(self.planning_info.state)
                 if self.planning_info.state==1:
-                    self.pub_msg.speed=0
-                    self.pub_msg.brake=20                                     
+                    self.pub_msg.speed*=0.9
                 elif self.planning_info.state==2:
-                    self.pub_msg.speed=0
-                    self.pub_msg.brake=100                                      
+                    self.pub_msg.speed*=0.2
+                    self.pub_msg.brake=30
                 elif self.planning_info.state==3:
+                    self.pub_msg.speed*=0
+                    self.pub_msg.brake=85
+                elif self.planning_info.state==4:
                     self.pub_msg.speed=0
-                    self.pub_msg.brake=200                                      
+                    self.pub_msg.brake=100
 
             self.past_mode = self.planning_info.mode
             control_pub.publish(self.pub_msg)
