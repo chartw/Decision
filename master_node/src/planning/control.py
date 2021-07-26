@@ -108,10 +108,10 @@ class Control:
                 if self.planning_info.state==1:
                     self.pub_msg.speed*=0.9
                 elif self.planning_info.state==2:
-                    self.pub_msg.speed*=0.2
-                    self.pub_msg.brake=30
+                    self.pub_msg.speed*=0.3
+                    self.pub_msg.brake=70
                 elif self.planning_info.state==3:
-                    self.pub_msg.speed*=0
+                    self.pub_msg.speed*=0.2
                     self.pub_msg.brake=85
                 elif self.planning_info.state==4:
                     self.pub_msg.speed=0

@@ -287,6 +287,9 @@ class GPP:
         else:
             self.target_index=min(min_idx+40,len(self.global_path.x)-1)
 
+        if self.target_index==len(self.global_path.x)-1:
+            self.target_index=min_idx+40 - (len(self.global_path.x)-1)
+
         theta = radians(self.local.heading - self.global_path.heading[self.target_index])
         proj_dist = lookahead * cos(radians(theta))
         planner.veh_index = max(0,self.target_index - int(proj_dist * 10))
