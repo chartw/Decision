@@ -18,7 +18,7 @@ from std_msgs.msg import Float32, Time, String, Int16
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
 from lib.planner_utils.mission_plan import MissionPlan
-from lib.planner_utils.mapping import Mapping, Obstacle
+from lib.planner_utils.mapping import Mapping
 
 
 class Planner:
@@ -106,12 +106,12 @@ class Planner:
 
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-        self.local_path_pub = rospy.Publisher("/local_path2", PointCloud, queue_size=1)
-        self.map_pub = rospy.Publisher("/map_pub2", PointCloud, queue_size=1)
-        self.obs_pub = rospy.Publisher("/obs_pub2", PointCloud, queue_size=1)
+        self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
+        self.map_pub = rospy.Publisher("/map_pub", PointCloud, queue_size=1)
+        self.obs_pub = rospy.Publisher("/obs_pub", PointCloud, queue_size=1)
         self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
         self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
-        self.target_pub = rospy.Publisher("/target2", PointCloud, queue_size=1)
+        self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
 
  
 
@@ -148,7 +148,7 @@ class Planner:
         else:
             min_dist=-1
 
-        if self.past_dist != obs_dist or self.past_min_dist != min_dist:
+        if abs(self.past_dist- obs_dist) > 0.1 or abs(self.past_min_dist - min_dist)> 0.01:
             self.start_time = time.time()
 
         self.past_dist=obs_dist
@@ -187,7 +187,7 @@ class Planner:
                 else:
                     self.mission_ing = self.misson_planner.end_check(self)  # return True/False
                     #encheck = not self.mission_ing
-                print(self.past_dist, self.past_min_dist)
+                print(self.mission_ing)
 
                 if self.planning_msg.mode == "general":
                     self.planning_msg.path = self.global_path
@@ -195,20 +195,14 @@ class Planner:
                 elif self.planning_msg.mode == "avoidance" and self.mission_ing:
                     if self.is_avoidance_ing == False:
                         self.is_avoidance_ing = True
-                        self.map_maker = Mapping(self)
-                        print("######################")
-                        self.map_maker.mapping(self,self.obstacle_msg.circles)
 
-                        self.local_path_maker.start(self)
+
                     self.target_map=self.map_maker.make_target_map(self)
                     self.local_path = self.local_path_maker.path_plan(self.target_map)
 
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
-
-                elif self.planning_msg.mode == "avoidance" and not self.mission_ing:
-                    self.map_maker = Mapping(self)
 
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):

@@ -25,6 +25,9 @@ class Mapping:
     def __init__(self, planner):
         self.local = planner.local
 
+    def start(self):
+        self.obs_map={}
+        self.obstacle_cnt=0
         # 원래 init에서 주소를 copy해서 할려고햇는데, 뭔가 잘 안되서, 확실하게 하기위해 planner.local로 함
     def mapping(self, planner, circles):
         theta = radians(planner.local.heading)

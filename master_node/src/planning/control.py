@@ -103,12 +103,12 @@ class Control:
                 #     self.pub_msg.auto_manual = 1
 
             # elif self.planning_info.mode == "parking":
-
+            print(self.planning_info.dist)
             if not self.planning_info.mode=="avoidance":
                 # print(self.planning_info.state)
                 if self.planning_info.dist!=-1:
                     self.pub_msg.speed=0
-                    self.pub_msg.brake=-200*(self.planning_info.dist-12)//9
+                    self.pub_msg.brake=int(min(200,pow(0.6,self.planning_info.dist-14)))
 
             self.past_mode = self.planning_info.mode
             control_pub.publish(self.pub_msg)

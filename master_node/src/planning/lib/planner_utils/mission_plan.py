@@ -1,6 +1,8 @@
 from geometry_msgs.msg import Point32
 from math import hypot
 import time
+from lib.planner_utils.mapping import Mapping
+
 
 
 class MissionPlan:
@@ -17,6 +19,7 @@ class MissionPlan:
         self.base = []
         self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
         self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
+        self.mode=""
 
         self.parking_lot = []
         self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
@@ -42,7 +45,10 @@ class MissionPlan:
             self.mission_ing = True
             planner.is_avoidance_ing=False
             
-        elif not planner.dynamic_flag and planner.planning_msg.dist!=-1:
+        elif self.mode == "general"and planner.dynamic_flag == False and planner.planning_msg.dist!=-1:
+            planner.local_path_maker.start(planner)
+            planner.map_maker.start()
+            planner.map_maker.mapping(planner,planner.obstacle_msg.circles)
             self.mode = "avoidance"
             self.mission_ing = True
             planner.is_avoidance_ing=False
@@ -50,6 +56,7 @@ class MissionPlan:
 
         else:
             self.mode = "general"
+            self.mission_ing=False
 
         """        
         if : # Parking
@@ -130,5 +137,10 @@ class MissionPlan:
         elif planner.planning_msg.mode == "avoidance" and len(planner.local_path.x)!=0:
             #print(hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y))
             #print("이거다시팚", hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3)
-            return hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3
+            if  hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3:
+                return True
+            else:
+                planner.map_maker.start()
+
+                return False
 
