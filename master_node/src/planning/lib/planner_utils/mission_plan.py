@@ -14,8 +14,6 @@ class MissionPlan:
         self.parking_msg = planner.parking_msg
         self.object_msg = planner.object_msg
         self.mission_ing = planner.mission_ing  # True / False
-        self.state = 0
-
         self.base = []
         self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
         self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
@@ -33,36 +31,6 @@ class MissionPlan:
         self.start_time = time.time()
         self.current_time = time.time()
 
-    def state_check(self, planner):
-        min_dist = 999999
-        id=-1
-        for min_index, target in planner.target_map.items():
-            if target.min_dist < 1.5:
-                dist = (min_index-planner.veh_index)/10
-                if min_dist > dist:
-                    id=min_index
-                    min_dist = dist
-
-        if id == -1:
-            self.state=0
-        ##거리 체크해보자
-        else:
-            if min_dist < 5:
-                self.state = 4
-            elif min_dist < 6:
-                self.state = 3
-            elif min_dist < 8:
-                self.state = 2
-            elif min_dist < 12:
-                self.state = 1
-            else:
-                self.state = 0
-
-        if planner.past_state != self.state:
-            self.start_time = time.time()
-
-        return self.state
-
     def decision(self, planner):
 
         if planner.object_msg.data == "normal_stop":
@@ -74,12 +42,11 @@ class MissionPlan:
             self.mission_ing = True
             planner.is_avoidance_ing=False
             
-        elif (self.state==3 or self.state==4) and time.time() - self.start_time > 3:
+        elif not planner.dynamic_flag and planner.planning_msg.dist!=-1:
             self.mode = "avoidance"
             self.mission_ing = True
             planner.is_avoidance_ing=False
-            self.state=0
-            planner.planning_msg.state=0
+            planner.planning_msg.dist=-1
 
         else:
             self.mode = "general"

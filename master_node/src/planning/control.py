@@ -1,4 +1,5 @@
 import rospy
+from math import sqrt
 
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from geometry_msgs.msg import Point32
@@ -105,17 +106,9 @@ class Control:
 
             if not self.planning_info.mode=="avoidance":
                 # print(self.planning_info.state)
-                if self.planning_info.state==1:
-                    self.pub_msg.speed*=0.9
-                elif self.planning_info.state==2:
-                    self.pub_msg.speed*=0.3
-                    self.pub_msg.brake=70
-                elif self.planning_info.state==3:
-                    self.pub_msg.speed*=0.2
-                    self.pub_msg.brake=85
-                elif self.planning_info.state==4:
+                if self.planning_info.dist!=-1:
                     self.pub_msg.speed=0
-                    self.pub_msg.brake=100
+                    self.pub_msg.brake=-200*(self.planning_info.dist-12)//9
 
             self.past_mode = self.planning_info.mode
             control_pub.publish(self.pub_msg)
