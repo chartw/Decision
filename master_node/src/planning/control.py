@@ -104,11 +104,18 @@ class Control:
 
             # elif self.planning_info.mode == "parking":
             print(self.planning_info.dist)
-            if not self.planning_info.mode=="avoidance":
-                # print(self.planning_info.state)
-                if self.planning_info.dist!=-1:
-                    self.pub_msg.speed=0
-                    self.pub_msg.brake=int(min(200,pow(0.6,self.planning_info.dist-14)))
+            if not self.planning_info.mode=="avoidance" and self.planning_info.dist!=-1:
+                dist=self.planning_info.dist -1.1 # 범퍼위치로 기준 재설정
+
+                self.pub_msg.speed=dist/5
+                t=dist/((self.serial_info.speed/3.6)+0.1)
+                self.pub_msg.brake=int(200/t) # 유리 함수 200/x
+                # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
+                # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
+                # self.pub_msg.brake=int(100*sqrt(-t+1)+200) # 제곱근 함수
+                # self.pub_msg.brake=int(75*sqrt(-t+1)+150) # 제곱근 함수
+                self.pub_msg.brake=max(0,min(200,self.pub_msg.brake))
+                
 
             self.past_mode = self.planning_info.mode
             control_pub.publish(self.pub_msg)

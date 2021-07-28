@@ -12,10 +12,13 @@ class Obstacle:
     point=Point32()
     rad=None
     EMA=ExpMovAvgFilter(Point32())
+    update=False
+    cnt=0
     def __init__(self, idx, dist, ema):
         self.index=idx
         self.dist=dist
         self.EMA=ema
+        self.update=True
 
 class Mapping:
     obs_map = {} # 실제 장애물 좌표가 저장되는 dictionary
@@ -66,11 +69,10 @@ class Mapping:
                     if min_dist==-1 or min_dist > dist:
                         min_dist=dist
                         min_index = i
-
                 self.obs_map[self.obstacle_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
                 self.obstacle_cnt += 1
 
-            # 있으면, 해당 key값의 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
+            # 있으면, 해당 key값 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
             else:
                 self.obs_map[id].EMA.emaFilter(pos)
                 obstacle=self.obs_map[id]
@@ -89,6 +91,21 @@ class Mapping:
 
                 self.obs_map[id].index=min_index
                 self.obs_map[id].dist=min_dist
+                self.obs_map[id].update=True
+
+            # 5 프레임에 동안 안나오면, 삭제
+            # 단, 회피주행중일 경우 제외
+            if planner.planning_msg.mode=="avoidance": 
+                continue
+
+            for id, obstacle in self.obs_map.items():
+                if obstacle.update:
+                    obstacle.update=False
+                    obstacle.cnt=0
+                elif obstacle.cnt>5:
+                    del self.obs_map[id]
+                else:
+                    obstacle.cnt+=1
                 
 
 
@@ -98,30 +115,31 @@ class Mapping:
             dist=obstacle.dist
             index=obstacle.index
             emapos=obstacle.EMA.retAvg()
+
+            std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
             if dist > 3:
                 continue
 
-            # dist -> 0 : 2 // dist -> inf : 0 식을 이용
             # 경로와 가까울때는 최대 2정도의 거리만큼 떨어져서 주행
             # 경로와 멀때는 거의 0에 가까운 거리만큼 떨어져서 주행
-            dist=min(dist, 2)
-            # r=sqrt(-9/10*min_dist + 9)
-            # r=sqrt(-2/5*min_dist + 4)
-            # r=sqrt(-3/4*min_dist + 9/4)
-            # r=-3*min_dist/4 + 3/2
-            r=-dist+2
-            
-            # r=1/(min_dist+1/3)
-            # 경로의 반대쪽에 point를 찍음
-            rad=np.arctan2(emapos.y-planner.global_path.y[index], emapos.x-planner.global_path.x[index]) + pi
+
+            rad=np.arctan2(emapos.y-std_point.y, emapos.x-std_point.x)
+
+            # d
+            if rad - planner.global_path.heading[index] > 0 and dist < 0.5:
+                r=dist+2
+            else:
+                rad+=pi
+                r=max(0,-dist+2)
+
             if obstacle.rad!=None:
                 if abs(rad -obstacle.rad) > pi/2:
                     rad=obstacle.rad
             else:
                 obstacle.rad=rad
             point=Point32()
-            point.x = planner.global_path.x[index] + (r * cos(rad))
-            point.y = planner.global_path.y[index] + (r * sin(rad))
+            point.x = std_point.x + (r * cos(rad))
+            point.y = std_point.y + (r * sin(rad))
             target_map[index]=point
 
         return target_map
