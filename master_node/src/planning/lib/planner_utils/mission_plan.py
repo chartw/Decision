@@ -52,10 +52,40 @@ class MissionPlan:
             planner.is_avoidance_ing=False
             planner.planning_msg.dist=-1
 
+        elif planner.object_msg.data == "pmission":
+            return "parking"
+        
+        elif planner.planning_msg.mode == "parking" and hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<1:
+            planner.planning_msg.mode = "parking-base1" 
+            self.time_count=time.time()
+
+        elif (planner.planning_msg.mode == "parking-base1" or planner.planning_msg.mode == "parking-base2") and self.time_count - time.time() > 3:
+            planner.planning_msg.mode = "parking-ready"
+        
+        elif planner.planning_msg.mode=='parking-ready':
+            if self.parking_msg!=-1:
+                planner.planning_msg.mode='parking-start'
+                self.temp_heading=self.local.heading
+
+            # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
+            elif self.parking_msg==-1:
+                planner.planning_msg.mode == 'parking2'
+
+        # 실제 주차 프로세스
+        elif planner.planning_msg.mode == "parking-start" and hypot(self.parking_lot[self.parking_msg].x-self.local.x, self.parking_lot[self.parking_msg].y-self.local.y) < 1:
+            planner.planning_msg.mode = "parking-complete"
+        
+        elif planner.planning_msg.mode == "parking-complete":
+            planner.planning_msg.mode = "backward-start"
+
+        elif planner.planning_msg.mode == "backward-start" and abs(self.local.heading - self.temp_heading) < 5:
+            planner.planning_msg.mode = 'general'
+
         else:
             self.mode = "general"
             self.mission_ing=False
 
+        
         """        
         if : # Parking
             mode = 'parking'
@@ -98,6 +128,8 @@ class MissionPlan:
             mode='general'
 
         """
+
+        
 
         # elif planner.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
         #     mode = 'normal_stop'
