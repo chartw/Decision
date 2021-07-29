@@ -61,7 +61,7 @@ def getMsg(msg):
     # downsampling 실행 코드 부분
     print("Input :", pcl_data)
 
-    LEAF_SIZE = 0.1
+    LEAF_SIZE = 0.01
     cloud = do_voxel_grid_downssampling(pcl_data, LEAF_SIZE)
     
     print("")
@@ -83,7 +83,7 @@ def getMsg(msg):
     # axis_max = 2
     filter_axis = 'x'
     axis_min = 0
-    axis_max = 4
+    axis_max = 10
     # axis_max = 2
     # axis_max = 15
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
@@ -109,7 +109,7 @@ def getMsg(msg):
         seo = Point32()
         seo.x = p[0]
         seo.y = p[1]
-        # seo.z = p[2]
+        seo.z = p[2]
         get_in.values.append(p[3])
         test.points.append(seo)
         cnt += 1

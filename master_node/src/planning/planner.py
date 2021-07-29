@@ -110,6 +110,7 @@ class Planner:
         self.target=PointCloud()
         self.target.header.frame_id = "world"
 
+        self.pmode = ""
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
         self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
@@ -131,6 +132,7 @@ class Planner:
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
         rospy.Subscriber("/darknet_ros/bounding_boxes", String, self.objectCallback)
+        # rospy.Subscribeer("/")
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
 
@@ -189,7 +191,8 @@ class Planner:
                 if not self.mission_ing:
                     self.planning_msg.dist = self.check_dist()
                     self.dynamic_flag=self.check_dynamic()
-                    self.planning_msg.mode, self.mission_ing = self.misson_planner.decision(self)
+                    self.planning_msg.mode, self.mission_ing, self.pmode = self.misson_planner.decision(self)
+                    print("the mission is on ", self.planning_msg.mode)
                 else:
                     self.mission_ing = self.misson_planner.end_check(self)  # return True/False
                     #encheck = not self.mission_ing
@@ -201,7 +204,6 @@ class Planner:
                     if self.is_avoidance_ing == False:
                         self.is_avoidance_ing = True
 
-
                     self.target_map=self.map_maker.make_target_map(self)
                     self.local_path = self.local_path_maker.path_plan(self.target_map)
 
@@ -209,8 +211,10 @@ class Planner:
                         self.planning_msg.path = self.local_path
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
 
+                elif self.planning_msg.mode == "parking":
+                    self.planning_msg.mode = self.pmode
 
-                elif self.planning_msg.mode == "parking-ready":
+                elif self.planning_msg.mode == "parking-start":
                     self.parking_path = self.parking_path_maker.make_parking_path(self.parking_target)
                     self.target_index, self.planning_msg.point = self.parking_path_maker.point_plan(self, 0.01)
 

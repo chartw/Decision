@@ -17,9 +17,12 @@ class MissionPlan:
         self.object_msg = planner.object_msg
         self.mission_ing = planner.mission_ing  # True / False
         self.base = []
-        self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
-        self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
+        self.base.append(Point32(8.133715275780418, 14.982628122549599, 0))
+        self.base.append(Point32(9.612609543917143, 17.94208643988677, 0))
+        #self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
+        #self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
         self.mode=""
+        self.pmode=""
 
         self.parking_lot = []
         self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
@@ -36,7 +39,13 @@ class MissionPlan:
 
     def decision(self, planner):
 
-        if planner.object_msg.data == "normal_stop":
+
+        print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
+
+        if hypot(4.2-self.local.x, 7.7-self.local.y) < 9:
+            self.mode = "parking"
+
+        elif planner.object_msg.data == "normal_stop":
             self.mode = "normal_stop"
             self.mission_ing = True
 
@@ -51,83 +60,39 @@ class MissionPlan:
             self.mission_ing = True
             planner.is_avoidance_ing=False
             planner.planning_msg.dist=-1
-
-        elif planner.object_msg.data == "pmission":
-            return "parking"
         
-        elif planner.planning_msg.mode == "parking" and hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<1:
-            planner.planning_msg.mode = "parking-base1" 
+        if self.mode == "parking" and hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<2:
+            print("base-1 gogogoogogog")
+            self.pmode = "parking-base1"
+
             self.time_count=time.time()
 
-        elif (planner.planning_msg.mode == "parking-base1" or planner.planning_msg.mode == "parking-base2") and self.time_count - time.time() > 3:
-            planner.planning_msg.mode = "parking-ready"
+        elif self.mode == "parking" and (self.pmode == "parking-base1" or self.pmode == "parking-base2") and self.time_count - time.time() > 3:
+            self.pmode = "parking-ready"
         
-        elif planner.planning_msg.mode=='parking-ready':
+        elif self.mode == "parking" and self.pmode=='parking-ready':
             if self.parking_msg!=-1:
-                planner.planning_msg.mode='parking-start'
+                self.pmode='parking-start'
                 self.temp_heading=self.local.heading
 
             # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
             elif self.parking_msg==-1:
-                planner.planning_msg.mode == 'parking2'
+                self.pmode == 'parking2'
 
         # 실제 주차 프로세스
-        elif planner.planning_msg.mode == "parking-start" and hypot(self.parking_lot[self.parking_msg].x-self.local.x, self.parking_lot[self.parking_msg].y-self.local.y) < 1:
-            planner.planning_msg.mode = "parking-complete"
+        elif self.mode == "parking" and self.pmode == "parking-start" and hypot(self.parking_lot[self.parking_msg].x-self.local.x, self.parking_lot[self.parking_msg].y-self.local.y) < 1:
+            self.pmode = "parking-complete"
         
-        elif planner.planning_msg.mode == "parking-complete":
-            planner.planning_msg.mode = "backward-start"
+        elif self.mode == "parking" and self.pmode == "parking-complete":
+            self.pmode = "backward-start"
 
-        elif planner.planning_msg.mode == "backward-start" and abs(self.local.heading - self.temp_heading) < 5:
-            planner.planning_msg.mode = 'general'
+        elif self.mode == "parking" and self.pmode == "backward-start" and abs(self.local.heading - self.temp_heading) < 5:
+            self.pmode = 'general'
 
         else:
             self.mode = "general"
             self.mission_ing=False
 
-        
-        """        
-        if : # Parking
-            mode = 'parking'
-
-        # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
-        # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
-        # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정
-        elif mode =='parking' and hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<1:
-            mode='parking-base1'
-            self.time_count=time.time()
-
-        # parking2이고(base1에서 주차공간 찾지 못함), base2에 가까이 올 경우 -> parking-base2로 변경하고 정지하여 그때의 시간 측정
-        elif mode =='parking2' and hypot(self.base[1].x-self.local.x, self.base[1].y-self.local.y)<1:
-            mode='parking-base2'
-            self.time_count=time.time()
-
-        # base에 정지해 있는 시간이 일정 시간 지날경우 -> parking-ready 로 변경. 이때 LiDAR로부터 주차 공간 수신
-        elif (mode =='parking-base1' or mode=='parking-base2') and self.time_count- time.time() > 3:
-            mode='parking-ready'
-
-        # parking-ready 일때, 유효한 주차공간이 들어올 경우 -> parking-start로 변경. 이때의 heading값 임시 저장. 주차 주행 시작
-        elif mode=='parking-ready':
-            if self.parking_msg!=-1:
-                mode='parking-start'
-                self.temp_heading=self.local.heading
-
-            # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
-            elif self.parking_msg==-1:
-                mode=='parking2'
-
-        # parking-start일때, 주차 공간 중점과 가까워지면 -> parking-complete로 변경. 이때의 시간 측정하여 일정시간 정지. 
-        elif mode=='parking-start' and hypot(self.parking_lot[self.parking_msg].x-self.local.x,self.parking_lot[self.parking_msg].y-self.local.y) < 1:
-            mode='parking-complete'
-            self.time_count=time.time()
-
-        elif mode=='parking-complete' and self.time_count- time.time() > 3:
-            mode='backward-start'
-
-        elif mode=='backward-start' and abs(self.local.heading - self.temp_heading) < 5:
-            mode='general'
-
-        """
 
         
 
@@ -158,7 +123,8 @@ class MissionPlan:
         # elif 4 is 4:
         #     self.mission_ing = True
 
-        return self.mode, self.mission_ing
+        print("in the mission_plan.py", self.mode, self.pmode)
+        return self.mode, self.mission_ing, self.pmode
 
     def end_check(self, planner):
         if planner.planning_msg.mode == "normal_stop":
@@ -166,7 +132,6 @@ class MissionPlan:
 
         elif planner.planning_msg.mode == "avoidance" and len(planner.local_path.x)!=0:
             #print(hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y))
-            #print("이거다시팚", hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3)
             if  hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3:
                 return True
             else:

@@ -1,8 +1,8 @@
 from lib.control_utils.general import General
 
 class Parking:
-    def __init__(self, controlplanner):
-        self.generalClass = General()
+    def __init__(self, control):
+        self.generalClass = General(control)
 
     def drivingParkingNode(self, parking_point):
         steer = self.generalClass.pure_pursuit(parking_point)

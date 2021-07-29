@@ -32,8 +32,11 @@ Planning_Info
 """
 
 
-LEFT_MAX_STEER = 10, RIGHT_MAX_STEER = -10
-BGEAR = 0x02, NGEAR = 0x01, FGEAR = 0x00
+LEFT_MAX_STEER = 10
+RIGHT_MAX_STEER = -10
+BGEAR = 0x02
+NGEAR = 0x01
+FGEAR = 0x00
 MAX_BRAKE = 0x200
 
 class Control:
@@ -56,7 +59,7 @@ class Control:
         general = General(self)
         avoidance = Avoidance(self)
         self.parking_stack = ParkingStack
-        parkingClass = Parking()
+        parkingClass = Parking(self)
 
         # emergency_stop = EmergencyStop(self)
         normal_stop = NormalStop(self)
@@ -68,6 +71,8 @@ class Control:
 
         # main loop
         while not rospy.is_shutdown():
+            # print(self.local.x, self.local.y)
+            print(self.planning_info.mode)
             if self.is_planning:
                 if self.planning_info.mode == "general":
                     if self.planning_info.path.x:
@@ -110,7 +115,7 @@ class Control:
                     self.pub_msg.steer = parkingClass.drivingParkingNode(self.planning_info.point)
 
                     # 정해진 노드 따라서 주행
-                    self.parking_stack.push(0x30, 0x00, FGEAR)
+                    self.parking_stack.push(0x30, 0x00, self.pub_msg.steer)
 
                     pass
 
@@ -122,6 +127,7 @@ class Control:
                 elif self.planning_info.mode == "backward-start":
                     self.pub_msg.speed, self.pub_msg.brake, self.pub_msg.steering = self.parking_stack.pop()
                     self.serialParkingComm(0x30, 0x00, FGEAR)
+
                     # elif self.planning_info.mode == "avoidance":
                     #     self.pub_msg.steer = avoidance.pure_puresuit()
                     #     self.pub_msg.speed = 10
@@ -140,7 +146,6 @@ class Control:
                     #     self.pub_msg.emergency_stop = 1
                     #     self.pub_msg.auto_manual = 1
 
-                # elif self.planning_info.mode == "parking":
                 print(self.planning_info.dist)
                 if not self.planning_info.mode=="avoidance" and self.planning_info.dist!=-1:
                     dist=self.planning_info.dist -1.05 # 범퍼위치로 기준 재설정
@@ -159,6 +164,11 @@ class Control:
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.pub_msg)
                 rate.sleep()
+
+    def serialParkingComm(self, speed, brake, gear):
+        self.pub_msg.speed = speed
+        self.pub_msg.brake = brake
+        self.pub_msg.gear = gear
 
     # Callback Function
     def planningCallback(self, msg):
@@ -188,4 +198,5 @@ class Control:
         # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
 
 
+print("Control start")
 control = Control()
