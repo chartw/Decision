@@ -17,6 +17,7 @@ from math import degrees
 from math import radians
 
 from master_node.msg import Path
+from geometry_msgs.msg import Point32
 
 
 class Graph:  # graph
@@ -56,14 +57,15 @@ class node:  # node
 
 class GPP:
     def __init__(self, planner):
-        self.cur = planner.local
+        self.local = planner.local
         self.goal_id = planner.goal_node
 
         self.nodelist = {}
         self.tx, self.ty, self.tyaw = [], [], []
         self.node_set(planner.map)
         self.lane_set(planner.map)
-        self.path=Path()
+        self.global_path=Path()
+        self.target_index=0
 
     def astar_search(self, graph, mynode, start, end):  # A* search (graph)
         class Node:
@@ -207,7 +209,7 @@ class GPP:
                 )
 
     def path_plan(self):
-        print(self.cur)
+        print(self.local)
         start_id = self.select_start_node()
         goal_ids = self.goal_id.split("/")
         path = self.astar_search(graph, self.nodelist, start_id, goal_ids[0])
@@ -226,10 +228,10 @@ class GPP:
             for j in range(
                 len(globals()["Lane{}".format(path[i] + path[i + 1])]["x"])
             ):
-                self.path.x.append(
+                self.global_path.x.append(
                     globals()["Lane{}".format(path[i] + path[i + 1])]["x"][j]
                 )
-                self.path.y.append(
+                self.global_path.y.append(
                     globals()["Lane{}".format(path[i] + path[i + 1])]["y"][j]
                 )
                 pyaw = (
@@ -237,12 +239,12 @@ class GPP:
                 )
                 
                 pyaw= (degrees(pyaw)+360) % 360
-                self.path.heading.append(pyaw)
-                self.path.k.append(
+                self.global_path.heading.append(pyaw)
+                self.global_path.k.append(
                     globals()["Lane{}".format(path[i] + path[i + 1])]["k"][j]
                 )
 
-        return self.path
+        return self.global_path
         # 가장 가까운 노드를 시작 노드로 설정
 
     def select_start_node(self):
@@ -254,8 +256,43 @@ class GPP:
         temp_dis = 9999
 
         for node in nodelist:
-            temp_dis = hypot(self.cur.x-nodelist[node].x, self.cur.y-nodelist[node].y)
+            temp_dis = hypot(self.local.x-nodelist[node].x, self.local.y-nodelist[node].y)
             if temp_dis < min_dis:
                 min_dis = temp_dis
                 min_idx = node
         return min_idx
+
+    def point_plan(self, planner, lookahead):
+        valid_idx_list = []
+        idx = 0
+        min_idx=0
+        min_dist=-1
+        if hypot(self.global_path.x[self.target_index] - self.local.x, self.global_path.y[self.target_index] - self.local.y) < lookahead:
+            idx = self.target_index
+        else:
+            idx = 0
+        for i in range(idx, len(self.global_path.x)):
+            dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
+
+            if dis < min_dist or min_dist == -1:
+                min_dist=dis
+                min_idx=i
+
+            if dis <= lookahead:
+                valid_idx_list.append(i)
+            if len(valid_idx_list) != 0 and dis > lookahead:
+                break
+        if valid_idx_list:
+            self.target_index = valid_idx_list[len(valid_idx_list) - 1]
+        else:
+            self.target_index=min(min_idx+40,len(self.global_path.x)-1)
+
+        if self.target_index==len(self.global_path.x)-1:
+            self.target_index=min_idx+40 - (len(self.global_path.x)-1)
+
+        theta = radians(self.local.heading - self.global_path.heading[self.target_index])
+        proj_dist = lookahead * cos(radians(theta))
+        planner.veh_index = max(0,self.target_index - int(proj_dist * 10))
+
+        target_point=Point32(self.global_path.x[self.target_index],self.global_path.y[self.target_index],0)
+        return self.target_index, target_point

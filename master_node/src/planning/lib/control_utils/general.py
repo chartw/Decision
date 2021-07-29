@@ -67,19 +67,9 @@ class General:
             self.lookahead = self.GeneralLookahead / 2
         # print ("LookAhead : ",self.lookahead)
 
-    def pure_pursuit(self):
-
-        # self.Dynamic_LookAhead() # 동적 lookAhead
-        if len(self.path.x) == 0:
-            return 0
-        self.target_index = self.select_target(self.lookahead)
-        # print(self.target_index)
-        # print(self.cur.x, self.cur.y)
-
-        target_x = self.path.x[self.target_index]
-        target_y = self.path.y[self.target_index]
+    def pure_pursuit(self,point):
         # pure pursuit 계산되는 부분
-        tmp_th = degrees(atan2((target_y - self.cur.y), (target_x - self.cur.x)))
+        tmp_th = degrees(atan2((point.y - self.cur.y), (point.x - self.cur.x)))
 
         tmp_th = tmp_th % 360
 
@@ -186,8 +176,7 @@ class General:
             self.V_ref_max = 12
         else:
             self.V_ref_max = 8
-
-        self.temp_msg.steer = self.pure_pursuit()
+        self.temp_msg.steer = self.pure_pursuit(control.local_point)
         self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
         self.temp_msg.brake = 0
         self.temp_msg.encoder = 0

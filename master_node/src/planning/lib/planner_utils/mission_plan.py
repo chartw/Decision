@@ -1,6 +1,8 @@
 from geometry_msgs.msg import Point32
 from math import hypot
 import time
+from lib.planner_utils.mapping import Mapping
+
 
 
 class MissionPlan:
@@ -14,11 +16,10 @@ class MissionPlan:
         self.parking_msg = planner.parking_msg
         self.object_msg = planner.object_msg
         self.mission_ing = planner.mission_ing  # True / False
-        self.state = 0
-
         self.base = []
         self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
         self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
+        self.mode=""
 
         self.parking_lot = []
         self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
@@ -33,27 +34,6 @@ class MissionPlan:
         self.start_time = time.time()
         self.current_time = time.time()
 
-    def state_check(self, planner):
-        min_dist = 999999
-        for circle in planner.obstacle_msg.circles:
-            dist = hypot(0 - circle.center.x, 0 - circle.center.y)
-            if min_dist > dist:
-                min_dist = dist
-        ##거리 체크해보자
-        if min_dist < 5:
-            self.state = 3
-        elif min_dist < 6:
-            self.state = 2
-        elif min_dist < 7.5:
-            self.state = 1
-        else:
-            self.state = 0
-
-        if planner.past_state != self.state:
-            self.start_time = time.time()
-
-        return self.state
-
     def decision(self, planner):
 
         if planner.object_msg.data == "normal_stop":
@@ -63,12 +43,18 @@ class MissionPlan:
         elif planner.object_msg.data == "avoid":
             self.mode = "avoidance"
             self.mission_ing = True
-        elif self.state and time.time() - self.start_time > 3:
+            planner.is_avoidance_ing=False
+            
+        elif self.mode == "general"and planner.dynamic_flag == False and planner.planning_msg.dist!=-1:
+            planner.local_path_maker.start(planner)
             self.mode = "avoidance"
             self.mission_ing = True
+            planner.is_avoidance_ing=False
+            planner.planning_msg.dist=-1
 
         else:
             self.mode = "general"
+            self.mission_ing=False
 
         """        
         if : # Parking
@@ -146,6 +132,11 @@ class MissionPlan:
         if planner.planning_msg.mode == "normal_stop":
             return self.serial_msg.speed > 0.01
 
-        elif planner.planning_msg.mode == "avoidance":
-            return hypot(planner.planning_msg.point.x - planner.local.x, planner.planning_msg.point.y - planner.local.y) > 0.5
+        elif planner.planning_msg.mode == "avoidance" and len(planner.local_path.x)!=0:
+            #print(hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y))
+            #print("이거다시팚", hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3)
+            if  hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3:
+                return True
+            else:
+                return False
 
