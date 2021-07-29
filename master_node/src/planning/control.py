@@ -7,7 +7,8 @@ from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
 # from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
-from lib.control_utils.parking import ParkingStack
+from lib.control_utils.parking import Parking
+from lib.control_utils.stack import ParkingStack
 import time
 
 """
@@ -55,6 +56,7 @@ class Control:
         general = General(self)
         avoidance = Avoidance(self)
         self.parking_stack = ParkingStack
+        parkingClass = Parking()
 
         # emergency_stop = EmergencyStop(self)
         normal_stop = NormalStop(self)
@@ -105,6 +107,7 @@ class Control:
                 # 주행
                 elif self.planning_info.mode == "parking-start":
                     self.serialParkingComm(0x30, 0x00, FGEAR)
+                    self.pub_msg.steer = parkingClass.drivingParkingNode(self.planning_info.point)
 
                     # 정해진 노드 따라서 주행
                     self.parking_stack.push(0x30, 0x00, FGEAR)
@@ -117,7 +120,7 @@ class Control:
 
                 # 후진
                 elif self.planning_info.mode == "backward-start":
-                    speed, brake, steering = self.parking_stack.pop()
+                    self.pub_msg.speed, self.pub_msg.brake, self.pub_msg.steering = self.parking_stack.pop()
                     self.serialParkingComm(0x30, 0x00, FGEAR)
                     # elif self.planning_info.mode == "avoidance":
                     #     self.pub_msg.steer = avoidance.pure_puresuit()

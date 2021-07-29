@@ -210,7 +210,7 @@ class Planner:
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
 
 
-                elif self.planning_msg.mode == "parking":
+                elif self.planning_msg.mode == "parking-ready":
                     self.parking_path = self.parking_path_maker.make_parking_path(self.parking_target)
                     self.target_index, self.planning_msg.point = self.parking_path_maker.point_plan(self, 0.01)
 
