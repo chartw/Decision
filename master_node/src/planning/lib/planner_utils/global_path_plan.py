@@ -58,12 +58,14 @@ class node:  # node
 class GPP:
     def __init__(self, planner):
         self.local = planner.local
-        self.goal_id = planner.goal_node
+        self.map=planner.map
 
         self.nodelist = {}
-        self.tx, self.ty, self.tyaw = [], [], []
-        self.node_set(planner.map)
-        self.lane_set(planner.map)
+        if self.map=="songdo" or self.map=="kcity":
+            self.goal_id = planner.goal_node
+            self.node_set(planner.map)
+            self.lane_set(planner.map)
+
         self.global_path=Path()
         self.target_index=0
 
@@ -209,43 +211,46 @@ class GPP:
                 )
 
     def path_plan(self):
-        print(self.local)
-        start_id = self.select_start_node()
-        goal_ids = self.goal_id.split("/")
-        path = self.astar_search(graph, self.nodelist, start_id, goal_ids[0])
-        if len(goal_ids) > 1:
-            for i in range(len(goal_ids) - 1):
-                temppath = self.astar_search(
-                    graph, self.nodelist, goal_ids[i], goal_ids[i + 1]
-                )
-                temppath.pop(0)
-                path += temppath
-        print(path)
-        for i in range(len(path) - 1):
+        if self.map!="songdo":
+            self.make_global_map()
+            return self.global_path
+        
+        else:
+            start_id = self.select_start_node()
+            goal_ids = self.goal_id.split("/")
+            path = self.astar_search(graph, self.nodelist, start_id, goal_ids[0])
+            if len(goal_ids) > 1:
+                for i in range(len(goal_ids) - 1):
+                    temppath = self.astar_search(
+                        graph, self.nodelist, goal_ids[i], goal_ids[i + 1]
+                    )
+                    temppath.pop(0)
+                    path += temppath
+            for i in range(len(path) - 1):
 
-            # print('Lane{}'.format(path[i]+path[i+1]))
+                # print('Lane{}'.format(path[i]+path[i+1]))
 
-            for j in range(
-                len(globals()["Lane{}".format(path[i] + path[i + 1])]["x"])
-            ):
-                self.global_path.x.append(
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["x"][j]
-                )
-                self.global_path.y.append(
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["y"][j]
-                )
-                pyaw = (
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["yaw"][j]
-                )
-                
-                pyaw= (degrees(pyaw)+360) % 360
-                self.global_path.heading.append(pyaw)
-                self.global_path.k.append(
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["k"][j]
-                )
+                for j in range(
+                    len(globals()["Lane{}".format(path[i] + path[i + 1])]["x"])
+                ):
+                    self.global_path.x.append(
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["x"][j]
+                    )
+                    self.global_path.y.append(
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["y"][j]
+                    )
+                    pyaw = (
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["yaw"][j]
+                    )
+                    
+                    pyaw= (degrees(pyaw)+360) % 360
+                    self.global_path.heading.append(pyaw)
+                    self.global_path.k.append(
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["k"][j]
+                    )
 
-        return self.global_path
-        # 가장 가까운 노드를 시작 노드로 설정
+            return self.global_path
+            # 가장 가까운 노드를 시작 노드로 설정
 
     def select_start_node(self):
         nodelist = self.nodelist
@@ -295,4 +300,17 @@ class GPP:
         planner.veh_index = max(0,self.target_index - int(proj_dist * 10))
 
         target_point=Point32(self.global_path.x[self.target_index],self.global_path.y[self.target_index],0)
+        print(self.global_path.heading[self.target_index])
         return self.target_index, target_point
+
+    def make_global_map(self):
+        with open("./map/kcity_map/" + self.map + ".csv", mode="r") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for line in csv_reader:
+                self.global_path.x.append(float(line[0]))
+                self.global_path.y.append(float(line[1]))
+                self.global_path.heading.append(degrees(float(line[2])))
+                self.global_path.k.append(float(line[3]))
+                # self.global_path.s.append(float(line[4]))
+                # self.global_path.etc.append(line[5])
+                # self.global_path.mission.append(line[6])

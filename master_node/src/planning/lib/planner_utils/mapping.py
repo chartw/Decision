@@ -103,7 +103,6 @@ class Mapping:
             else:
                 self.obs_map[id].cnt+=1
         
-        print(len(self.obs_map))
                 
 
 
@@ -123,7 +122,6 @@ class Mapping:
 
             rad=np.arctan2(emapos.y-std_point.y, emapos.x-std_point.x)
 
-            print(rad - radians(planner.global_path.heading[index])>0, dist)
             if rad - radians(planner.global_path.heading[index]) > 0 and dist < 0.5:
                 r=dist+2
             else:

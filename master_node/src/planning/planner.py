@@ -31,7 +31,8 @@ class Planner:
         arg = rospy.myargv(argv=sys.argv)
         # arg[0] == planner.py
         self.map = str(arg[1])
-        self.goal_node = str(arg[2])
+        if self.map=="songdo" or self.map=="kcity":
+            self.goal_node = str(arg[2])
 
         """
         publish 정의
