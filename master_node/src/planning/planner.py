@@ -187,7 +187,6 @@ class Planner:
                 else:
                     self.mission_ing = self.misson_planner.end_check(self)  # return True/False
                     #encheck = not self.mission_ing
-                print(self.mission_ing)
 
                 if self.planning_msg.mode == "general":
                     self.planning_msg.path = self.global_path

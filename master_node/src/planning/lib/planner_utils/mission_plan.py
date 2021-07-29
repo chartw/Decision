@@ -47,8 +47,6 @@ class MissionPlan:
             
         elif self.mode == "general"and planner.dynamic_flag == False and planner.planning_msg.dist!=-1:
             planner.local_path_maker.start(planner)
-            planner.map_maker.start()
-            planner.map_maker.mapping(planner,planner.obstacle_msg.circles)
             self.mode = "avoidance"
             self.mission_ing = True
             planner.is_avoidance_ing=False
@@ -140,7 +138,5 @@ class MissionPlan:
             if  hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3:
                 return True
             else:
-                planner.map_maker.start()
-
                 return False
 

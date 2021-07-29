@@ -28,10 +28,6 @@ class Mapping:
     def __init__(self, planner):
         self.local = planner.local
 
-    def start(self):
-        self.obs_map={}
-        self.obstacle_cnt=0
-        # 원래 init에서 주소를 copy해서 할려고햇는데, 뭔가 잘 안되서, 확실하게 하기위해 planner.local로 함
     def mapping(self, planner, circles):
         theta = radians(planner.local.heading)
         for circle in circles:
@@ -95,17 +91,19 @@ class Mapping:
 
             # 5 프레임에 동안 안나오면, 삭제
             # 단, 회피주행중일 경우 제외
-            if planner.planning_msg.mode=="avoidance": 
-                continue
+        if planner.planning_msg.mode=="avoidance": 
+            return
 
-            for id, obstacle in self.obs_map.items():
-                if obstacle.update:
-                    obstacle.update=False
-                    obstacle.cnt=0
-                elif obstacle.cnt>5:
-                    del self.obs_map[id]
-                else:
-                    obstacle.cnt+=1
+        for id in list(self.obs_map.keys()):
+            if self.obs_map[id].update:
+                self.obs_map[id].update=False
+                self.obs_map[id].cnt=0
+            elif self.obs_map[id].cnt>5:
+                del self.obs_map[id]
+            else:
+                self.obs_map[id].cnt+=1
+        
+        print(len(self.obs_map))
                 
 
 
@@ -125,8 +123,8 @@ class Mapping:
 
             rad=np.arctan2(emapos.y-std_point.y, emapos.x-std_point.x)
 
-            # d
-            if rad - planner.global_path.heading[index] > 0 and dist < 0.5:
+            print(rad - radians(planner.global_path.heading[index])>0, dist)
+            if rad - radians(planner.global_path.heading[index]) > 0 and dist < 0.5:
                 r=dist+2
             else:
                 rad+=pi
