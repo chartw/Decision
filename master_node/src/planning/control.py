@@ -7,7 +7,7 @@ from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
 # from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
-
+from lib.control_utils.parking import ParkingStack
 import time
 
 """
@@ -54,6 +54,8 @@ class Control:
 
         general = General(self)
         avoidance = Avoidance(self)
+        self.parking_stack = ParkingStack
+
         # emergency_stop = EmergencyStop(self)
         normal_stop = NormalStop(self)
         self.is_planning = False
@@ -105,6 +107,8 @@ class Control:
                     self.serialParkingComm(0x30, 0x00, FGEAR)
 
                     # 정해진 노드 따라서 주행
+                    self.parking_stack.push(0x30, 0x00, FGEAR)
+
                     pass
 
                 # 전진 주차 끝 정지, 후진 기어
@@ -113,6 +117,7 @@ class Control:
 
                 # 후진
                 elif self.planning_info.mode == "backward-start":
+                    speed, brake, steering = self.parking_stack.pop()
                     self.serialParkingComm(0x30, 0x00, FGEAR)
                     # elif self.planning_info.mode == "avoidance":
                     #     self.pub_msg.steer = avoidance.pure_puresuit()
@@ -176,7 +181,6 @@ class Control:
         self.serial_info.speed = msg.speed
         self.serial_info.emergency_stop = msg.emergency_stop
         self.serial_info.brake = msg.brake
-
 
         # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
 

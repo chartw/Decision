@@ -19,6 +19,8 @@ from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
 from lib.planner_utils.mission_plan import MissionPlan
 from lib.planner_utils.mapping import Mapping
+from lib.planner_utils.parking_path_plan import ParkingPlan
+
 
 
 class Planner:
@@ -67,6 +69,7 @@ class Planner:
         # data 변수 선언
         self.global_path = Path()
         self.local_path = Path()
+        self.parking_path = Path()
         self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
@@ -83,6 +86,8 @@ class Planner:
         # gpp 변수 선언
         self.global_path_maker = GPP(self)
         self.local_path_maker = LPP(self)
+        self.parking_path_maker = ParkingPlan(self)
+
         self.misson_planner = MissionPlan(self)
         self.map_maker = Mapping(self)
 
@@ -118,7 +123,7 @@ class Planner:
 
         # LiDAR
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        # rospy.Subscriber("/parking",Int16, self.parkingCallback)
+        rospy.Subscriber("/parking",Int16, self.parkingCallback)
 
         # Localization
         rospy.Subscriber("/pose", Odometry, self.localCallback)
@@ -204,6 +209,12 @@ class Planner:
                         self.planning_msg.path = self.local_path
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
 
+
+                elif self.planning_msg.mode == "parking":
+                    self.parking_path = self.parking_path_maker.make_parking_path(self.parking_target)
+                    self.target_index, self.planning_msg.point = self.parking_path_maker.point_plan(self, 0.01)
+
+
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):
                     self.vis_local_path.points.append(Point32(self.local_path.x[i], self.local_path.y[i], 0))
@@ -272,6 +283,8 @@ class Planner:
     def objectCallback(self, msg):
         self.object_msg.data = msg.data
 
+    def parkingCallback(self, msg):
+        self.parking_target = msg.data
 
 if __name__ == "__main__":
     planner = Planner()
