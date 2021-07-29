@@ -66,60 +66,61 @@ class Control:
                         self.global_path = self.planning_info.path
                     if self.global_path.x:
                         self.pub_msg = general.driving(self)
-            if self.planning_info.mode == 'emergency_stop':                                    
-                self.pub_msg.steer = 0
-                self.pub_msg.speed = 0
-                self.pub_msg.brake = 0
-                self.pub_msg.encoder = 0
-                self.pub_msg.gear = 0
-                self.pub_msg.emergency_stop = 1
-                self.pub_msg.auto_manual = 1
+                if self.planning_info.mode == 'emergency_stop':                                    
+                    self.pub_msg.steer = 0
+                    self.pub_msg.speed = 0
+                    self.pub_msg.brake = 0
+                    self.pub_msg.encoder = 0
+                    self.pub_msg.gear = 0
+                    self.pub_msg.emergency_stop = 1
+                    self.pub_msg.auto_manual = 1
 
-            elif self.planning_info.mode == "avoidance":
-                if self.local_point.x!=0 and self.local_point.y!=0:
-                    self.pub_msg=avoidance.driving(self.local_point)
-                else:
-                    self.pub_msg=general.driving(self)
-            elif self.planning_info.mode == 'normal_stop':
-                is_first = (self.past_mode != 'normal_stop')
-                self.normal_stop.run(is_first)
+                elif self.planning_info.mode == "avoidance":
+                    if self.local_point.x!=0 and self.local_point.y!=0:
+                        self.pub_msg=avoidance.driving(self.local_point)
+                    else:
+                        self.pub_msg=general.driving(self)
+                elif self.planning_info.mode == 'normal_stop':
+                    is_first = (self.past_mode != 'normal_stop')
+                    self.normal_stop.run(is_first)
 
-                # elif self.planning_info.mode == "avoidance":
-                #     self.pub_msg.steer = avoidance.pure_puresuit()
-                #     self.pub_msg.speed = 10
-                #     self.pub_msg.brake = 0
-                #     self.pub_msg.encoder = 0
-                #     self.pub_msg.gear = 0
-                #     self.pub_msg.emergency_stop = 0
-                #     self.pub_msg.auto_manual = 1
+                    # elif self.planning_info.mode == "avoidance":
+                    #     self.pub_msg.steer = avoidance.pure_puresuit()
+                    #     self.pub_msg.speed = 10
+                    #     self.pub_msg.brake = 0
+                    #     self.pub_msg.encoder = 0
+                    #     self.pub_msg.gear = 0
+                    #     self.pub_msg.emergency_stop = 0
+                    #     self.pub_msg.auto_manual = 1
 
-                # elif self.planning_info.mode == "emergency_stop":
-                #     self.pub_msg.steer = 0
-                #     self.pub_msg.speed = 0
-                #     self.pub_msg.brake = 0
-                #     self.pub_msg.encoder = 0
-                #     self.pub_msg.gear = 0
-                #     self.pub_msg.emergency_stop = 1
-                #     self.pub_msg.auto_manual = 1
+                    # elif self.planning_info.mode == "emergency_stop":
+                    #     self.pub_msg.steer = 0
+                    #     self.pub_msg.speed = 0
+                    #     self.pub_msg.brake = 0
+                    #     self.pub_msg.encoder = 0
+                    #     self.pub_msg.gear = 0
+                    #     self.pub_msg.emergency_stop = 1
+                    #     self.pub_msg.auto_manual = 1
 
-            # elif self.planning_info.mode == "parking":
-            print(self.planning_info.dist)
-            if not self.planning_info.mode=="avoidance" and self.planning_info.dist!=-1:
-                dist=self.planning_info.dist -1.1 # 범퍼위치로 기준 재설정
+                # elif self.planning_info.mode == "parking":
+                print(self.planning_info.dist)
+                if not self.planning_info.mode=="avoidance" and self.planning_info.dist!=-1:
+                    dist=self.planning_info.dist -1.05 # 범퍼위치로 기준 재설정
 
-                self.pub_msg.speed=dist/5
-                t=dist/((self.serial_info.speed/3.6)+0.1)
-                self.pub_msg.brake=int(200/t) # 유리 함수 200/x
-                # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
-                # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
-                # self.pub_msg.brake=int(100*sqrt(-t+1)+200) # 제곱근 함수
-                # self.pub_msg.brake=int(75*sqrt(-t+1)+150) # 제곱근 함수
-                self.pub_msg.brake=max(0,min(200,self.pub_msg.brake))
-                
+                    self.pub_msg.speed=dist/5
+                    t=dist/((self.serial_info.speed/3.6)+0.1)
+                    # self.pub_msg.brake=int(200/t) # 유리 함수 200/x
+                    # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
+                    # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
+                    t=max(1,dist/((self.serial_info.speed/3.6)+0.1))
+                    self.pub_msg.brake=int(-100*sqrt(t-1)+200) # 제곱근 함수
+                    # self.pub_msg.brake=int(-75*sqrt(t-1)+150) # 제곱근 함수
+                    self.pub_msg.brake=max(0,min(200,self.pub_msg.brake))
+                    
 
-            self.past_mode = self.planning_info.mode
-            control_pub.publish(self.pub_msg)
-            rate.sleep()
+                self.past_mode = self.planning_info.mode
+                control_pub.publish(self.pub_msg)
+                rate.sleep()
 
     # Callback Function
     def planningCallback(self, msg):
