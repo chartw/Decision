@@ -175,7 +175,7 @@ class General:
         temp_rad = atan2( center_y - self.head_y , center_x - self.head_x) % 360 
         safe_d = emergency_d * sin(radians( abs(self.cur.heading - degrees(temp_rad)) )) - radius 
 
-        R = 4.5   '''push circle radius.'''
+        R = 4.5  #push circle radius
 
 
         ## 장애물 들어오면
@@ -183,7 +183,7 @@ class General:
             '''너무 자주 생성되는것을 대비하면, safe_d 를 조금 작게 ㄱㄱ'''
             temp_idx=[]
             for idx in range(self.target_index-100,self.target_index+100):
-                if hypot(path_x[i]-center_x,path_y[i]-center_y) <= R:
+                if hypot(path_x[idx]-center_x,path_y[idx]-center_y) <= R:
                     temp_idx.append(idx) # 거리가 R 보다 작은 index들   
         
             # circle push gogo
@@ -201,7 +201,7 @@ class General:
         self.gpaths = PointCloud()
         self.gpaths.header.stamp=rospy.Time.now()
         self.gpaths.header.frame_id='world'
-        for i in range( self.target_index,self.target_index + L*10): # 앞뒤 30m 씩 까지만 path 가시화! _ path가 계속 바뀌어야함!
+        for i in range( max(0,self.target_index-100),self.target_index + 100): # 앞뒤 30m 씩 까지만 path 가시화! _ path가 계속 바뀌어야함!
             gpath = Point32()
             gpath.x=path_x[i]
             gpath.y=path_y[i]
