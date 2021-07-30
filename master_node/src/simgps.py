@@ -49,6 +49,8 @@ class Localization():
     def publish_msg(self):
         self.msg.twist.twist.angular.z = self.heading
         x, y = self.get_xy(self.lat, self.lon, 15.400)
+        self.msg.twist.twist.angular.x = x
+        self.msg.twist.twist.angular.y = y
         self.msg.pose.pose.position.x = x
         self.msg.pose.pose.position.y = y
         self.msg.header.stamp=rospy.Time.now()

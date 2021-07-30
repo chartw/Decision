@@ -77,23 +77,23 @@ class Control:
                         # 
                         self.pub_msg = general.driving(self)
 
-            if self.planning_info.mode == 'emergency_stop':                                    
-                self.pub_msg.steer = 0
-                self.pub_msg.speed = 0
-                self.pub_msg.brake = 0
-                self.pub_msg.encoder = 0
-                self.pub_msg.gear = 0
-                self.pub_msg.emergency_stop = 1
-                self.pub_msg.auto_manual = 1
+            # if self.planning_info.mode == 'emergency_stop':                                    
+            #     self.pub_msg.steer = 0
+            #     self.pub_msg.speed = 0
+            #     self.pub_msg.brake = 0
+            #     self.pub_msg.encoder = 0
+            #     self.pub_msg.gear = 0
+            #     self.pub_msg.emergency_stop = 1
+            #     self.pub_msg.auto_manual = 1
 
-            elif self.planning_info.mode == "avoidance":
-                if self.local_point.x!=0 and self.local_point.y!=0:
-                    self.pub_msg=avoidance.driving(self.local_point)
-                else:
-                    self.pub_msg=general.driving(self)
-            elif self.planning_info.mode == 'normal_stop':
-                is_first = (self.past_mode != 'normal_stop')
-                self.normal_stop.run(is_first)
+            # elif self.planning_info.mode == "avoidance":
+            #     if self.local_point.x!=0 and self.local_point.y!=0:
+            #         self.pub_msg=avoidance.driving(self.local_point)
+            #     else:
+            #         self.pub_msg=general.driving(self)
+            # elif self.planning_info.mode == 'normal_stop':
+            #     is_first = (self.past_mode != 'normal_stop')
+            #     self.normal_stop.run(is_first)
 
                 # elif self.planning_info.mode == "avoidance":
                 #     self.pub_msg.steer = avoidance.pure_puresuit()
@@ -115,17 +115,17 @@ class Control:
 
             # elif self.planning_info.mode == "parking":
 
-            if not self.planning_info.mode=="avoidance":
-                # print(self.planning_info.state)
-                if self.planning_info.state==1:
-                    self.pub_msg.speed=0
-                    self.pub_msg.brake=20                                     
-                elif self.planning_info.state==2:
-                    self.pub_msg.speed=0
-                    self.pub_msg.brake=100                                      
-                elif self.planning_info.state==3:
-                    self.pub_msg.speed=0
-                    self.pub_msg.brake=200                                      
+            # if not self.planning_info.mode=="avoidance":
+            #     # print(self.planning_info.state)
+            #     if self.planning_info.state==1:
+            #         self.pub_msg.speed=0
+            #         self.pub_msg.brake=20                                     
+            #     elif self.planning_info.state==2:
+            #         self.pub_msg.speed=0
+            #         self.pub_msg.brake=100                                      
+            #     elif self.planning_info.state==3:
+            #         self.pub_msg.speed=0
+            #         self.pub_msg.brake=200                                      
 
             self.past_mode = self.planning_info.mode
             control_pub.publish(self.pub_msg)

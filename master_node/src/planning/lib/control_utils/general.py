@@ -14,6 +14,9 @@ class General:
         # 참조 수행
         self.cur = control.local  # local 좌표
         self.path = control.global_path  # global_path # 한번만 받아오는거.  # self.path.heading 이 0~360 이어야 함. @@@@
+        self.path_ori = control.global_path
+        
+
 
         self.GeneralLookahead = control.lookahead  # 직진 주행시 lookahead
 
@@ -45,6 +48,10 @@ class General:
         self.pub_gp=rospy.Publisher('/gpath',PointCloud,queue_size=1)
         self.emergency = False
 
+        self.gpaths_ori=PointCloud()
+        self.gpaths_ori.header.frame_id='world'
+        self.pub_gp_ori=rospy.Publisher('/gpath_ori',PointCloud,queue_size=1)
+        
 
 
 
@@ -103,16 +110,16 @@ class General:
     def calc_nearest_obstacle(self):# 가장 작은 거리의 obstacle 정보 반환. @@@
         
         min_dis=1000000
-        for idx,circle in enumerate(self.obstacle_msg.circle):
+        for idx,circle in enumerate(self.obstacle_msg.circles):
             dis = hypot(circle.center.x - self.head_x, circle.center.y - self.head_y) - circle.radius
 
             if dis < min_dis: # 더 작은게 있으면 그 point 의 distance, idx  저장. 
                 min_dis = dis
                 min_idx = idx
 
-        return ( self.obstacle_msg.circle[min_idx].center.x ,
-                 self.obstacle_msg.circle[min_idx].center.y ,
-                 self.obstacle_msg.circle[min_idx].radius,
+        return ( self.obstacle_msg.circles[min_idx].center.x ,
+                 self.obstacle_msg.circles[min_idx].center.y ,
+                 self.obstacle_msg.circles[min_idx].radius,
                  min_dis                                        )
 
 
@@ -127,16 +134,26 @@ class General:
 
 
     def lane_push(self): # push 된 lane 으로 개정. @@@@@@
-        
+        # print('aaa')
+        # 지역변수로 가져와
+        path_x = []
+        path_y = []
+        path_x = self.path_ori.x # 안바뀌는애 지역변수로 가져와서 사용.
+        path_y = self.path_ori.y
+        # print(len(self.path_ori.x))
+        # print(type(path_x))
+
         self.head_x = self.cur.x + 1.5*cos(radians(self.cur.heading))
         self.head_y = self.cur.y + 1.5*cos(radians(self.cur.heading))
 
         center_x, center_y, radius , emergency_d = self.calc_nearest_obstacle()  # 최소거리를 emergency_dis 로 받자.
 
         temp_rad = atan2( center_y - self.head_y , center_x - self.head_x) % 360 
+        # print('center.xy:',center_x,center_y)
         safe_d = emergency_d * sin(radians( abs(self.cur.heading - degrees(temp_rad)) )) - radius 
-        d = 1.5 + 0.5/emergency_d  # 현속도 (self.serial_info.speed) , radius , emergency_d 에 맞게 수정 하기.
-        L = 2                      # 일단 고정 / >> 속도 빠르면 멀면 길게잘라 
+        # d = 1.5 + 0.5/emergency_d  # 현속도 (self.serial_info.speed) , radius , emergency_d 에 맞게 수정 하기.
+        d = 20
+        L = 5                      # 일단 고정 / >> 속도 빠르면 멀면 길게잘라 
 
         ''' center_x,y, :  차 앞머리에서 가장 가까운 obstacle 의 정보.
             emergency_d :  차 앞부분과 최근인식된 장애물중점 사이 거리 - 장애물반지름 
@@ -146,47 +163,57 @@ class General:
             L[m]        :  쪼가리의 길이
         '''
 
-        if emergency_d < 1:   # 1m 반경 들어오면, 무조건 비상 stop. -> 이후엔 수동으로 원상복귀 할거.
-            self.emergency = True 
+        # print('emergency_d',emergency_d)
 
-        else:                   # 여기에 추후에 차선정보도 포함시킬 수 있음
-            self.emergency = False
+        # if emergency_d < 0.1:   # 1m 반경 들어오면, 무조건 비상 stop. -> 이후엔 수동으로 원상복귀 할거.
+        #     self.emergency = True   
+        #     # self.emergency = False
 
-            if emergency_d<4 and safe_d < 0.8: # 4m 이내로 진입했고, 진행방향과 충돌 위험이 있을 때에만, 경로 생성 함.(최종 조건)
-                '''너무 자주 생성되는것을 대비하면, safe_d 를 조금 작게 ㄱㄱ'''
+        # else:                   # 여기에 추후에 차선정보도 포함시킬 수 있음
 
-                for i in range( L*10 ): 
-                    if self.push_direction(center_x,center_y): # 경로의 오른쪽에 있을때 왼쪽으로 push (차량 위치와 관계없이 경로기준 판단) 
-                        self.path.x[ self.target_index + i ] -= d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
-                        self.path.y[ self.target_index + i ] += d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
-                    else:
-                        self.path.x[ self.target_index + i ] += d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
-                        self.path.y[ self.target_index + i ] -= d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
-         
-                ########## 딱 lane_push 될 때에만 rviz로 송출 ------------------------------
-                for i in range( self.target_index- 300,self.target_index + 300)): # 앞뒤 30m 씩 까지만 path 가시화! _ path가 계속 바뀌어야함!
-                    gpath = Point32()
-                    gpath.x=self.path.x[i]
-                    gpath.y=self.path.y[i]
-                    self.gpaths.points.append(gpath)
-                self.gpaths.header.stamp=rospy.Time.now()
-                self.pub_gp.publish(self.gpaths)
+        self.emergency = False
 
-                print('gpaths published._ in general.py')
-                #-------------------------------------------------------------
+        if emergency_d< 4 and safe_d < 0.8: #   4m 이내로 진입했고, 진행방향과 충돌 위험이 있을 때에만, 경로 생성 함.(최종 조건)
+            '''너무 자주 생성되는것을 대비하면, safe_d 를 조금 작게 ㄱㄱ'''
 
+            for i in range( L*10 ): 
+                if self.push_direction(center_x,center_y): # 경로의 오른쪽에 있을때 왼쪽으로 push (차량 위치와 관계없이 경로기준 판단) 
+                    path_x[ self.target_index + i ] -= d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]))
+                    path_y[ self.target_index + i ] += d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]))
+                else:
+                    path_x[ self.target_index + i ] += d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+                    path_y[ self.target_index + i ] -= d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+    
+
+            ########## 딱 lane_push 될 때에만 rviz로 송출 ------------------------------
+            for i in range( self.target_index- 100,self.target_index + 100): # 앞뒤 30m 씩 까지만 path 가시화! _ path가 계속 바뀌어야함!
+                gpath = Point32()
+                gpath.x=path_x[i]
+                gpath.y=path_y[i]
+                self.gpaths.points.append(gpath)
+            self.pub_gp.publish(self.gpaths)
+            self.gpaths = PointCloud()
+            # print(self.gpaths.points)
+            self.gpaths.header.stamp=rospy.Time.now()
+            self.gpaths.header.frame_id='world'
+            # print('gpaths published._ in general.py')
+            #-------------------------------------------------------------
+        return path_x,path_y
 
 
     def pure_pursuit(self):
+        # print('type:',type(self.path.x))
 
         # if self.path_mission == 'static': # kcity csv의 마지막 부분 작업 이후에.추가.
 
         if self.obstacle_msg.circles: ## control에서 오는거에 장애물이 담겨있으면, @@@@@@@
-            self.lane_push() # class 전역변수만 바꿔줌
+            self.path.x,self.path.y= self.lane_push() # class 전역변수만 바꿔줌
+            # print('b')
 			
         
         self.target_index = self.select_target(self.lookahead)
 
+        # print(len(self.path.x))
         target_x = self.path.x[self.target_index]
         target_y = self.path.y[self.target_index]
 
@@ -311,9 +338,23 @@ class General:
 
 
     def driving(self, control):
+        # print(self.path_ori.x,type(self.path_ori.x))
         # @@@@ control에서 callback받아서 , 계속 여기로 전해줄거.
         self.obstacle_msg.circles = control.obstacle_msg.circles
         self.obstacle_msg.circle_number = control.obstacle_msg.circle_number 
+
+        self.path.x = list(self.path.x) # 왜인지 모르지만 tuple
+        self.path.y = list(self.path.y)
+        # print(len((self.path.x)))
+
+
+        for i in range(len(self.path_ori.x)): # 앞뒤 30m 씩 까지만 path 가시화! _ path가 계속 바뀌어야함!
+            gpath_ori = Point32()
+            gpath_ori.x=self.path_ori.x[i]
+            gpath_ori.y=self.path_ori.y[i]
+            self.gpaths_ori.points.append(gpath_ori)
+        self.gpaths_ori.header.stamp=rospy.Time.now()
+        self.pub_gp_ori.publish(self.gpaths_ori)
 
 
         # 미션별 최고속도. 여기에 ??
@@ -333,7 +374,7 @@ class General:
         self.temp_msg.auto_manual = 1
         
         # prerequisite 
-        if self.emergency:
-            self.temp_msg.emergency_stop = 1
+        # if self.emergency:
+        #     self.temp_msg.emergency_stop = 1
 
         return self.temp_msg
