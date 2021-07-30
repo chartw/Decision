@@ -54,6 +54,11 @@ class General:
         self.gpaths_ori=PointCloud()
         self.gpaths_ori.header.frame_id='world'
         self.pub_gp_ori=rospy.Publisher('/gpath_ori',PointCloud,queue_size=1)
+
+        self.pub_cur = rospy.Publisher('/cur_pt',PointCloud,queue_size=1)
+
+        self.pub_tpt = rospy.Publisher('/target_pt',PointCloud,queue_size=1)
+
         
 
 
@@ -142,10 +147,14 @@ class General:
 
     def push_direction(self,ox,oy): # ox,oy = 가장 가까운 장애물의 좌표.
 
-        vector_obs  = np.array([ox,oy])  -  np.array([ self.pathx_ori[self.target_index-40] , self.pathy_ori[self.target_index-40] ])   # purple vector
-        vector_path = np.array([ cos( radians(self.path.heading[self.target_index-40]) ), sin( radians(self.path.heading[self.target_index-40])) ])  # pink vector
-        
-        if np.cross(vector_obs,vector_path) >= 0: # lane 의 오른편에 장애물 위치.
+        # vector_obs  = np.array([ox,oy])  -  np.array([ self.pathx_ori[self.target_index-40] , self.pathy_ori[self.target_index-40] ])   # purple vector
+        # vector_path = np.array([ cos( radians(self.path.heading[self.target_index-40]) ), sin( radians(self.path.heading[self.target_index-40])) ])  # pink vector
+
+        vector_1 = np.array([ self.pathx_ori[self.target_index] , self.pathy_ori[self.target_index] ]) - np.array([ox,oy])   # purple vector
+        vector_2 = np.array([ self.pathx_ori[self.target_index+1] , self.pathy_ori[self.target_index+1] ]) - np.array([ox,oy])  # pink vector
+
+
+        if np.cross(vector_1,vector_2) >= 0: # lane 의 오른편에 장애물 위치.
             return True
         else:
             return False
@@ -171,7 +180,7 @@ class General:
         safe_d = emergency_d * sin(radians( abs(self.cur.heading - degrees(temp_rad)) )) - radius 
         # d = 1.5 + 0.5/emergency_d  # 현속도 (self.serial_info.speed) , radius , emergency_d 에 맞게 수정 하기.
         d = 3
-        L = 11                    # 일단 고정 / >> 속도 빠르면 멀면 길게잘라 
+        L = 3                  # 일단 고정 / >> 속도 빠르면 멀면 길게잘라 
         # print(self.target_index)
 
         ''' center_x,y, :  차 앞머리에서 가장 가까운 obstacle 의 정보.
@@ -193,13 +202,25 @@ class General:
         if emergency_d< 4 and safe_d < 1.5: #   4m 이내로 진입했고, 진행방향과 충돌 위험이 있을 때에만, 경로 생성 함.(최종 조건)
             '''너무 자주 생성되는것을 대비하면, safe_d 를 조금 작게 ㄱㄱ'''
 
-            for i in range( L*10 ): 
-                if self.push_direction(center_x,center_y): # 경로의 오른쪽에 있을때 왼쪽으로 push (차량 위치와 관계없이 경로기준 판단) 
-                    path_x[ self.target_index + i ] -= d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]))
-                    path_y[ self.target_index + i ] += d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]))
-                else:
-                    path_x[ self.target_index + i ] += d*cos(  radians(90) - radians( self.path.heading[self.target_index + i]) )
-                    path_y[ self.target_index + i ] -= d*sin(  radians(90) - radians( self.path.heading[self.target_index + i]) )
+            # for i in range( L*10 ): 
+            if self.push_direction(center_x,center_y): # 경로의 오른쪽에 있을때 왼쪽으로 push (차량 위치와 관계없이 경로기준 판단)
+                pre_targetx =path_x[self.target_index]
+                pre_targety =path_y[self.target_index] 
+                path_x[self.target_index] -= d*cos(radians(90) - radians( self.path.heading[self.target_index]))
+                path_y[self.target_index] += d*sin(radians(90) - radians( self.path.heading[self.target_index]))
+            else:
+                pre_targetx =path_x[self.target_index]
+                pre_targety =path_y[self.target_index]
+                path_x[self.target_index] += d*cos(radians(90) - radians( self.path.heading[self.target_index]))
+                path_y[self.target_index] -= d*sin(radians(90) - radians( self.path.heading[self.target_index]))
+
+            dx = path_x[self.target_index] - pre_targetx
+            dy = path_y[self.target_index] - pre_targety
+
+            for i in range(1,L*10):
+                path_x[self.target_index + i] += dx
+                path_y[self.target_index + i] += dy
+
             # print(self.target_index)
 
             ########## 딱 lane_push 될 때에만 rviz로 송출 ------------------------------
@@ -369,12 +390,10 @@ class General:
         # print(self.target_index)
 
         if len(self.pathx_ori) == 0:
-            print('d?')
             self.pathx_ori = self.path.x
             self.pathy_ori = self.path.y
             self.pathx_ori = tuple(self.pathx_ori)
             self.pathy_ori = tuple(self.pathy_ori)
-            print(type(self.pathx_ori))
 
         for i in range(len(self.pathx_ori)):
             gpath_ori = Point32()
@@ -383,6 +402,26 @@ class General:
             self.gpaths_ori.points.append(gpath_ori)
         self.gpaths_ori.header.stamp=rospy.Time.now()
         self.pub_gp_ori.publish(self.gpaths_ori)
+
+        #현재좌표 시각화
+        cur_point = PointCloud()
+        cur = Point32()
+        cur.x = self.cur.x
+        cur.y = self.cur.y
+        cur_point.points.append(cur)
+        cur_point.header.frame_id = 'world'
+        cur_point.header.stamp = rospy.Time.now()
+        self.pub_cur.publish(cur_point)
+
+        #타겟포인트 시각화
+        target_pt = PointCloud()
+        target = Point32()
+        target.x = self.path.x[self.target_index]
+        target.y = self.path.y[self.target_index]
+        target_pt.points.append(target)
+        target_pt.header.frame_id = 'world'
+        target_pt.header.stamp = rospy.Time.now()
+        self.pub_tpt.publish(target_pt)
 
 
         # 미션별 최고속도. 여기에 ??
