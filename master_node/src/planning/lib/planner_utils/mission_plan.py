@@ -2,6 +2,7 @@ from geometry_msgs.msg import Point32
 from math import hypot
 import time
 from lib.planner_utils.mapping import Mapping
+from master_node.msg import Path
 
 
 
@@ -35,108 +36,30 @@ class MissionPlan:
         self.current_time = time.time()
 
     def decision(self, planner):
+        mission=planner.global_path.mission[planner.veh_index]
+        env=planner.global_path.env[planner.veh_index]
+        dist=planner.planning_msg.dist
 
-        if planner.object_msg.data == "normal_stop":
-            self.mode = "normal_stop"
-            self.mission_ing = True
+        # print(mission, env, dist)
+        if mission=="small" or mission=="big":
+            if dist >0:
+                self.mode = mission
+                planner.local_path_maker.start(planner)
+            if len(planner.local_path.x)!=0:
+                if hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) < 3:
+                    planner.local_path=Path()
+                    self.mode="general"
 
-        elif planner.object_msg.data == "avoid":
-            self.mode = "avoidance"
-            self.mission_ing = True
-            planner.is_avoidance_ing=False
-            
-        elif self.mode == "general"and planner.dynamic_flag == False and planner.planning_msg.dist!=-1:
-            planner.local_path_maker.start(planner)
-            self.mode = "avoidance"
-            self.mission_ing = True
-            planner.is_avoidance_ing=False
-            planner.planning_msg.dist=-1
+        elif mission=="kid":
+            if env=="bump":
+                self.mode="bump"
+            elif dist > 0 and dist < 5:
+                self.mode="emergency_stop"
+            else:
+                self.mode="kid"
 
         else:
-            self.mode = "general"
-            self.mission_ing=False
+            self.mode="general"
 
-        """        
-        if : # Parking
-            mode = 'parking'
-
-        # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
-        # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
-        # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정
-        elif mode =='parking' and hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<1:
-            mode='parking-base1'
-            self.time_count=time.time()
-
-        # parking2이고(base1에서 주차공간 찾지 못함), base2에 가까이 올 경우 -> parking-base2로 변경하고 정지하여 그때의 시간 측정
-        elif mode =='parking2' and hypot(self.base[1].x-self.local.x, self.base[1].y-self.local.y)<1:
-            mode='parking-base2'
-            self.time_count=time.time()
-
-        # base에 정지해 있는 시간이 일정 시간 지날경우 -> parking-ready 로 변경. 이때 LiDAR로부터 주차 공간 수신
-        elif (mode =='parking-base1' or mode=='parking-base2') and self.time_count- time.time() > 3:
-            mode='parking-ready'
-
-        # parking-ready 일때, 유효한 주차공간이 들어올 경우 -> parking-start로 변경. 이때의 heading값 임시 저장. 주차 주행 시작
-        elif mode=='parking-ready':
-            if self.parking_msg!=-1:
-                mode='parking-start'
-                self.temp_heading=self.local.heading
-
-            # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
-            elif self.parking_msg==-1:
-                mode=='parking2'
-
-        # parking-start일때, 주차 공간 중점과 가까워지면 -> parking-complete로 변경. 이때의 시간 측정하여 일정시간 정지. 
-        elif mode=='parking-start' and hypot(self.parking_lot[self.parking_msg].x-self.local.x,self.parking_lot[self.parking_msg].y-self.local.y) < 1:
-            mode='parking-complete'
-            self.time_count=time.time()
-
-        elif mode=='parking-complete' and self.time_count- time.time() > 3:
-            mode='backward-start'
-
-        elif mode=='backward-start' and abs(self.local.heading - self.temp_heading) < 5:
-            mode='general'
-
-        """
-
-        # elif planner.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
-        #     mode = 'normal_stop'
-        #     self.mission_ing = True
-
-        # elif self.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
-        #     return "normal_stop"
-
-        # Dyanamic -- person stop at node 24
-        # elif hypot(self.local.x - 2.125, self.local.y - 43.617) < 1:
-        #     mode = 'emergency_stop'
-        #     self.mission_ing = True
-
-        # # Static -- cone avoidance at node 16
-        # elif hypot(self.local.x - 29.757, self.local.y - 35.737) < 1:
-        #     mode = 'avoidance'
-        #     self.mission_ing = True
-        # elif self.local.x is coordinate: # Dyanamic -- person
-        #     mode = 'emergency_stop'
-        #     self.mission_ing = True
-
-        # elif self.local.x is 3: # Static -- cone
-        #     mode = 'avoidance'
-        #     self.mission_ing = True
-
-        # elif 4 is 4:
-        #     self.mission_ing = True
-
-        return self.mode, self.mission_ing
-
-    def end_check(self, planner):
-        if planner.planning_msg.mode == "normal_stop":
-            return self.serial_msg.speed > 0.01
-
-        elif planner.planning_msg.mode == "avoidance" and len(planner.local_path.x)!=0:
-            #print(hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y))
-            #print("이거다시팚", hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3)
-            if  hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) > 3:
-                return True
-            else:
-                return False
+        return self.mode
 

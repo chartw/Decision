@@ -170,14 +170,21 @@ class General:
         return int(V_in)
 
     def driving(self, control):
+        mode = control.planning_info.mode
         # self.temp_msg=Serial_Info()
         # print('self.serial_info',self.serial_info.speed)
-        if control.planning_info.mode == "general":
-            self.V_ref_max = 12
-        else:
-            self.V_ref_max = 8
+        if mode == "general":
+            self.V_ref_max = 15
+            self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
+
+        elif mode =="kid":
+            self.V_ref_max = 10
+            self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
+        elif mode=="small" or mode=="big":
+            self.temp_msg.speed=8
+        elif mode=="bump":
+            self.temp_msg.speed=8
         self.temp_msg.steer = self.pure_pursuit(control.local_point)
-        self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
         self.temp_msg.brake = 0
         self.temp_msg.encoder = 0
         self.temp_msg.gear = 0

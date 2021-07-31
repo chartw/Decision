@@ -170,6 +170,7 @@ class Planner:
             if self.is_local:
                 # GPP
                 # print(self.planning_msg.mode)
+                
                 if self.gpp_requested:
 
                     self.global_path = self.global_path_maker.path_plan()
@@ -180,22 +181,14 @@ class Planner:
                 # Localization Information
                 self.planning_msg.local = self.local
 
-                # Mission Decision
-                if not self.mission_ing:
-                    self.planning_msg.dist = self.check_dist()
-                    self.dynamic_flag=self.check_dynamic()
-                    self.planning_msg.mode, self.mission_ing = self.misson_planner.decision(self)
-                else:
-                    self.mission_ing = self.misson_planner.end_check(self)  # return True/False
-                    #encheck = not self.mission_ing
 
-                if self.planning_msg.mode == "general":
+                self.planning_msg.dist = self.check_dist()
+                self.planning_msg.mode = self.misson_planner.decision(self)
+
+                if self.planning_msg.mode == "general" or self.planning_msg.mode=="kid" or self.planning_msg.mode=="bump":
                     self.planning_msg.path = self.global_path
                     self.target_index, self.planning_msg.point = self.global_path_maker.point_plan(self, 4)
-                elif self.planning_msg.mode == "avoidance" and self.mission_ing:
-                    if self.is_avoidance_ing == False:
-                        self.is_avoidance_ing = True
-
+                elif (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
 
                     self.target_map=self.map_maker.make_target_map(self)
                     self.local_path = self.local_path_maker.path_plan(self.target_map)
@@ -203,6 +196,9 @@ class Planner:
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
+
+                if self.planning_msg.mode=="kid":
+                    self.dynamic_flag=self.check_dynamic()
 
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):

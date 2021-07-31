@@ -46,6 +46,7 @@ class Mapping:
             # 만약 딕셔너리에 없으면, 새로운 이동 평균 필터 클래스 선언후 삽입
             # circle의 절대좌표 (x, y)로 초기화
             if id == -1:
+    
                 min_dist=-1
                 min_index = 0
                 # base_index = avoidance가 시작된 시점의 차량의 위치와 가장 가까운 global path index
@@ -65,8 +66,16 @@ class Mapping:
                     if min_dist==-1 or min_dist > dist:
                         min_dist=dist
                         min_index = i
-                self.obs_map[self.obstacle_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
-                self.obstacle_cnt += 1
+                    
+                if planner.global_path.mission[planner.veh_index]=="big":
+                    L=2
+                    for index in range(min_index, min_index+L*10):
+                        print("dddd")
+                        self.obs_map[self.obstacle_cnt] = Obstacle(index,min_dist,ExpMovAvgFilter(pos))
+                        self.obstacle_cnt += 1
+                else:
+                    self.obs_map[self.obstacle_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
+                    self.obstacle_cnt += 1
 
             # 있으면, 해당 key값 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
             else:
@@ -91,7 +100,7 @@ class Mapping:
 
             # 5 프레임에 동안 안나오면, 삭제
             # 단, 회피주행중일 경우 제외
-        if planner.planning_msg.mode=="avoidance": 
+        if planner.planning_msg.mode=="small" or planner.planning_msg.mode=="big": 
             return
 
         for id in list(self.obs_map.keys()):
@@ -108,36 +117,58 @@ class Mapping:
 
     def make_target_map(self,planner):
         target_map={}
-        for i, obstacle in self.obs_map.items():
-            dist=obstacle.dist
-            index=obstacle.index
-            emapos=obstacle.EMA.retAvg()
+        if planner.planning_msg.mode=="big":
+            for i, obstacle in self.obs_map.items():
+                dist=obstacle.dist
+                index=obstacle.index
+                emapos=obstacle.EMA.retAvg()
+                L=3
 
-            std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
-            if dist > 3:
-                continue
+                std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
+                if dist <1:
+                    rad=radians(planner.global_path.heading[index])-pi/2
+                    r=3
+                else:
+                    rad=radians(planner.global_path.heading[index])+pi/2
+                    r=0
 
-            # 경로와 가까울때는 최대 2정도의 거리만큼 떨어져서 주행
-            # 경로와 멀때는 거의 0에 가까운 거리만큼 떨어져서 주행
 
-            rad=np.arctan2(emapos.y-std_point.y, emapos.x-std_point.x)
+                std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
+                point=Point32()
+                point.x = std_point.x + (r * cos(rad))
+                point.y = std_point.y + (r * sin(rad))
+                target_map[index]=point
 
-            if rad - radians(planner.global_path.heading[index]) > 0 and dist < 0.5:
-                r=dist+2
-            else:
-                rad+=pi
-                r=max(0,-dist+2)
+        elif planner.planning_msg.mode=="small":
+            for i, obstacle in self.obs_map.items():
+                dist=obstacle.dist
+                index=obstacle.index
+                emapos=obstacle.EMA.retAvg()
 
-            if obstacle.rad!=None:
-                if abs(rad -obstacle.rad) > pi/2:
-                    rad=obstacle.rad
-            else:
-                obstacle.rad=rad
-            point=Point32()
-            point.x = std_point.x + (r * cos(rad))
-            point.y = std_point.y + (r * sin(rad))
-            target_map[index]=point
+                std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
+                if dist > 2:
+                    continue
 
+                # 경로와 가까울때는 최대 2정도의 거리만큼 떨어져서 주행
+                # 경로와 멀때는 거의 0에 가까운 거리만큼 떨어져서 주행
+
+                rad=np.arctan2(emapos.y-std_point.y, emapos.x-std_point.x)
+
+                if rad - radians(planner.global_path.heading[index]) > 0 and dist < 0.5:
+                    r=dist+2
+                else:
+                    rad+=pi
+                    r=max(0,-dist+2)
+
+                if obstacle.rad!=None:
+                    if abs(rad -obstacle.rad) > pi/2:
+                        rad=obstacle.rad
+                else:
+                    obstacle.rad=rad
+                point=Point32()
+                point.x = std_point.x + (r * cos(rad))
+                point.y = std_point.y + (r * sin(rad))
+                target_map[index]=point
         return target_map
 
         # target point를 key로 정렬 -> tuple로 이루어진 list[(index, point), (index, point) ... ]
