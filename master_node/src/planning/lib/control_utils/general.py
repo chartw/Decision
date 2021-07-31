@@ -99,7 +99,7 @@ class General:
         
         self.cur_idx = min_idx
         # print(self.cur_idx)
-        self.target_index = self.cur_idx + 40
+        self.target_index = self.cur_idx + 45
         # print(self.target_index)
 
         # valid_idx_list = []
@@ -169,17 +169,24 @@ class General:
         path_x = list(path_x)
         path_y = list(path_y)
 
+        ''' center_x,y, :  차 앞머리에서 가장 가까운 obstacle 의 정보.
+            emergency_d :  차 앞부분과 최근인식된 장애물중점 사이 거리 - 장애물반지름 
+            temp_rad    :  emergency_d line 의 각도 = 차량 앞부분에서 장애물까지 선이 이르는 각도  [0~ 2pi]
+            safe_d      :  1m 이하일때만 실행! (멀리서 막 실행하지 않도록)_ 그 빗변삼각형의 높이 부분. 
+            R[m]        :  circle's Radius
+        '''
         self.head_x = self.cur.x + 1.5*cos(radians(self.cur.heading))
         self.head_y = self.cur.y + 1.5*cos(radians(self.cur.heading))
         center_x, center_y, radius , emergency_d = self.calc_nearest_obstacle()  # 최소거리를 emergency_dis 로 받자.
         temp_rad = atan2( center_y - self.head_y , center_x - self.head_x) % 360 
         safe_d = emergency_d * sin(radians( abs(self.cur.heading - degrees(temp_rad)) )) - radius 
 
-        R = 4.5  #push circle radius
+        R = 5 #push circle radius
+
 
 
         ## 장애물 들어오면
-        if emergency_d< 4 and safe_d < 1: #  4m 이내로 진입했고, 진행방향과 충돌 위험이 있을 때에만, 경로 생성 함.(최종 조건)
+        if emergency_d< 4 and safe_d < 0.8: #  4m 이내로 진입했고, 진행방향과 충돌 위험이 있을 때에만, 경로 생성 함.(최종 조건)
             '''너무 자주 생성되는것을 대비하면, safe_d 를 조금 작게 ㄱㄱ'''
             temp_idx=[]
             for idx in range(self.target_index-100,self.target_index+100):
@@ -190,26 +197,30 @@ class General:
             for i in range(temp_idx[0],temp_idx[-1]):
                 path_x[i] = center_x + R* cos(radians(degrees(atan2((path_y[i]-center_y),(path_x[i]-center_x))) % 360))
                 path_y[i] = center_y + R* sin(radians(degrees(atan2((path_y[i]-center_y),(path_x[i]-center_x))) % 360))
+                
+                
+                dist= hypot(path_x[i]-center_x,path_y[i]-center_y)
+                print(dist)
+                print('R:',R)
 
-        ''' center_x,y, :  차 앞머리에서 가장 가까운 obstacle 의 정보.
-            emergency_d :  차 앞부분과 최근인식된 장애물중점 사이 거리 - 장애물반지름 
-            temp_rad    :  emergency_d line 의 각도 = 차량 앞부분에서 장애물까지 선이 이르는 각도  [0~ 2pi]
-            safe_d      :  1m 이하일때만 실행! (멀리서 막 실행하지 않도록)_ 그 빗변삼각형의 높이 부분. 
-            R[m]        :  circle's Radius
-        '''
-        #### lane_push 될 때에만 rviz로 송출 ------------------------------
-        self.gpaths = PointCloud()
-        self.gpaths.header.stamp=rospy.Time.now()
-        self.gpaths.header.frame_id='world'
-        for i in range( max(0,self.target_index-100),self.target_index + 100): # 앞뒤 30m 씩 까지만 path 가시화! _ path가 계속 바뀌어야함!
-            gpath = Point32()
-            gpath.x=path_x[i]
-            gpath.y=path_y[i]
-            self.gpaths.points.append(gpath)
-        self.pub_gp.publish(self.gpaths)
 
-        # print('gpaths published._ in general.py')
-        #-------------------------------------------------------------
+
+                # if i== (temp_idx[0]+temp_idx[-1])/2:
+                #     print(degrees(atan2((path_y[i]-center_y),(path_x[i]-center_x))) % 360)
+
+            #### lane_push 될 때에만 rviz로 송출 ------------------------------
+            self.gpaths = PointCloud()
+            self.gpaths.header.stamp=rospy.Time.now()
+            self.gpaths.header.frame_id='world'
+            for i in range(max(0,temp_idx[0]),temp_idx[-1]): # 앞뒤 30m 씩 까지만 path 가시화! _ path가 계속 바뀌어야함!
+                gpath = Point32()
+                gpath.x=path_x[i]
+                gpath.y=path_y[i]
+                self.gpaths.points.append(gpath)
+            self.pub_gp.publish(self.gpaths)
+
+            # print('gpaths published._ in general.py')
+            #-------------------------------------------------------------
 
 
         return path_x,path_y
