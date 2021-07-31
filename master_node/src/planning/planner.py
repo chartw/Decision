@@ -12,7 +12,7 @@ from nav_msgs.msg import Odometry
 # from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
-from std_msgs.msg import Float32, Time, String, Int16
+from std_msgs.msg import Float32, Time, String, Int16, Int32
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
@@ -64,7 +64,7 @@ class Planner:
         self.object_msg = String()  # temporary setting for development
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
-        self.parking_msg = Int16()
+        self.parking_msg = Int32()
 
         # data 변수 선언
         self.global_path = Path()
@@ -86,11 +86,12 @@ class Planner:
         # gpp 변수 선언
         self.global_path_maker = GPP(self)
         self.local_path_maker = LPP(self)
-        self.parking_path_maker = ParkingPlan(self)
+        self.parking_planner = ParkingPlan(self)
 
         self.misson_planner = MissionPlan(self)
         self.map_maker = Mapping(self)
 
+        self.parking_planner
 
         self.vis_local_path = PointCloud()
         self.vis_local_path.header.frame_id = "world"
@@ -111,6 +112,7 @@ class Planner:
         self.target.header.frame_id = "world"
 
         self.pmode = ""
+        self.parking_target = 0
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
         self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
@@ -121,10 +123,9 @@ class Planner:
         self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
 
  
-
         # LiDAR
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        rospy.Subscriber("/parking",Int16, self.parkingCallback)
+        rospy.Subscriber("/Parking_num",Int32, self.parkingCallback)
 
         # Localization
         rospy.Subscriber("/pose", Odometry, self.localCallback)
@@ -193,6 +194,7 @@ class Planner:
                     self.dynamic_flag=self.check_dynamic()
                     self.planning_msg.mode, self.mission_ing, self.pmode = self.misson_planner.decision(self)
                     print("the mission is on ", self.planning_msg.mode)
+                    print(self.parking_target)
                 else:
                     self.mission_ing = self.misson_planner.end_check(self)  # return True/False
                     #encheck = not self.mission_ing
@@ -212,12 +214,17 @@ class Planner:
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
 
                 elif self.planning_msg.mode == "parking":
-                    self.planning_msg.mode = self.pmode
+                    self.pmode = self.parking_planner.parking_state_decision()
 
-                elif self.planning_msg.mode == "parking-start":
-                    self.parking_path = self.parking_path_maker.make_parking_path(self.parking_target)
-                    self.target_index, self.planning_msg.point = self.parking_path_maker.point_plan(self, 0.01)
-
+                    if self.pmode == "parking-start":
+                        self.parking_path = self.parking_planner.make_parking_path()
+                        self.target_index, self.planning_msg.point = self.parking_planner.point_plan(self, 0.01)
+                        
+                        스택에 넣기
+                        
+                    elif self.pmode == "parking_backward":
+                        # 스택에서 빼서 바로 플래닝 메시지 제어
+                        
 
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):
@@ -277,7 +284,7 @@ class Planner:
         self.local.y = msg.pose.pose.position.y
         self.local.heading = msg.twist.twist.angular.z
         self.is_local = True
-
+        
     def surfaceCallback(self, msg):
         self.surface_msg = msg
 
@@ -289,6 +296,8 @@ class Planner:
 
     def parkingCallback(self, msg):
         self.parking_target = msg.data
+
+        print("parking callback!!", self.parking_target)
 
 if __name__ == "__main__":
     planner = Planner()
