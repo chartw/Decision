@@ -19,6 +19,8 @@ class ParkingPlan:
         self.base.append(Point32(8.133715275780418, 14.982628122549599, 0))
         self.base.append(Point32(9.612609543917143, 17.94208643988677, 0))
 
+        self.start_base = self.base[0]
+
         self.parking_lot = []
         self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
         self.parking_lot.append(Point32(15.85266480396189, 38.844924089730185, 0))
@@ -35,8 +37,9 @@ class ParkingPlan:
             print("======Initialize Parking")
 
 
-            if hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<2:
+            if hypot(self.base[0].x-planner.local.x, self.base[0].y-planner.local.y)<2:
                 self.parking_state = "parking-base1"
+                self.start_base = self.base[0]
                 self.time_count=time.time()
 
         elif self.parking_state == "parking-base1":
@@ -70,26 +73,14 @@ class ParkingPlan:
                 self.parking_state = "parking_backward"
 
         elif self.parking_state == "parking_backward":
-            스택에서 빼서 리턴?
+            
+            if hypot(self.start_base.x-planner.local.x, self.base[0].y-planner.local.y)<2:
+                self.parking_state = "parking_end"
 
 
         return self.parking_state
 
-    def parking_base_1(self):
-        
-          
 
-    #def parking_base_2(self):
-
-    def parking_ready(self):
-        self.parking_state = "parking-ready"
-
-    def parking_start(self):
-        
-    def parking_complete(self):
-    
-    def parking_backward(self):
-    
         
 
     def make_parking_path(self):

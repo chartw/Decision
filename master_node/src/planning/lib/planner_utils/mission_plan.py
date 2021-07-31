@@ -39,10 +39,9 @@ class MissionPlan:
 
     def decision(self, planner):
 
-
         # print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
 
-        if hypot(4.2-self.local.x, 7.7-self.local.y) < 9:
+        if hypot(4.2-self.local.x, 7.7-self.local.y) < 2:
             self.mode = "parking"
 
         elif planner.object_msg.data == "normal_stop":
@@ -61,67 +60,70 @@ class MissionPlan:
             planner.is_avoidance_ing=False
             planner.planning_msg.dist=-1
 
+        else:
+            self.mode = "general"
 
-        # Parking
-        if self.mode == "parking":
-            if hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<2:
-                self.pmode = "parking-base1"
-                self.time_count=time.time()
-                print("resetttttttttttttttttttttttttt")
 
-            elif (self.pmode == "parking-base1" or self.pmode == "parking-base2") and time.time() - self.time_count > 3:
-                self.pmode = "parking-ready"
+        # # Parking
+        # if self.mode == "parking":
+        #     if hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<2:
+        #         self.pmode = "parking-base1"
+        #         self.time_count=time.time()
+        #         print("resetttttttttttttttttttttttttt")
+
+        #     elif (self.pmode == "parking-base1" or self.pmode == "parking-base2") and time.time() - self.time_count > 3:
+        #         self.pmode = "parking-ready"
             
-            elif self.pmode=='parking-ready':
-                if self.parking_msg!=-1:
-                    self.pmode='parking-start'
-                    self.temp_heading=self.local.heading
+        #     elif self.pmode=='parking-ready':
+        #         if self.parking_msg!=-1:
+        #             self.pmode='parking-start'
+        #             self.temp_heading=self.local.heading
 
-                # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
-                elif self.parking_msg==-1:
-                    self.pmode == 'parking2'
+        #         # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
+        #         elif self.parking_msg==-1:
+        #             self.pmode == 'parking2'
 
-            # 실제 주차 프로세스
-            elif self.pmode == "parking-start" and hypot(self.parking_lot[self.parking_msg].x-self.local.x, self.parking_lot[self.parking_msg].y-self.local.y) < 1:
-                self.pmode = "parking-complete"
+        #     # 실제 주차 프로세스
+        #     elif self.pmode == "parking-start" and hypot(self.parking_lot[self.parking_msg].x-self.local.x, self.parking_lot[self.parking_msg].y-self.local.y) < 1:
+        #         self.pmode = "parking-complete"
             
-            elif self.pmode == "parking-complete":
-                self.pmode = "backward-start"
+        #     elif self.pmode == "parking-complete":
+        #         self.pmode = "backward-start"
 
-            elif self.pmode == "backward-start" and abs(self.local.heading - self.temp_heading) < 5:
-                self.pmode = 'general'
+        #     elif self.pmode == "backward-start" and abs(self.local.heading - self.temp_heading) < 5:
+        #         self.pmode = 'general'
 
-            else:
-                self.mode = "general"
-                self.mission_ing=False
+        #     else:
+        #         self.mode = "general"
+        #         self.mission_ing=False
 
 
-        if self.mission_mode == "Backward":
-            print('@@@@@@@@@백월드@@@@@@@@@')
-            parking_time_end=time.time() + 6.5
-            while time.time() < parking_time_end:
+        # if self.mission_mode == "Backward":
+        #     print('@@@@@@@@@백월드@@@@@@@@@')
+        #     parking_time_end=time.time() + 6.5
+        #     while time.time() < parking_time_end:
                 
-                cnt=0x00
-                result = self.ser.readline() 
-                self.ser.flushInput()
-                # print(result)
-                # print(result[0])
-                if (result[0] is 0x53 and result[1] is 0x54 and result[2] is 0x58):
-                    res_arr = []
-                    res_idx = 0
-                    # print('okokok')
+        #         cnt=0x00
+        #         result = self.ser.readline() 
+        #         self.ser.flushInput()
+        #         # print(result)
+        #         # print(result[0])
+        #         if (result[0] is 0x53 and result[1] is 0x54 and result[2] is 0x58):
+        #             res_arr = []
+        #             res_idx = 0
+        #             # print('okokok')
 
-                    while True:
-                        for i in range(len(result)):
-                            if result[i] is 0x0A and i is not 17:
-                                # print("### 0x0A Found!", i, "th data")
-                                res_arr.append(0x0B)
-                            else :
-                                res_arr.append(result[i])
+        #             while True:
+        #                 for i in range(len(result)):
+        #                     if result[i] is 0x0A and i is not 17:
+        #                         # print("### 0x0A Found!", i, "th data")
+        #                         res_arr.append(0x0B)
+        #                     else :
+        #                         res_arr.append(result[i])
 
-                        if len(res_arr) < 18:
-                            result = self.ser.readline()
-                        els
+        #                 if len(res_arr) < 18:
+        #                     result = self.ser.readline()
+        #                 els
         
 
         # elif planner.surface_msg is "stopline" and self.serial_msg.speed > 10 and abs(self.srial_msg.steer) < 5:
@@ -152,7 +154,7 @@ class MissionPlan:
         #     self.mission_ing = True
 
         # print("in the mission_plan.py", self.mode, self.pmode)
-        return self.mode, self.mission_ing, self.pmode
+        return self.mode, self.mission_ing
 
     def end_check(self, planner):
         if planner.planning_msg.mode == "normal_stop":

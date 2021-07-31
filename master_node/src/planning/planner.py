@@ -175,14 +175,15 @@ class Planner:
         rate = rospy.Rate(50)  # 100hz
 
         while not rospy.is_shutdown():
+
             if self.is_local:
                 # GPP
                 # print(self.planning_msg.mode)
                 if self.gpp_requested:
-
                     self.global_path = self.global_path_maker.path_plan()
                     self.planning_msg.mode = "general"
                     self.gpp_requested = False
+                    print('============geral')
 
                 #endcheck = False
                 # Localization Information
@@ -192,7 +193,7 @@ class Planner:
                 if not self.mission_ing:
                     self.planning_msg.dist = self.check_dist()
                     self.dynamic_flag=self.check_dynamic()
-                    self.planning_msg.mode, self.mission_ing, self.pmode = self.misson_planner.decision(self)
+                    self.planning_msg.mode, self.mission_ing = self.misson_planner.decision(self)
                     print("the mission is on ", self.planning_msg.mode)
                     print(self.parking_target)
                 else:
@@ -202,6 +203,7 @@ class Planner:
                 if self.planning_msg.mode == "general":
                     self.planning_msg.path = self.global_path
                     self.target_index, self.planning_msg.point = self.global_path_maker.point_plan(self, 4)
+
                 elif self.planning_msg.mode == "avoidance" and self.mission_ing:
                     if self.is_avoidance_ing == False:
                         self.is_avoidance_ing = True
@@ -214,17 +216,21 @@ class Planner:
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
 
                 elif self.planning_msg.mode == "parking":
-                    self.pmode = self.parking_planner.parking_state_decision()
+                    self.pmode = self.parking_planner.parking_state_decision(self)
 
                     if self.pmode == "parking-start":
                         self.parking_path = self.parking_planner.make_parking_path()
                         self.target_index, self.planning_msg.point = self.parking_planner.point_plan(self, 0.01)
                         
-                        스택에 넣기
-                        
                     elif self.pmode == "parking_backward":
                         # 스택에서 빼서 바로 플래닝 메시지 제어
-                        
+                        pass
+
+
+                    elif self.pmode == "parking_end":
+                        self.planning_msg.mode = "general"
+                        self.mission_ing = False
+
 
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):
