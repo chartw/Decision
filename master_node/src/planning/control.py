@@ -55,7 +55,7 @@ class Control:
         self.local_point=Point32()
         self.lookahead = 4
         self.past_mode = None
-
+        self.parking_target = 0
         general = General(self)
         avoidance = Avoidance(self)
         self.parking_stack = ParkingStack
@@ -72,7 +72,7 @@ class Control:
         # main loop
         while not rospy.is_shutdown():
             # print(self.local.x, self.local.y)
-            print(self.planning_info.mode)
+            # print(self.planning_info.mode)
             if self.is_planning:
                 if self.planning_info.mode == "general":
                     if self.planning_info.path.x:
@@ -106,21 +106,22 @@ class Control:
                     self.serialParkingComm(0x30, 0x00, FGEAR)
                 
                 # 라이다에 쏴줄때 정지 - 없어도 될 수도
-                elif self.planning_info.mode == "parking-ready":
+                elif self.planning_info.mode == "parking_ready":
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
 
                 # 주행
-                elif self.planning_info.mode == "parking-start":
+                elif self.planning_info.mode == "parking_start":
+                    print('sibal')
                     self.serialParkingComm(0x30, 0x00, FGEAR)
-                    self.pub_msg.steer = parkingClass.drivingParkingNode(self.planning_info.point)
-
+                    # print(self.planning_info)
+                    self.pub_msg.steer = parkingClass.pure_pursuit(self.planning_info.point, self)
+                    print("steer", self.pub_msg.steer)
                     # 정해진 노드 따라서 주행
-                    self.parking_stack.push(0x30, 0x00, self.pub_msg.steer)
+                    # self.parking_stack.push(0x30, 0x00, self.pub_msg.steer)
 
-                    pass
 
                 # 전진 주차 끝 정지, 후진 기어
-                elif self.planning_info.mode == "parking-complete":
+                elif self.planning_info.mode == "parking_complete":
                     self.serialParkingComm(0x00, MAX_BRAKE, BGEAR)
 
                 # 후진
@@ -146,7 +147,7 @@ class Control:
                     #     self.pub_msg.emergency_stop = 1
                     #     self.pub_msg.auto_manual = 1
 
-                print(self.planning_info.dist)
+                # print(self.planning_info.dist)
                 if not self.planning_info.mode=="avoidance" and self.planning_info.dist!=-1:
                     dist=self.planning_info.dist -1.05 # 범퍼위치로 기준 재설정
 
@@ -197,6 +198,8 @@ class Control:
 
         # print(self.serial_info) # 얜 잘 받음 / 근데  general 에서 못받아.ㅇㄹ이러이라ㅓㅁ댜ㅐ렁마러ㅑㅐㄷ머랑ㅁ르
 
+    def parkingCallback(self, msg):
+        self.parking_target = msg.data
 
 print("Control start")
 control = Control()

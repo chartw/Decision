@@ -83,6 +83,12 @@ class Serial_Node:
         if self.control_input.brake > 200:
             self.control_input.brake = 200
 
+        if self.control_input.steer > 27.7:
+            self.control_input.steer = 27.7
+        elif self.control_input.steer < -27.7:
+            self.control_input.steer = -27.7
+
+
         print(self.control_input)
         print("#######################")
         print(self.control_input.auto_manual)

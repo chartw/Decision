@@ -43,6 +43,7 @@ class MissionPlan:
 
         if hypot(4.2-self.local.x, 7.7-self.local.y) < 2:
             self.mode = "parking"
+            self.mission_ing = True
 
         elif planner.object_msg.data == "normal_stop":
             self.mode = "normal_stop"
@@ -167,3 +168,13 @@ class MissionPlan:
             else:
                 return False
 
+        elif planner.planning_msg.mode == "parking" \
+            or planner.planning_msg.mode == "parking-base1" \
+            or planner.planning_msg.mode == "parking-base2" \
+            or planner.planning_msg.mode == "parking_ready" \
+            or planner.planning_msg.mode == "parking_start" \
+            or planner.planning_msg.mode == "parking_complete" \
+            or planner.planning_msg.mode == "parking_backward" \
+            or planner.planning_msg.mode == "parking_end": 
+            return True
+            # end check 안쓰겠다는 의지.
