@@ -300,7 +300,7 @@ class GPP:
         planner.veh_index = max(0,self.target_index - int(proj_dist * 10))
 
         target_point=Point32(self.global_path.x[self.target_index],self.global_path.y[self.target_index],0)
-        print(self.global_path.heading[self.target_index])
+        # print(self.global_path.heading[self.target_index])
         return self.target_index, target_point
 
     def make_global_map(self):
@@ -312,5 +312,5 @@ class GPP:
                 self.global_path.heading.append(degrees(float(line[2])))
                 self.global_path.k.append(float(line[3]))
                 # self.global_path.s.append(float(line[4]))
-                self.global_path.etc.append(line[5])
+                self.global_path.env.append(line[5])
                 self.global_path.mission.append(line[6])

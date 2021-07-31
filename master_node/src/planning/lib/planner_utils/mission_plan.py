@@ -40,16 +40,15 @@ class MissionPlan:
         env=planner.global_path.env[planner.veh_index]
         dist=planner.planning_msg.dist
 
-        print(mission, env, dist)
+        # print(mission, env, dist)
         if mission=="small" or mission=="big":
             if dist >0:
                 self.mode = mission
-            elif len(planner.local_path.x)!=0:
+                planner.local_path_maker.start(planner)
+            if len(planner.local_path.x)!=0:
                 if hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) < 3:
                     planner.local_path=Path()
                     self.mode="general"
-            else:
-                self.mode="general"
 
         elif mission=="kid":
             if env=="bump":

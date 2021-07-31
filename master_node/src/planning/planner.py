@@ -170,6 +170,7 @@ class Planner:
             if self.is_local:
                 # GPP
                 # print(self.planning_msg.mode)
+                
                 if self.gpp_requested:
 
                     self.global_path = self.global_path_maker.path_plan()
@@ -184,7 +185,7 @@ class Planner:
                 self.planning_msg.dist = self.check_dist()
                 self.planning_msg.mode = self.misson_planner.decision(self)
 
-                if self.planning_msg.mode == "general":
+                if self.planning_msg.mode == "general" or self.planning_msg.mode=="kid" or self.planning_msg.mode=="bump":
                     self.planning_msg.path = self.global_path
                     self.target_index, self.planning_msg.point = self.global_path_maker.point_plan(self, 4)
                 elif (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
