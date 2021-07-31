@@ -312,5 +312,5 @@ class GPP:
                 self.global_path.heading.append(degrees(float(line[2])))
                 self.global_path.k.append(float(line[3]))
                 # self.global_path.s.append(float(line[4]))
-                # self.global_path.etc.append(line[5])
-                # self.global_path.mission.append(line[6])
+                self.global_path.etc.append(line[5])
+                self.global_path.mission.append(line[6])
