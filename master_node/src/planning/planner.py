@@ -217,10 +217,10 @@ class Planner:
                 # self.target.header.stamp=rospy.Time.now()
                 # self.target_pub.publish(self.target)
 
-                self.target.points=[]
-                self.target.points.append(self.planning_msg.point)
-                self.target.header.stamp=rospy.Time.now()
-                self.target_pub.publish(self.target)
+                # self.target.points=[]
+                # self.target.points.append(self.planning_msg.point)
+                # self.target.header.stamp=rospy.Time.now()
+                # # self.target_pub.publish(self.target)
 
 
                 self.map.points= self.map_maker.showObstacleMap().points
