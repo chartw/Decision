@@ -125,9 +125,9 @@ class General:
     def pure_pursuit(self):
 
         if self.curve_flag: #@@@
-            self.lookahead=3
-        else:
             self.lookahead=4
+        else:
+            self.lookahead=5
 
         self.select_target(self.lookahead) # @@@@
 
@@ -237,7 +237,7 @@ class General:
         # self.temp_msg=Serial_Info()
         # print('self.serial_info',self.serial_info.speed)
         if mode == "general":
-            self.V_ref_max = 18
+            self.V_ref_max = 15
             self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
 
         elif mode =="kid":
