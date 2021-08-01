@@ -146,7 +146,7 @@ class Mapping:
                 emapos=obstacle.EMA.retAvg()
 
                 std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
-                if dist > 2:
+                if dist > 1.75:
                     continue
 
                 # 경로와 가까울때는 최대 2정도의 거리만큼 떨어져서 주행
@@ -155,10 +155,10 @@ class Mapping:
                 rad=np.arctan2(emapos.y-std_point.y, emapos.x-std_point.x)
 
                 if rad - radians(planner.global_path.heading[index]) > 0 and dist < 0.5:
-                    r=dist+2
+                    r=dist+1.5
                 else:
                     rad+=pi
-                    r=max(0,-dist+2)
+                    r=max(0,-dist+1.5)
 
                 if obstacle.rad!=None:
                     if abs(rad -obstacle.rad) > pi/2:

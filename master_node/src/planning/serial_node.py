@@ -74,6 +74,7 @@ class Serial_Node:
 
                     self.alive = struct.unpack("B", packet[15:16])[0]
                     # print(self.alive)
+            print(self.serial_msg)
             self.serial_pub.publish(self.serial_msg)
 
     def serialWrite(self):
@@ -83,9 +84,8 @@ class Serial_Node:
         if self.control_input.brake > 200:
             self.control_input.brake = 200
 
-        print(self.control_input)
-        print("#######################")
-        print(self.control_input.auto_manual)
+        # print(self.control_input)
+        # print(self.control_input.auto_manual)
         # a = input()
         result = struct.pack(
             ">BBBBBBHhBBBB",

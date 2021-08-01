@@ -272,33 +272,17 @@ class GPP:
         idx = 0
         min_idx=0
         min_dist=-1
-        if hypot(self.global_path.x[self.target_index] - self.local.x, self.global_path.y[self.target_index] - self.local.y) < lookahead:
-            idx = self.target_index
-        else:
-            idx = 0
-        for i in range(idx, len(self.global_path.x)):
+        start=max(0,planner.veh_index-100)
+        end=min(len(self.global_path.x)-1,planner.veh_index+100)
+        for i in range(start,end):
             dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
 
             if dis < min_dist or min_dist == -1:
                 min_dist=dis
                 min_idx=i
-
-            if dis <= lookahead:
-                valid_idx_list.append(i)
-            if len(valid_idx_list) != 0 and dis > lookahead:
-                break
-        if valid_idx_list:
-            self.target_index = valid_idx_list[len(valid_idx_list) - 1]
-        else:
-            self.target_index=min(min_idx+40,len(self.global_path.x)-1)
-
-        if self.target_index==len(self.global_path.x)-1:
-            self.target_index=min_idx+40 - (len(self.global_path.x)-1)
-
-        theta = radians(self.local.heading - self.global_path.heading[self.target_index])
-        proj_dist = lookahead * cos(radians(theta))
-        planner.veh_index = max(0,self.target_index - int(proj_dist * 10))
-
+            
+        planner.veh_index=min_idx
+        self.target_index=min_idx+40
         target_point=Point32(self.global_path.x[self.target_index],self.global_path.y[self.target_index],0)
         # print(self.global_path.heading[self.target_index])
         return self.target_index, target_point
