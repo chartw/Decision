@@ -5,7 +5,6 @@ import serial
 import rospy
 import struct
 import threading
-
 from master_node.msg import Serial_Info
 
 
@@ -13,7 +12,6 @@ class Serial_Node:
     def __init__(self):
         # Serial Connect
         self.ser = serial.Serial("/dev/ttyUSB0", 115200)
-
 
         # ROS Publish
         rospy.init_node("Serial", anonymous=False)
@@ -47,7 +45,7 @@ class Serial_Node:
 
     def serialRead(self):
         while True:
-            packet = self.ser.readline()
+            packet = self.ser.read_until(b'\x0d\x0a')
             print(packet)
             if len(packet) == 18:
                 header = packet[0:3].decode()
