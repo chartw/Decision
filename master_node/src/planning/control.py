@@ -58,7 +58,7 @@ class Control:
         self.parking_target = 0
         general = General(self)
         avoidance = Avoidance(self)
-        self.parking_stack = ParkingStack
+        self.parking_stack = ParkingStack()
         parkingClass = Parking(self)
 
         # emergency_stop = EmergencyStop(self)
@@ -75,6 +75,8 @@ class Control:
             # print(self.planning_info.mode)
             if self.is_planning:
                 if self.planning_info.mode == "general":
+                    print("change to general_mode")
+                    self.serialParkingComm(self.pub_msg.speed, self.pub_msg.brake, FGEAR)
                     if self.planning_info.path.x:
                         self.global_path = self.planning_info.path
                     if self.global_path.x:
@@ -113,21 +115,21 @@ class Control:
                 elif self.planning_info.mode == "parking_start":
                     print('sibal')
                     self.serialParkingComm(0x30, 0x00, FGEAR)
-                    # print(self.planning_info)
+                    print("target point:", self.planning_info.point.x, self.planning_info.point.y)
                     self.pub_msg.steer = parkingClass.pure_pursuit(self.planning_info.point, self)
                     print("steer", self.pub_msg.steer)
                     # 정해진 노드 따라서 주행
-                    # self.parking_stack.push(0x30, 0x00, self.pub_msg.steer)
-
+                    self.parking_stack.push(0x30, 0x00, self.pub_msg.steer)
 
                 # 전진 주차 끝 정지, 후진 기어
                 elif self.planning_info.mode == "parking_complete":
                     self.serialParkingComm(0x00, MAX_BRAKE, BGEAR)
+                    self.parking_stack.push(0x30, 0x00, 0x00)
 
                 # 후진
-                elif self.planning_info.mode == "backward-start":
-                    self.pub_msg.speed, self.pub_msg.brake, self.pub_msg.steering = self.parking_stack.pop()
-                    self.serialParkingComm(0x30, 0x00, FGEAR)
+                elif self.planning_info.mode == "parking_backward":
+                    _, _, self.pub_msg.steer= self.parking_stack.pop()
+                    self.serialParkingComm(0x30, 0x00, BGEAR)
 
                     # elif self.planning_info.mode == "avoidance":
                     #     self.pub_msg.steer = avoidance.pure_puresuit()
@@ -146,6 +148,12 @@ class Control:
                     #     self.pub_msg.gear = 0
                     #     self.pub_msg.emergency_stop = 1
                     #     self.pub_msg.auto_manual = 1
+                elif self.planning_info.mode == "backward_complete":
+                    self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+
+                elif self.planning_info.mode == "parking_end":
+                    self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+                    #self.planning_info.mode = "general"
 
                 # print(self.planning_info.dist)
                 if not self.planning_info.mode=="avoidance" and self.planning_info.dist!=-1:

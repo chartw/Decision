@@ -13,19 +13,29 @@ class ParkingPlan:
         self.global_path = planner.parking_path
         self.parking_state = "parking_init"
         self.time_count = 0
+        self.time_bcount= 0
+        self.time_ecount= 0
+
 
         self.base = []
-        self.base.append(Point32(8.133715275780418, 14.982628122549599, 0))
-        self.base.append(Point32(9.612609543917143, 17.94208643988677, 0))
+        self.base.append(Point32(4.88, 8.876, 0))
+        self.base.append(Point32(8.725, 16.832, 0))
+        #self.base.append(Point32(9.612609543917143, 17.94208643988677, 0))
 
         self.start_base = self.base[0]
 
         self.parking_lot = []
-        self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
-        self.parking_lot.append(Point32(15.85266480396189, 38.844924089730185, 0))
+        self.parking_lot.append(Point32(11.4874257376099, 10.9097614081884, 0))
+        self.parking_lot.append(Point32(11.4874257376099, 10.9097614081884, 0))
+        self.parking_lot.append(Point32(13.30981534063439, 13.317898690530509, 0))
         self.parking_lot.append(Point32(14.16998329088652, 36.736197374027405, 0))
         self.parking_lot.append(Point32(12.398738836681156, 34.405499957494584, 0))
         self.parking_lot.append(Point32(10.716055698028432, 32.18578849457638, 0))
+        # self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
+        # self.parking_lot.append(Point32(15.85266480396189, 38.844924089730185, 0))
+        # self.parking_lot.append(Point32(14.16998329088652, 36.736197374027405, 0))
+        # self.parking_lot.append(Point32(12.398738836681156, 34.405499957494584, 0))
+        # self.parking_lot.append(Point32(10.716055698028432, 32.18578849457638, 0))
 
         planner.parking_target_index = 0
 
@@ -61,26 +71,27 @@ class ParkingPlan:
             print("======Parking for target ", self.parking_target)
 
             #밖에서 파킹스택 쌓기. 
-
-
             dis_x = self.parking_lot[self.parking_target].x-planner.local.x
             dis_y = self.parking_lot[self.parking_target].y-planner.local.y
 
-            if hypot(dis_x, dis_y) < 1:
+            print("======Distance from goal_point: ", hypot(dis_x, dis_y))
+            if hypot(dis_x, dis_y) < 2.2:
                 self.parking_state = "parking_complete"
                 self.time_count=time()
    
 
         elif self.parking_state == "parking_complete":
-            
             if time() - self.time_count > 3:
                 self.parking_state = "parking_backward"
 
         elif self.parking_state == "parking_backward":
-            
-            if hypot(self.start_base.x-planner.local.x, self.base[0].y-planner.local.y)<2:
+            if hypot(self.start_base.x-planner.local.x, self.start_base.y-planner.local.y)<2.5:
+                self.parking_state = "backward_complete"
+                self.time_bcount=time()
+                
+        elif self.parking_state == "backward_complete":
+            if time() - self.time_bcount > 3:
                 self.parking_state = "parking_end"
-
 
         return self.parking_state
 
@@ -127,8 +138,8 @@ class ParkingPlan:
         else:
             planner.parking_target_index=min(min_idx+40,len(self.parking_path.x)-1)
 
-        if planner.parking_target_index==len(self.parking_path.x)-1:
-            planner.parking_target_index=min_idx+40 - (len(self.parking_path.x)-1)
+        # if planner.parking_target_index==len(self.parking_path.x)-1:
+        #     planner.parking_target_index=min_idx+40 - (len(self.parking_path.x)-1)
 
         theta = radians(planner.local.heading - self.parking_path.heading[planner.parking_target_index])
         proj_dist = lookahead * cos(radians(theta))

@@ -90,6 +90,9 @@ class Planner:
 
         self.parking_planner
 
+        self.vis_parking_path = PointCloud()
+        self.vis_parking_path.header.frame_id = "world"
+
         self.vis_local_path = PointCloud()
         self.vis_local_path.header.frame_id = "world"
 
@@ -110,20 +113,23 @@ class Planner:
 
         self.pmode = ""
         self.is_parking = False
-        self.parking_target = 0
+        self.parking_target = 1
         self.veh_index = 0
         self.parking_target_index = 0
         self.target_index = 0
 
-
+        self.count = 0
+        self.booleanFalse = False
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
         self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
+        self.parking_path_pub = rospy.Publisher("/parking_path", PointCloud, queue_size=1)
         self.map_pub = rospy.Publisher("/map_pub", PointCloud, queue_size=1)
         self.obs_pub = rospy.Publisher("/obs_pub", PointCloud, queue_size=1)
         self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
         self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
         self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
+        
 
  
         # LiDAR
@@ -178,7 +184,7 @@ class Planner:
         rate = rospy.Rate(50)  # 100hz
 
         while not rospy.is_shutdown():
-
+            print("current point is:", self.local.x, self.local.y)
             if self.is_local:
                 # GPP
                 # print(self.planning_msg.mode)
@@ -224,6 +230,7 @@ class Planner:
                 if self.is_parking is True:
                     self.pmode = self.parking_planner.parking_state_decision(self)
 
+                    print("Current Mission: ", self.planning_msg.mode)
 
                     # if self.pmode == "parking-base1":
                     #     self.parking_path = self.parking_planner.make_parking_path(1)
@@ -232,19 +239,22 @@ class Planner:
                         self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
                         print('==========parking path created')
                         print(self.parking_path)
+                        self.vis_parking_path.points = []
+                        for i in range(len(self.parking_path.x)):
+                            self.vis_parking_path.points.append(Point32(self.parking_path.x[i], self.parking_path.y[i], 0))
+                        self.vis_parking_path.header.stamp = rospy.Time.now()
+                        self.parking_path_pub.publish(self.vis_parking_path)
+
                     elif self.pmode == "parking_start":
-                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self, 0.01)
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self, 1)
                         
                     elif self.pmode == "parking_backward":
-                        # 스택에서 빼서 바로 플래닝 메시지 제어
                         pass
-
 
                     elif self.pmode == "parking_end":
                         self.pmode = "general"
                         self.mission_ing = False
-
-
+                        self.is_parking = False
 
                     self.planning_msg.mode = self.pmode
 
@@ -319,6 +329,7 @@ class Planner:
         self.object_msg.data = msg.data
 
     def parkingCallback(self, msg):
+        print("Parking Callback run")
         self.parking_target = msg.data
 
 if __name__ == "__main__":

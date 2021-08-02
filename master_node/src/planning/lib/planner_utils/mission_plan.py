@@ -17,8 +17,8 @@ class MissionPlan:
         self.object_msg = planner.object_msg
         self.mission_ing = planner.mission_ing  # True / False
         self.base = []
-        self.base.append(Point32(8.133715275780418, 14.982628122549599, 0))
-        self.base.append(Point32(9.612609543917143, 17.94208643988677, 0))
+        self.base.append(Point32(4.88, 8.876, 0))
+        self.base.append(Point32(8.725, 16.832, 0))
         #self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
         #self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
         self.mode=""
@@ -54,7 +54,7 @@ class MissionPlan:
             self.mission_ing = True
             planner.is_avoidance_ing=False
             
-        elif self.mode == "general"and planner.dynamic_flag == False and planner.planning_msg.dist!=-1:
+        elif self.mode == "general" and planner.dynamic_flag == False and planner.planning_msg.dist!=-1:
             planner.local_path_maker.start(planner)
             self.mode = "avoidance"
             self.mission_ing = True
@@ -178,3 +178,4 @@ class MissionPlan:
             or planner.planning_msg.mode == "parking_end": 
             return True
             # end check 안쓰겠다는 의지.
+            # 머선일이고;;
