@@ -2,8 +2,29 @@
 # -*- coding:utf-8 -*-
 from master_node.msg import Serial_Info  # 개발할 메세지 타입
 
-from math import degrees, atan2, sin, radians, sqrt
+from math import degrees, atan2, sin, radians, sqrt ,hypot
+import time, rospy
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+import rospy
+
+import numpy as np
+from math import radians, degrees, sin, cos, hypot, atan2, pi
+import sys
 import time
+from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
+from nav_msgs.msg import Odometry
+
+# from darknet_ros_msgs.msg import BoundingBoxes
+from sensor_msgs.msg import PointCloud
+from geometry_msgs.msg import Point32
+from std_msgs.msg import Float32, Time, String, Int16
+
+# from lane_detection.msg import lane
+from lib.planner_utils.global_path_plan import GPP
+from lib.planner_utils.local_point_plan import LPP
+from lib.planner_utils.mission_plan import MissionPlan
+from lib.planner_utils.mapping import Mapping
 
 
 class General:
@@ -16,15 +37,18 @@ class General:
         self.GeneralLookahead = control.lookahead  # 직진 주행시 lookahead
 
         self.serial_info = control.serial_info  #####  얘가 빈공간으로 들어오고 ㅣㅇ씅 @@@@@@@ 음 그냥  init 이라서 한번만 받아오는거네.같은 데이터 공간이어도 계속 받아와야 하징자ㅓㄹㄴㅁㅇ러ㅣㄷ렁마ㅣㄴ
+        self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
 
         self.temp_msg = Serial_Info()
 
         self.past_mode = control.past_mode
         self.lookahead = 4
-        self.speed_lookahead = 6
+        self.speed_lookahead = 4
         self.WB = 1.04
         self.target_index = 0
 
+
+        self.stidx =0
         self.t_start = 0
         self.t_delta = 0
         self.t_old = 0
@@ -42,34 +66,72 @@ class General:
         self.V_err_deri = 0
 
         self.safety_factor = 0.8
-        self.V_ref_max = 12
+        self.V_ref_max = 12 # 어차피 driving 에서 해서 의미없음.
+        self.curve_flag = False
 
-    def select_target(self, lookahead):
-        valid_idx_list = []
+        self.first_check = True
 
-        for i in range(self.target_index, len(self.path.x)):
-            dis = ((self.path.x[i] - self.cur.x) ** 2 + (self.path.y[i] - self.cur.y) ** 2) ** 0.5
+    # def select_target(self, lookahead):  태웅님꺼
+    #     valid_idx_list = []
 
-            if dis <= self.lookahead:
-                valid_idx_list.append(i)
-            if len(valid_idx_list) != 0 and dis > lookahead:
-                break
-        if len(valid_idx_list) == 0:
-            return 0
+    #     for i in range(self.target_index, len(self.path.x)):
+    #         dis = ((self.path.x[i] - self.cur.x) ** 2 + (self.path.y[i] - self.cur.y) ** 2) ** 0.5
+
+    #         if dis <= self.lookahead:
+    #             valid_idx_list.append(i)
+    #         if len(valid_idx_list) != 0 and dis > lookahead:
+    #             break
+    #     if len(valid_idx_list) == 0:
+    #         return 0
+    #     else:
+    #         return valid_idx_list[len(valid_idx_list) - 1]
+
+    # # Dynamic Lookahead
+    # def Dynamic_LookAhead(self):
+    #     self.lookahead = self.GeneralLookahead
+    #     heading_difference = self.cur.heading - self.path.heading[self.target_index]
+    #     if heading_difference > 10:
+    #         self.lookahead = self.GeneralLookahead / 2
+    #     # print ("LookAhead : ",self.lookahead)
+
+
+
+
+    def select_target(self,lookahead): # 여기서 사용하는 self.path 관련정보를 바꾸면 됨. 여기서바꿔야하나?
+        min_dis = 99999
+        min_idx = 0
+
+        if self.first_check: # cur_idx 잡는데, 배달미션이나 cross 되는부분은 ,  
+            for i in range(len(self.path.x)):
+                dis = hypot(self.path.x[i]-self.cur.x,self.path.y[i]-self.cur.y)
+                if min_dis > dis: # 여기에 등호가 붙으면, 뒷부분 index 잡고, 안붙으면 앞쪽 index
+                    min_dis = dis
+                    min_idx = i
+            self.first_check = False
         else:
-            return valid_idx_list[len(valid_idx_list) - 1]
+            for i in range(max(self.cur_idx-50,0),self.cur_idx+50):
+                dis = hypot(self.path.x[i]-self.cur.x,self.path.y[i]-self.cur.y)
+                if min_dis > dis:
+                    min_dis = dis
+                    min_idx = i
+        
+        self.cur_idx = min_idx # 차량과 가장 가까운 index. 
+        self.target_index = self.cur_idx + lookahead*10   
 
-    # Dynamic Lookahead
-    def Dynamic_LookAhead(self):
-        self.lookahead = self.GeneralLookahead
-        heading_difference = self.cur.heading - self.path.heading[self.target_index]
-        if heading_difference > 10:
-            self.lookahead = self.GeneralLookahead / 2
-        # print ("LookAhead : ",self.lookahead)
+        self.stidx =  self.cur_idx + 60
 
-    def pure_pursuit(self,point):
-        # pure pursuit 계산되는 부분
-        tmp_th = degrees(atan2((point.y - self.cur.y), (point.x - self.cur.x)))
+
+    # def pure_pursuit(self,point):
+    def pure_pursuit(self):
+
+        if self.curve_flag: #@@@
+            self.lookahead=4
+        else:
+            self.lookahead=5
+
+        self.select_target(self.lookahead) # @@@@
+
+        tmp_th = degrees(atan2((self.path.y[self.target_index] - self.cur.y), (self.path.x[self.target_index] - self.cur.x)))
 
         tmp_th = tmp_th % 360
 
@@ -130,14 +192,15 @@ class General:
 
         if k < critical_k:
             V_ref = self.V_ref_max
+            self.curve_flag = False
         else:
             V_ref = self.safety_factor * (sqrt(19.071 / k))
-
+            self.curve_flag = True
         return V_ref  # km/h
 
     def calc_Vref(self):
-        stidx = self.select_target(self.speed_lookahead)
-        target_k = abs(self.path.k[stidx])
+        self.select_target(self.speed_lookahead)
+        target_k = abs(self.path.k[self.stidx])
         # print(target_k)
         V_ref = self.calc_k(target_k)
 
@@ -184,11 +247,25 @@ class General:
             self.temp_msg.speed=8
         elif mode=="bump":
             self.temp_msg.speed=8
-        self.temp_msg.steer = self.pure_pursuit(control.local_point)
+        # self.temp_msg.steer = self.pure_pursuit(control.local_point)
+        self.temp_msg.steer = self.pure_pursuit()
+
         self.temp_msg.brake = 0
         self.temp_msg.encoder = 0
         self.temp_msg.gear = 0
         self.temp_msg.emergency_stop = 0
         self.temp_msg.auto_manual = 1
 
+
+        self.target = PointCloud()
+        target_pt = Point32()
+        target_pt.x = self.path.x[self.target_index]
+        target_pt.y = self.path.y[self.target_index]
+        self.target.points.append(target_pt)
+        self.target.header.frame_id = 'world'
+        self.target.header.stamp=rospy.Time.now()
+        self.target_pub.publish(self.target)
+
+
         return self.temp_msg
+
