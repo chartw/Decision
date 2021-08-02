@@ -48,6 +48,7 @@ class Serial_Node:
     def serialRead(self):
         while True:
             packet = self.ser.readline()
+            print(packet)
             if len(packet) == 18:
                 header = packet[0:3].decode()
 
@@ -70,11 +71,12 @@ class Serial_Node:
 
                     tmp1 = struct.unpack("f", packet[11:15])
                     self.serial_msg.encoder = tmp1[0]
+                
                     # print("encoder", tmp1[0])
 
                     self.alive = struct.unpack("B", packet[15:16])[0]
                     # print(self.alive)
-            print(self.serial_msg)
+            # print(self.serial_msg)
             self.serial_pub.publish(self.serial_msg)
 
     def serialWrite(self):

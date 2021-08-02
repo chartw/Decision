@@ -86,6 +86,22 @@ class Control:
                     
                 elif self.planning_info.mode=="bump":
                     self.pub_msg=general.driving(self)
+                
+                elif self.planning_info.mode=="normal_stop":
+                    self.pub_msg=general.driving(self)
+
+                    dist=self.planning_info.dist -0.9 # 범퍼위치로 기준 재설정\
+                    self.pub_msg.speed=dist/5
+                    t=dist/((self.serial_info.speed/3.6)+0.1)
+                    # self.pub_msg.brake=int(200/t) # 유리 함수 200/x
+                    # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
+                    # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
+                    t=max(1,dist/((self.serial_info.speed/3.6)+0.1))
+                    # self.pub_msg.brake=int(-100*sqrt(t-1)+200) # 제곱근 함수
+                    self.pub_msg.brake=int(-75*sqrt(t-1)+150) # 제곱근 함수
+                    self.pub_msg.brake=max(0,min(200,self.pub_msg.brake))
+
+                    
                 # elif self.planning_info.mode == 'normal_stop':
                 #     is_first = (self.past_mode != 'normal_stop')
                 #     self.normal_stop.run(is_first)

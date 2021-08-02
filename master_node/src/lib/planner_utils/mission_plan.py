@@ -53,10 +53,13 @@ class MissionPlan:
         elif mission=="kid":
             if env=="bump":
                 self.mode="bump"
-            elif dist > 0 and dist < 5:
+            elif dist > 0 and dist < 7:
                 self.mode="emergency_stop"
             else:
                 self.mode="kid"
+
+        elif planner.stop_index-planner.veh_index < 10*10:
+            self.mode="crossroad"
 
         else:
             self.mode="general"
