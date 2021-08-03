@@ -203,7 +203,7 @@ class Planner:
                 if not self.mission_ing:
                     self.planning_msg.dist = self.check_dist()
                     self.dynamic_flag=self.check_dynamic()
-                    self.planning_msg.mode, self.mission_ing = self.misson_planner.decision(self)
+                    self.planning_msg.mode = self.misson_planner.decision(self)
                 else:
                     self.mission_ing = self.misson_planner.end_check(self)  # return True/False
                     #encheck = not self.mission_ing
