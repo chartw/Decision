@@ -190,7 +190,7 @@ class Planner:
             if self.is_local:
                 # GPP
                 # print(self.planning_msg.mode)
-                print(self.planning_msg.dist)
+                # print(self.planning_msg.dist)
                 if self.gpp_requested:
                     self.global_path = self.global_path_maker.path_plan()
                     self.planning_msg.mode = "general"
@@ -201,7 +201,7 @@ class Planner:
                 self.planning_msg.local = self.local
                 self.veh_index=self.get_veh_index()
                 self.stop_index=self.stop_line_checker.stop_idx_check(planner)
-                print(self.stop_index)
+                # print(self.stop_index)
 
                 self.planning_msg.dist = self.check_dist()
                 self.planning_msg.mode = self.misson_planner.decision(self)
@@ -219,13 +219,14 @@ class Planner:
                         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
 
                 elif self.planning_msg.mode=="crossroad":
-                    self.planning_msg.dist=(self.stop_index-self.veh_index)/10
+                    self.planning_msg.mode="general"
+                    # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
 
-                    signal = self.traffic_light.run(self.object_msg.data) # string
-                    if self.global_path.mission[self.stop_index] in signal:
-                        self.planning_msg.mode="general"
-                    else:
-                        self.planning_msg.mode="normal_stop"
+                    # signal = self.traffic_light.run(self.object_msg.data) # string
+                    # if self.global_path.mission[self.stop_index] in signal:
+                    #     self.planning_msg.mode="general"
+                    # else:
+                    #     self.planning_msg.mode="normal_stop"
 
                 
 

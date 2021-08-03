@@ -37,7 +37,7 @@ class Mapping:
             pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + planner.local.x
             pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + planner.local.y
             id = -1
-
+            
             for i, obstacle in self.obs_map.items():
                 if obstacle.EMA.tracking(pos):
                     id = i
@@ -68,17 +68,22 @@ class Mapping:
                         min_index = i
                     
                 if planner.global_path.mission[planner.veh_index]=="big":
-                    L=2
+                    if min_index in self.obs_map:
+                        continue
+                    L=3
+
                     for index in range(min_index, min_index+L*10):
-                        print("dddd")
-                        self.obs_map[self.obstacle_cnt] = Obstacle(index,min_dist,ExpMovAvgFilter(pos))
+                        pos=Point32(planner.global_path.x[index],planner.global_path.y[index],0)
+                        self.obs_map[index] = Obstacle(index,min_dist,ExpMovAvgFilter(pos))
                         self.obstacle_cnt += 1
                 else:
-                    self.obs_map[self.obstacle_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
+                    self.obs_map[min_index] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
                     self.obstacle_cnt += 1
 
             # 있으면, 해당 key값 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
             else:
+                if planner.global_path.mission[planner.veh_index]=="big":
+                    continue
                 self.obs_map[id].EMA.emaFilter(pos)
                 obstacle=self.obs_map[id]
                 emapos=obstacle.EMA.retAvg()
@@ -177,7 +182,7 @@ class Mapping:
     # 이걸 바로 rviz로 쏘고있음
     def showObstacleMap(self):
         obstacle_map = PointCloud()
-        for i, obstacle in self.obs_map.items():
+        for i, obstacle in list(self.obs_map.items()):
             obstacle_map.points.append(obstacle.EMA.retAvg())
 
         return obstacle_map

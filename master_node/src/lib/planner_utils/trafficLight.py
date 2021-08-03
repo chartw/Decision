@@ -27,7 +27,7 @@ class trafficLight:
                 if size > max_size:
                     max_size = size
                     max_box = box
-
+        
         self.queue.append(max_box.Class)
         self.lights_count[max_box.Class]+=1
         if len(self.queue) >self.queue_size:
