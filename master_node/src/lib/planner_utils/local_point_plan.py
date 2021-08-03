@@ -59,24 +59,19 @@ class LPP:
 
 # 경로가 짧기때문에 0번인덱스부터 계속 탐색해도 괜찮을것 같다.
     def point_plan(self, planner, lookahead):
+        max_index=len(self.local_path.x)-1
         valid_idx_list = []
         min_idx=0
         min_dist=-1
-        for i in range(len(self.local_path.x)):
+        for i in range(max_index+1):
             dis = hypot(self.local_path.x[i] - self.local.x, self.local_path.y[i] - self.local.y)
             if dis < min_dist or min_dist == -1:
                 min_dist=dis
                 min_idx=i
-                
-            if dis <= lookahead:
-                valid_idx_list.append(i)
-            if len(valid_idx_list) != 0 and dis > lookahead:
-                break
-
-        if valid_idx_list:
-            self.target_index = valid_idx_list[len(valid_idx_list) - 1]
+        if min_dist > lookahead:
+            self.target_index=min_idx
         else:
-            self.target_index=min(min_idx+10,len(self.local_path.x)-1)
+            self.target_index=min(min_idx+lookahead*10,max_index)
         # print(self.target_index)
         target_point=Point32(self.local_path.x[self.target_index],self.local_path.y[self.target_index],0)
         return target_point

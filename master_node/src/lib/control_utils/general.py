@@ -244,7 +244,7 @@ class General:
             self.V_ref_max = 10
             self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
         elif mode=="small" or mode=="big":
-            self.temp_msg.speed=8
+            self.temp_msg.speed=12
         elif mode=="bump":
             self.temp_msg.speed=8
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
