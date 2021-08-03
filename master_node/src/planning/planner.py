@@ -12,13 +12,15 @@ from nav_msgs.msg import Odometry
 # from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
-from std_msgs.msg import Float32, Time, String, Int16
+from std_msgs.msg import Float32, Time, String, Int16, Int32
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
 from lib.planner_utils.mission_plan import MissionPlan
 from lib.planner_utils.mapping import Mapping
+from lib.planner_utils.parking_path_plan import ParkingPlan
+
 
 
 class Planner:
@@ -62,11 +64,13 @@ class Planner:
         self.object_msg = String()  # temporary setting for development
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
-        self.parking_msg = Int16()
+        self.parking_msg = Int32()
 
         # data 변수 선언
         self.global_path = Path()
         self.local_path = Path()
+        self.parking_path = Path()
+        self.parking_backpath = Path()
         self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
@@ -77,15 +81,18 @@ class Planner:
         self.start_time=time.time()
         self.dynamic_flag=False
 
-        self.veh_index = 0
-        self.target_index = 0
-
         # gpp 변수 선언
         self.global_path_maker = GPP(self)
         self.local_path_maker = LPP(self)
+        self.parking_planner = ParkingPlan(self)
+
         self.misson_planner = MissionPlan(self)
         self.map_maker = Mapping(self)
 
+        self.parking_planner
+
+        self.vis_parking_path = PointCloud()
+        self.vis_parking_path.header.frame_id = "world"
 
         self.vis_local_path = PointCloud()
         self.vis_local_path.header.frame_id = "world"
@@ -105,20 +112,30 @@ class Planner:
         self.target=PointCloud()
         self.target.header.frame_id = "world"
 
+        self.pmode = ""
+        self.is_parking = False
+        self.parking_target = 1
+        self.veh_index = 0
+        self.parking_target_index = 0
+        self.target_index = 0
+
+        self.count = 0
+        self.booleanFalse = False
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
         self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
+        self.parking_path_pub = rospy.Publisher("/parking_path", PointCloud, queue_size=1)
         self.map_pub = rospy.Publisher("/map_pub", PointCloud, queue_size=1)
         self.obs_pub = rospy.Publisher("/obs_pub", PointCloud, queue_size=1)
         self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
         self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
         self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
+        
 
  
-
         # LiDAR
         rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        # rospy.Subscriber("/parking",Int16, self.parkingCallback)
+        rospy.Subscriber("/Parking_num",Int32, self.parkingCallback)
 
         # Localization
         rospy.Subscriber("/pose", Odometry, self.localCallback)
@@ -126,6 +143,7 @@ class Planner:
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
         rospy.Subscriber("/darknet_ros/bounding_boxes", String, self.objectCallback)
+        # rospy.Subscribeer("/")
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
 
@@ -167,12 +185,12 @@ class Planner:
         rate = rospy.Rate(50)  # 100hz
 
         while not rospy.is_shutdown():
+            print("current point is:", self.local.x, self.local.y)
             if self.is_local:
                 # GPP
                 # print(self.planning_msg.mode)
                 
                 if self.gpp_requested:
-
                     self.global_path = self.global_path_maker.path_plan()
                     self.planning_msg.mode = "general"
                     self.gpp_requested = False
@@ -181,6 +199,14 @@ class Planner:
                 # Localization Information
                 self.planning_msg.local = self.local
 
+                # Mission Decision
+                if not self.mission_ing:
+                    self.planning_msg.dist = self.check_dist()
+                    self.dynamic_flag=self.check_dynamic()
+                    self.planning_msg.mode, self.mission_ing = self.misson_planner.decision(self)
+                else:
+                    self.mission_ing = self.misson_planner.end_check(self)  # return True/False
+                    #encheck = not self.mission_ing
 
                 self.planning_msg.dist = self.check_dist()
                 self.planning_msg.mode = self.misson_planner.decision(self)
@@ -193,12 +219,54 @@ class Planner:
                     self.target_map=self.map_maker.make_target_map(self)
                     self.local_path = self.local_path_maker.path_plan(self.target_map)
 
-                    if self.local_path.x:
-                        self.planning_msg.path = self.local_path
-                        self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
+                #     if self.local_path.x:
+                #         self.planning_msg.path = self.local_path
+                #         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
+                elif self.planning_msg.mode == "parking":
+                    self.is_parking = True
 
                 if self.planning_msg.mode=="kid":
                     self.dynamic_flag=self.check_dynamic()
+
+
+                #####Parking
+                if self.is_parking is True:
+                    self.pmode = self.parking_planner.parking_state_decision(self)
+
+                    print("Current Mission: ", self.planning_msg.mode)
+
+                    # if self.pmode == "parking-base1":
+                    #     self.parking_path = self.parking_planner.make_parking_path(1)
+
+                    if self.pmode == "parking_ready":
+                        self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
+
+                        for i in range(len(self.parking_path.x)):
+                            self.parking_backpath.x.insert(0,self.parking_path.x[i])
+                            self.parking_backpath.y.insert(0,self.parking_path.y[i])
+                        print('==========parking path created')
+                        print(self.parking_path)
+                        self.vis_parking_path.points = []
+                        for i in range(len(self.parking_path.x)):
+                            self.vis_parking_path.points.append(Point32(self.parking_backpath.x[i], self.parking_backpath.y[i], 0))
+                        self.vis_parking_path.header.stamp = rospy.Time.now()
+                        self.parking_path_pub.publish(self.vis_parking_path)
+
+                    elif self.pmode == "parking_start":
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
+                        
+                    elif self.pmode == "parking_backward":
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
+
+
+                    elif self.pmode == "parking_end":
+                        self.pmode = "general"
+                        self.mission_ing = False
+                        self.is_parking = False
+
+                    self.planning_msg.mode = self.pmode
+
+
 
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):
@@ -258,7 +326,7 @@ class Planner:
         self.local.y = msg.pose.pose.position.y
         self.local.heading = msg.twist.twist.angular.z
         self.is_local = True
-
+        
     def surfaceCallback(self, msg):
         self.surface_msg = msg
 
@@ -268,6 +336,9 @@ class Planner:
     def objectCallback(self, msg):
         self.object_msg.data = msg.data
 
+    def parkingCallback(self, msg):
+        print("Parking Callback run")
+        self.parking_target = msg.data
 
 if __name__ == "__main__":
     planner = Planner()

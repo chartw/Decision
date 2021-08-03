@@ -84,8 +84,15 @@ class Serial_Node:
         if self.control_input.brake > 200:
             self.control_input.brake = 200
 
-        # print(self.control_input)
-        # print(self.control_input.auto_manual)
+        if self.control_input.steer > 27.7:
+            self.control_input.steer = 27.7
+        elif self.control_input.steer < -27.7:
+            self.control_input.steer = -27.7
+
+
+        print(self.control_input.auto_manual)
+        print("#######################")
+        print(self.control_input)
         # a = input()
         result = struct.pack(
             ">BBBBBBHhBBBB",
