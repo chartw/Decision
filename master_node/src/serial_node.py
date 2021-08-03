@@ -67,7 +67,7 @@ class Serial_Node:
                     self.serial_msg.brake = tmp3[0]
                     # print("brake", tmp3[0])
 
-                    tmp1 = struct.unpack("f", packet[11:15])
+                    tmp1 = struct.unpack("i", packet[11:15])
                     self.serial_msg.encoder = tmp1[0]
                 
                     # print("encoder", tmp1[0])

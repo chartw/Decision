@@ -209,14 +209,14 @@ class Planner:
                 if self.planning_msg.mode == "general" or self.planning_msg.mode=="kid" or self.planning_msg.mode=="bump":
                     self.planning_msg.path = self.global_path
 
-                elif (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
+
+                if (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
 
                     self.target_map=self.map_maker.make_target_map(self)
                     self.local_path = self.local_path_maker.path_plan(self.target_map)
 
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
-                        self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
 
                 elif self.planning_msg.mode=="crossroad":
                     self.planning_msg.mode="general"
@@ -273,6 +273,7 @@ class Planner:
                 self.pose_pub.publish(self.pose)
 
                 self.planning_info_pub.publish(self.planning_msg)
+                print(self.local.heading, self.global_path.heading[self.veh_index])
                 rate.sleep()
 
     # Callback Functions

@@ -20,7 +20,7 @@ class MissionPlan:
         self.base = []
         self.base.append(Point32(22.760400877965, 41.7303388307402, 0))
         self.base.append(Point32(17.978170358155626, 34.84945192598553, 0))
-        self.mode=""
+        self.mode="general"
 
         self.parking_lot = []
         self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
@@ -57,12 +57,10 @@ class MissionPlan:
                 self.mode="emergency_stop"
             else:
                 self.mode="kid"
-
         elif planner.stop_index-planner.veh_index < 10*10:
             self.mode="crossroad"
 
         else:
             self.mode="general"
-
         return self.mode
 

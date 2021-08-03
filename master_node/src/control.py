@@ -5,6 +5,7 @@ from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할
 from geometry_msgs.msg import Point32
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
+from nav_msgs.msg import Odometry
 # from lib.control_utils.emergency_stop import EmergencyStop
 from lib.control_utils.normal_stop import NormalStop
 
@@ -44,7 +45,7 @@ class Control:
         self.serial_info = Serial_Info() # 위에서 받았는데 얘가 계속 초기화 되는거 아니가?? @@@@@@@@
         self.local = Local()
         self.global_path = Path()
-        self.local_point=Point32()
+        self.local_path=Path()
         self.lookahead = 4
         self.past_mode = None
 
@@ -60,10 +61,17 @@ class Control:
 
         # main loop
         while not rospy.is_shutdown():
+            # print(self.local)
             if self.is_planning:
                 if self.planning_info.mode == "general":
                     if self.planning_info.path.x:
-                        self.global_path = self.planning_info.path
+                        self.global_path.x = self.planning_info.path.x
+                        self.global_path.y = self.planning_info.path.y
+                        self.global_path.k = self.planning_info.path.k
+                        self.global_path.heading=self.planning_info.path.heading
+                        self.global_path.env = self.planning_info.path.env
+                        self.global_path.mission = self.planning_info.path.mission
+
                     if self.global_path.x:
                         self.pub_msg = general.driving(self)
                 elif self.planning_info.mode == 'emergency_stop':                                    
@@ -76,8 +84,14 @@ class Control:
                     self.pub_msg.auto_manual = 1
 
                 elif self.planning_info.mode == "small" or self.planning_info.mode == "big":
-                    if self.local_point.x!=0 and self.local_point.y!=0:
-                        self.pub_msg=avoidance.driving(self.local_point)
+                    if self.planning_info.path.x:
+                        self.local_path.x = self.planning_info.path.x
+                        self.local_path.y = self.planning_info.path.y
+                        self.local_path.k = self.planning_info.path.k
+                        self.local_path.env = self.planning_info.path.env
+                        self.local_path.mission = self.planning_info.path.mission
+                    if self.local_path.x:
+                        self.pub_msg=avoidance.driving(self)
                     else:
                         self.pub_msg=general.driving(self)
                 
@@ -128,15 +142,10 @@ class Control:
     # Callback Function
     def planningCallback(self, msg):
         self.planning_info=msg
-        self.global_path.x = msg.path.x
-        self.global_path.y = msg.path.y
-        self.global_path.heading = msg.path.heading
-        self.global_path.k = msg.path.k
         self.local_point=msg.point
         self.local.x = msg.local.x
         self.local.y = msg.local.y
         self.local.heading = msg.local.heading
-
         # print(self.planning_info)
         self.is_planning = True
 

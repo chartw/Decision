@@ -1,5 +1,4 @@
-
-
+import sys
 class StopLine:
     nst_stop=0
 
@@ -15,5 +14,7 @@ class StopLine:
                 if global_path.env[index]=="stop":
                     self.nst_stop=index
                     return self.nst_stop
+
+        return int(sys.maxsize)
 
     

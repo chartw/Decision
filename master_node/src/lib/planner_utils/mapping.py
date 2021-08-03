@@ -70,9 +70,9 @@ class Mapping:
                 if planner.global_path.mission[planner.veh_index]=="big":
                     if min_index in self.obs_map:
                         continue
-                    L=3
+                    L=5.5
 
-                    for index in range(min_index, min_index+L*10):
+                    for index in range(min_index, int(min_index+L*10)):
                         pos=Point32(planner.global_path.x[index],planner.global_path.y[index],0)
                         self.obs_map[index] = Obstacle(index,min_dist,ExpMovAvgFilter(pos))
                         self.obstacle_cnt += 1
@@ -127,7 +127,6 @@ class Mapping:
                 dist=obstacle.dist
                 index=obstacle.index
                 emapos=obstacle.EMA.retAvg()
-                L=3
 
                 std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                 if dist <1:
@@ -160,10 +159,10 @@ class Mapping:
                 rad=np.arctan2(emapos.y-std_point.y, emapos.x-std_point.x)
 
                 if rad - radians(planner.global_path.heading[index]) > 0 and dist < 0.5:
-                    r=dist+1.5
+                    r=dist+1.25
                 else:
                     rad+=pi
-                    r=max(0,-dist+1.5)
+                    r=max(0,-dist+1.25)
 
                 if obstacle.rad!=None:
                     if abs(rad -obstacle.rad) > pi/2:

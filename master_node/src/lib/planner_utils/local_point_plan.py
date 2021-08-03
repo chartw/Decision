@@ -31,7 +31,7 @@ class LPP:
 
         # 마지막 target point로부터 20 index 만큼 떨어진 점을 마지막으로 추가함
         # out of index 방지 위해 min 활용
-        last_index=min(target_point_list[-1][0]+50, len(self.global_path.x)-1)
+        last_index=min(target_point_list[-1][0]+30, len(self.global_path.x)-1)
 
         if self.target_index==len(self.global_path.x)-1:
             self.target_index=target_point_list[-1][0]+50 - (len(self.global_path.x)-1)
@@ -71,7 +71,7 @@ class LPP:
         if min_dist > lookahead:
             self.target_index=min_idx
         else:
-            self.target_index=int(min(min_idx+lookahead*10-min_dist,max_index))
+            self.target_index=int(min(min_idx+(lookahead-min_dist)*10,max_index))
         # print(self.target_index)
         target_point=Point32(self.local_path.x[self.target_index],self.local_path.y[self.target_index],0)
         return target_point
