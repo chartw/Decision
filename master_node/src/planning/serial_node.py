@@ -46,7 +46,7 @@ class Serial_Node:
     def serialRead(self):
         while True:
             packet = self.ser.read_until(b'\x0d\x0a')
-            print(packet)
+            # print(packet)
             if len(packet) == 18:
                 header = packet[0:3].decode()
 
@@ -90,7 +90,7 @@ class Serial_Node:
             self.control_input.steer = -27.7
 
 
-        print(self.control_input.auto_manual)
+        # print(self.control_input.auto_manual)
         print("#######################")
         print(self.control_input)
         # a = input()

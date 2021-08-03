@@ -76,7 +76,7 @@ class ParkingPlan:
             dis_y = planner.parking_path.y[-1]-planner.local.y
 
             print("======Distance from goal_point: ", hypot(dis_x, dis_y))
-            if hypot(dis_x, dis_y) < 2.2:
+            if hypot(dis_x, dis_y) < 2:
                 self.parking_state = "parking_complete"
                 self.time_count=time()
    
@@ -86,12 +86,12 @@ class ParkingPlan:
                 self.parking_state = "parking_backward"
 
         elif self.parking_state == "parking_backward":
-            if hypot(planner.parking_backpath.x[-1]-planner.local.x, planner.parking_backpath.y[-1]-planner.local.y)<2.5:
+            if hypot(planner.parking_backpath.x[-1]-planner.local.x, planner.parking_backpath.y[-1]-planner.local.y)<1:
                 self.parking_state = "backward_complete"
                 self.time_bcount=time()
                 
         elif self.parking_state == "backward_complete":
-            if time() - self.time_bcount > 1:
+            if time() - self.time_bcount > 2:
                 self.parking_state = "parking_end"
 
         return self.parking_state

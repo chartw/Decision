@@ -54,7 +54,6 @@ class MissionPlan:
 
         elif hypot(4.2-self.local.x, 7.7-self.local.y) < 2:
             self.mode = "parking"
-            self.mission_ing = True
 
         elif mission=="kid":
             if env=="bump":
@@ -69,39 +68,6 @@ class MissionPlan:
         # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
         # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
         # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정
-        elif self.mode =='parking' and hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y)<1:
-            self.mode='parking-base1'
-            self.time_count=time.time()
-
-        # parking2이고(base1에서 주차공간 찾지 못함), base2에 가까이 올 경우 -> parking-base2로 변경하고 정지하여 그때의 시간 측정
-        elif self.mode =='parking2' and hypot(self.base[1].x-self.local.x, self.base[1].y-self.local.y)<1:
-            self.mode='parking-base2'
-            self.time_count=time.time()
-
-        # base에 정지해 있는 시간이 일정 시간 지날경우 -> parking-ready 로 변경. 이때 LiDAR로부터 주차 공간 수신
-        elif (self.mode =='parking-base1' or self.mode=='parking-base2') and self.time_count- time.time() > 3:
-            self.mode='parking-ready'
-
-        # parking-ready 일때, 유효한 주차공간이 들어올 경우 -> parking-start로 변경. 이때의 heading값 임시 저장. 주차 주행 시작
-        elif self.mode=='parking-ready':
-            if self.parking_msg!=-1:
-                self.mode='parking-start'
-                self.temp_heading=self.local.heading
-
-            # 유효한 주차공간이 들어오지 않을 경우 -> parking2로 변경하여 base2를 향해 주행
-            elif self.parking_msg==-1:
-                self.mode=='parking2'
-
-        # parking-start일때, 주차 공간 중점과 가까워지면 -> parking-complete로 변경. 이때의 시간 측정하여 일정시간 정지. 
-        elif self.mode=='parking-start' and hypot(self.parking_lot[self.parking_msg].x-self.local.x,self.parking_lot[self.parking_msg].y-self.local.y) < 1:
-            self.mode='parking-complete'
-            self.time_count=time.time()
-
-        elif self.mode=='parking-complete' and self.time_count- time.time() > 3:
-            self.mode='backward-start'
-
-        elif self.mode=='backward-start' and abs(self.local.heading - self.temp_heading) < 5:
-            self.mode='general'
 
         else:
             self.mode="general"

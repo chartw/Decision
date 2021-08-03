@@ -38,7 +38,7 @@ RIGHT_MAX_STEER = -10
 BGEAR = 0x02
 NGEAR = 0x01
 FGEAR = 0x00
-MAX_BRAKE = 0x200
+MAX_BRAKE = 200
 
 class Control:
     def __init__(self):
@@ -73,6 +73,7 @@ class Control:
         # main loop
         while not rospy.is_shutdown():
             if self.is_planning:
+                print(self.planning_info.mode)
                 if self.planning_info.mode == "general":
                     if self.planning_info.path.x:
                         self.global_path.x = self.planning_info.path.x
@@ -136,7 +137,7 @@ class Control:
 
                 # base2로 이동
                 elif self.planning_info.mode == "parking2":
-                    self.serialParkingComm(12, 0x00, FGEAR)
+                    self.serialParkingComm(10, 0x00, FGEAR)
                 
                 # 라이다에 쏴줄때 정지 - 없어도 될 수도
                 elif self.planning_info.mode == "parking_ready":
@@ -144,23 +145,21 @@ class Control:
 
                 # 주행
                 elif self.planning_info.mode == "parking_start":
-                    print('sibal')
-                    self.serialParkingComm(12, 0x00, FGEAR)
-                    print("target point:", self.planning_info.point.x, self.planning_info.point.y)
+
+                    self.serialParkingComm(10, 0x00, FGEAR)
                     self.pub_msg.steer = parkingClass.pure_pursuit(self.planning_info.point, self)
-                    print("steer", self.pub_msg.steer)
                     # 정해진 노드 따라서 주행
-                    # self.parking_stack.push(12, 0x00, self.pub_msg.steer)
+                    # self.parking_stack.push(10, 0x00, self.pub_msg.steer)
 
                 # 전진 주차 끝 정지, 후진 기어
                 elif self.planning_info.mode == "parking_complete":
                     self.serialParkingComm(0x00, MAX_BRAKE, BGEAR)
-                    # self.parking_stack.push(12, 0x00, 0x00)
+                    # self.parking_stack.push(10, 0x00, 0x00)
 
                 # 후진
                 elif self.planning_info.mode == "parking_backward":
                     # _, _, self.pub_msg.steer= self.parking_stack.pop()
-                    self.serialParkingComm(12, 0x00, BGEAR)
+                    self.serialParkingComm(10, 0x00, BGEAR)
                     self.pub_msg.steer = parkingClass.pure_pursuit(self.planning_info.point, self)
                     self.pub_msg.steer=-self.pub_msg.steer
 
@@ -171,20 +170,6 @@ class Control:
                 elif self.planning_info.mode == "parking_end":
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
                     #self.planning_info.mode = "general"
-
-                # print(self.planning_info.dist)
-                if not self.planning_info.mode=="avoidance" and self.planning_info.dist!=-1:
-                    dist=self.planning_info.dist -1.05 # 범퍼위치로 기준 재설정
-
-                    self.pub_msg.speed=dist/5
-                    t=dist/((self.serial_info.speed/3.6)+0.1)
-                    # self.pub_msg.brake=int(200/t) # 유리 함수 200/x
-                    # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
-                    # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
-                    t=max(1,dist/((self.serial_info.speed/3.6)+0.1))
-                    self.pub_msg.brake=int(-100*sqrt(t-1)+200) # 제곱근 함수
-                    # self.pub_msg.brake=int(-75*sqrt(t-1)+150) # 제곱근 함수
-                    self.pub_msg.brake=max(0,min(200,self.pub_msg.brake))
                     
 
                 self.past_mode = self.planning_info.mode
