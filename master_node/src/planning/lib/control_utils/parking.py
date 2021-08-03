@@ -22,7 +22,8 @@ class Parking:
         tmp_th = degrees(atan2((point.y - self.cur.y), (point.x - self.cur.x)))
 
         tmp_th = tmp_th % 360
-
+        if control.planning_info.mode=="parking_backward":
+            self.cur.heading=(180+self.cur.heading)%360
         alpha = self.cur.heading - tmp_th
         if abs(alpha) > 180:
             if alpha < 0:

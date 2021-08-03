@@ -70,6 +70,7 @@ class Planner:
         self.global_path = Path()
         self.local_path = Path()
         self.parking_path = Path()
+        self.parking_backpath = Path()
         self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
@@ -237,19 +238,24 @@ class Planner:
 
                     if self.pmode == "parking_ready":
                         self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
+
+                        for i in range(len(self.parking_path.x)):
+                            self.parking_backpath.x.insert(0,self.parking_path.x[i])
+                            self.parking_backpath.y.insert(0,self.parking_path.y[i])
                         print('==========parking path created')
                         print(self.parking_path)
                         self.vis_parking_path.points = []
                         for i in range(len(self.parking_path.x)):
-                            self.vis_parking_path.points.append(Point32(self.parking_path.x[i], self.parking_path.y[i], 0))
+                            self.vis_parking_path.points.append(Point32(self.parking_backpath.x[i], self.parking_backpath.y[i], 0))
                         self.vis_parking_path.header.stamp = rospy.Time.now()
                         self.parking_path_pub.publish(self.vis_parking_path)
 
                     elif self.pmode == "parking_start":
-                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self, 1)
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
                         
                     elif self.pmode == "parking_backward":
-                        pass
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
+
 
                     elif self.pmode == "parking_end":
                         self.pmode = "general"

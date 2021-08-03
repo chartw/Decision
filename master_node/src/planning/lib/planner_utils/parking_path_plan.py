@@ -15,6 +15,7 @@ class ParkingPlan:
         self.time_count = 0
         self.time_bcount= 0
         self.time_ecount= 0
+        self.target_index=0
 
 
         self.base = []
@@ -28,9 +29,9 @@ class ParkingPlan:
         self.parking_lot.append(Point32(11.4874257376099, 10.9097614081884, 0))
         self.parking_lot.append(Point32(11.4874257376099, 10.9097614081884, 0))
         self.parking_lot.append(Point32(13.30981534063439, 13.317898690530509, 0))
-        self.parking_lot.append(Point32(14.16998329088652, 36.736197374027405, 0))
-        self.parking_lot.append(Point32(12.398738836681156, 34.405499957494584, 0))
-        self.parking_lot.append(Point32(10.716055698028432, 32.18578849457638, 0))
+        self.parking_lot.append(Point32(14.19713198871293, 15.90745254290775, 0))
+        self.parking_lot.append(Point32(15.528108324120966, 18.497007306554277, 0))
+        self.parking_lot.append(Point32(17.15482766406704, 21.08667387278349, 0))
         # self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
         # self.parking_lot.append(Point32(15.85266480396189, 38.844924089730185, 0))
         # self.parking_lot.append(Point32(14.16998329088652, 36.736197374027405, 0))
@@ -71,8 +72,8 @@ class ParkingPlan:
             print("======Parking for target ", self.parking_target)
 
             #밖에서 파킹스택 쌓기. 
-            dis_x = self.parking_lot[self.parking_target].x-planner.local.x
-            dis_y = self.parking_lot[self.parking_target].y-planner.local.y
+            dis_x = planner.parking_path.x[-1]-planner.local.x
+            dis_y = planner.parking_path.y[-1]-planner.local.y
 
             print("======Distance from goal_point: ", hypot(dis_x, dis_y))
             if hypot(dis_x, dis_y) < 2.2:
@@ -85,12 +86,12 @@ class ParkingPlan:
                 self.parking_state = "parking_backward"
 
         elif self.parking_state == "parking_backward":
-            if hypot(self.start_base.x-planner.local.x, self.start_base.y-planner.local.y)<2.5:
+            if hypot(planner.parking_backpath.x[-1]-planner.local.x, planner.parking_backpath.y[-1]-planner.local.y)<2.5:
                 self.parking_state = "backward_complete"
                 self.time_bcount=time()
                 
         elif self.parking_state == "backward_complete":
-            if time() - self.time_bcount > 3:
+            if time() - self.time_bcount > 1:
                 self.parking_state = "parking_end"
 
         return self.parking_state
@@ -113,6 +114,24 @@ class ParkingPlan:
 
         return self.parking_path
 
+    def point_plan(self,path,lookahead):
+        max_index=len(path.x)-1
+        min_idx=0
+        min_dist=-1
+        for i in range(max_index+1):
+            dis = hypot(path.x[i] - self.local.x, path.y[i] - self.local.y)
+            if dis < min_dist or min_dist == -1:
+                min_dist=dis
+                min_idx=i
+        if min_dist > lookahead:
+            self.target_index=min_idx
+        else:
+            self.target_index=int(min(min_idx+(lookahead-min_dist)*10,max_index))
+        # print(self.target_index)
+        target_point=Point32(path.x[self.target_index],path.y[self.target_index],0)
+        return self.target_index, target_point
+
+    '''
     def point_plan(self, planner, lookahead):
         valid_idx_list = []
         idx = 0
@@ -148,3 +167,4 @@ class ParkingPlan:
         target_point=Point32(self.parking_path.x[planner.parking_target_index],self.parking_path.y[planner.parking_target_index],0)
         # print(self.parking_path.heading[planner.parking_target_index])
         return planner.parking_target_index, target_point
+    '''
