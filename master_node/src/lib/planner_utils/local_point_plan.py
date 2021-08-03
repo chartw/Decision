@@ -71,7 +71,7 @@ class LPP:
         if min_dist > lookahead:
             self.target_index=min_idx
         else:
-            self.target_index=min(min_idx+lookahead*10,max_index)
+            self.target_index=int(min(min_idx+lookahead*10-min_dist,max_index))
         # print(self.target_index)
         target_point=Point32(self.local_path.x[self.target_index],self.local_path.y[self.target_index],0)
         return target_point
