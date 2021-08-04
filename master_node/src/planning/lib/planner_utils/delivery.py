@@ -1,8 +1,12 @@
+import numpy as np
 from numpy import argmax, array
 from geometry_msgs.msg import Point32
-from lib.planner_utils.local_point_plan import LPP
-from lib.planner_utils.mission_plan import MissionPlan
+from math import hypot
 import csv
+
+from master_node.msg import Path
+
+from lib.planner_utils.cubic_spline_planner import Spline2D
 
 class deliveryClass:
     def __init__(self):
@@ -30,8 +34,6 @@ class deliveryClass:
 
         return self.delivery_path_a, self.delivery_path_b
 
-
-
     def detect_signs(self, boxes):
         max_count = 0
         maxClassA = ''
@@ -58,12 +60,30 @@ class deliveryClass:
         self.sign_size_b = {'B1':0, 'B2': 0, 'B3':0}
 
         return maxClassA, order_b
-                
+
+    def path_plan(self, path, sign_index):
+        path=Path()
+
+        x_list, y_list=[],[]
+        x_list.append[path.x[0]]
+        y_list.append[path.y[0]]
+        x_list.append[path.x[sign_index]]
+        y_list.append[path.y[sign_index]]
+
+        csp=Spline2D(x_list, y_list)
+        s=np.arange(0,csp.s[-1],0.1)
+        rx, ry=[],[]
+        for i_s in s:
+            ix,iy=csp.calc_position(i_s)
+            rx.append(ix)
+            ry.append(iy)
 
 
+        path.x=rx
+        path.y=ry
+        return path
 
-
-    def find_stop_point(self, targetPoint):
+    def find_stop_point(self, targetPoint, slicedPath):
         min = 100
         min_x, min_y = 0
 
@@ -79,13 +99,12 @@ class deliveryClass:
     def stop_decision(self, targetPoint):
         distance = hypot(self.local.x, self.local.y, targetPoint.x, targetPoint.y)
         if distance < 0.5:
-            return true
+            return True
 
-    def index_decision(self, order_b, coordinate_b, targetPoint):
-        goal_index = ''
-        for i in range(order_b):
-            if order_b[i] == targetPoint:
-                goal_index = order_b[i]
-                break
+    def index_decision(self, order_b, sign_map, targetPoint):
+        goal_order=order_b.index(targetPoint)
 
-        return coordinate_b[goal_index]
+        return sign_map[goal_order].index
+
+
+

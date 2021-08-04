@@ -252,23 +252,6 @@ class Planner:
                     self.planning_msg.mode="general"
                     # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
 
-                elif self.planning_msg.mode=="delivery_a":
-                    self.delivery_target, self.delivery_order = self.delivery_decision.detect_signs(planner)
-                    # signal = self.traffic_light.run(self.object_msg.data) # string
-                    # if self.global_path.mission[self.stop_index] in signal:
-                    #     self.planning_msg.mode="general"
-                    # else:
-                    #     self.planning_msg.mode="normal_stop"
-
-                    #LIDAR
-                    #LIDAR
-                    #LIDAR
-
-
-
-                elif self.planning_msg.mode=="delivery_b":
-                    self.delivery_target, self.delivery_order = self.delivery_decision.run(planner)
-
 
 
 
@@ -308,6 +291,39 @@ class Planner:
                         self.is_parking = False
 
                     self.planning_msg.mode = self.pmode
+
+                
+                if self.is_deliver is True:
+                    if self.planning_msg.mode == "deliver_a" and self.pickUpComplete is not True:
+                        self.maxClassA, self.order_b = self.detect_signs()
+                        sign_map=self.map_maker.a_sign_mapping(self,self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
+                        for i, sign in sign_map.items():
+                            # if sign.index == 신호등:
+                            #     continue
+                            self.planning_msg.path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_a, sign.index)
+                        
+                        if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
+                            self.planning_msg.mode = "pickup_stop"
+                            self.pickUpComplete = True
+                            self.count = time.time()
+
+                    if self.planning_msg.mode == "pickup_stop" and self.count - time.time() > 5.5:
+                        self.planning_msg.mode = "general"
+                    
+                    elif self.planning_msg.mode == "deliver_b":
+                        sign_map=self.map_maker.b_sign_mapping(self,self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
+
+
+
+                        index = self.delivery_decision.index_decision(self.order_b,sign_map, self.maxClassA.replace("A","B"))
+                        self.planning_msg.path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_b, sign.index)
+
+                        if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
+                            self.planning_msg.mode = "delivery_stop"
+                            self.count = time.time()
+
+                    elif self.planning_msg.mode == "delivery_stop" and self.count - time.time() > 5.5:
+                        self.planning_msg.mode = "general"
 
 
 
