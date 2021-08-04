@@ -22,6 +22,7 @@ from lib.planner_utils.mapping import Mapping
 from lib.planner_utils.parking_path_plan import ParkingPlan
 from lib.planner_utils.stopline_check import StopLine
 from lib.planner_utils.trafficLight import trafficLight
+from lib.planner_utils.delivery import deliveryClass
 
 
 
@@ -97,6 +98,7 @@ class Planner:
         self.map_maker = Mapping(self)
         self.stop_line_checker=StopLine()
         self.traffic_light=trafficLight()
+        self.delivery_decision = deliveryClass()
         
 
         self.parking_planner
@@ -249,6 +251,20 @@ class Planner:
                 elif self.planning_msg.mode=="crossroad":
                     self.planning_msg.mode="general"
                     # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
+
+                elif self.planning_msg.mode=="delivery_a":
+                    self.delivery_target, self.delivery_order = self.delivery_decision.run(planner)
+
+                    #LIDAR
+                    #LIDAR
+                    #LIDAR
+
+
+
+                elif self.planning_msg.mode=="delivery_b":
+                    self.delivery_target, self.delivery_order = self.delivery_decision.run(planner)
+
+
 
 
                 #####Parking
