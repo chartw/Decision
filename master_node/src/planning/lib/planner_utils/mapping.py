@@ -131,7 +131,7 @@ class Mapping:
                 std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                 if dist <1:
                     rad=radians(planner.global_path.heading[index])-pi/2
-                    r=3
+                    r=3.4
                 else:
                     rad=radians(planner.global_path.heading[index])+pi/2
                     r=0
