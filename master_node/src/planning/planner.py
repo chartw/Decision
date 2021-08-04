@@ -250,6 +250,12 @@ class Planner:
                     self.planning_msg.mode="general"
                     # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
 
+                    # signal = self.traffic_light.run(self.object_msg.data) # string
+                    # if self.global_path.mission[self.stop_index] in signal:
+                    #     self.planning_msg.mode="general"
+                    # else:
+                    #     self.planning_msg.mode="normal_stop"
+
 
                 #####Parking
                 if self.is_parking is True:
