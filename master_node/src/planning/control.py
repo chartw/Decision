@@ -67,6 +67,7 @@ class Control:
         self.is_planning = False
         self.start_time = time.time()
         self.current_time = time.time()
+        self.time_count = 0
 
         rate = rospy.Rate(50)  # 100hz
 
@@ -170,7 +171,33 @@ class Control:
                 elif self.planning_info.mode == "parking_end":
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
                     #self.planning_info.mode = "general"
+
+                elif self.planning_info.mode == "delivery_A":
+                    stopPointX, stopPointY = delivery.find_stop_point(targetPoint)
                     
+                    if delivery.stop_decision(stopPointX, stopPointY):
+                        serialParkingComm(0, MAX_BRAKE, FGEAR)
+                        self.time_count = time.time()
+                        self.planning_info.mode = "delivery_start"
+                    
+                elif self.planning_info.mode == "delivery_start":
+                    if self.time_count - time.time() > 5.5:
+                        self.planning_info.mode = "general"
+
+
+                elif self.planning_info.mode == "delivery_B":
+                    deliverDestX, deliverDestY = delivery.index_decision(self, order_b, coordinate_b, targetIndex)
+                    if deliverDestX == -1 and deliverDestY == -1:
+                        # 못찾은 경우
+                        pass
+                    else:
+                        if delivery.stop_decision(deliverDestX, deliverDestY):                        
+                            serialParkingComm(0, MAX_BRAKE, FGEAR)
+                        self.planning_info.mode = "delivery_end"
+
+                elif self.planning_info.mode == "delivery_end":
+                    if self.time_count - time.time() > 5.5:
+                    self.planning_info.mode = "general":
 
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.pub_msg)
