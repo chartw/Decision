@@ -41,6 +41,8 @@ class General:
         self.planning_info = control.planning_info
         self.mode = control.planning_info.mode
 
+        self.WB = 1.04
+
         self.lookahead = 4
         # self.speed_lookahead = 0 # 안쓰임
 
@@ -92,7 +94,7 @@ class General:
         
         
         self.cur_idx = min_idx # 차량과 가장 가까운 index. 
-        self.target_index = self.cur_idx + lookahead*10   
+        self.target_index = int(self.cur_idx + lookahead*10)
         self.speed_idx =  self.cur_idx + 60 # speed_idx는 무조건 이거로 가자.(speed_ld랑 상관없이)
 
 
