@@ -33,22 +33,24 @@ class General:
         # 참조 수행
         self.cur = control.local  # local 좌표
         self.path = control.global_path  # global_path
+        self.cur_idx = 0
 
         self.GeneralLookahead = control.lookahead  # 직진 주행시 lookahead
-
+        
         self.serial_info = control.serial_info  #####  얘가 빈공간으로 들어오고 ㅣㅇ씅 @@@@@@@ 음 그냥  init 이라서 한번만 받아오는거네.같은 데이터 공간이어도 계속 받아와야 하징자ㅓㄹㄴㅁㅇ러ㅣㄷ렁마ㅣㄴ
         self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
 
         self.temp_msg = Serial_Info()
-
         self.past_mode = control.past_mode
+
+        self.planning_info = control.planning_info
+        self.mode = control.planning_info.mode
+
         self.lookahead = 4
-        self.speed_lookahead = 4
-        self.WB = 1.04
-        self.target_index = 0
+        # self.speed_lookahead = 0 # 안쓰임
 
 
-        self.stidx =0
+        self.speed_idx =0
         self.t_start = 0
         self.t_delta = 0
         self.t_old = 0
@@ -70,29 +72,6 @@ class General:
         self.curve_flag = False
 
         self.first_check = True
-
-    # def select_target(self, lookahead):  태웅님꺼
-    #     valid_idx_list = []
-
-    #     for i in range(self.target_index, len(self.path.x)):
-    #         dis = ((self.path.x[i] - self.cur.x) ** 2 + (self.path.y[i] - self.cur.y) ** 2) ** 0.5
-
-    #         if dis <= self.lookahead:
-    #             valid_idx_list.append(i)
-    #         if len(valid_idx_list) != 0 and dis > lookahead:
-    #             break
-    #     if len(valid_idx_list) == 0:
-    #         return 0
-    #     else:
-    #         return valid_idx_list[len(valid_idx_list) - 1]
-
-    # # Dynamic Lookahead
-    # def Dynamic_LookAhead(self):
-    #     self.lookahead = self.GeneralLookahead
-    #     heading_difference = self.cur.heading - self.path.heading[self.target_index]
-    #     if heading_difference > 10:
-    #         self.lookahead = self.GeneralLookahead / 2
-    #     # print ("LookAhead : ",self.lookahead)
 
 
 
@@ -117,17 +96,19 @@ class General:
         
         self.cur_idx = min_idx # 차량과 가장 가까운 index. 
         self.target_index = self.cur_idx + lookahead*10   
-
-        self.stidx =  self.cur_idx + 60
+        self.speed_idx =  self.cur_idx + 60 # speed_idx는 무조건 이거로 가자.(speed_ld랑 상관없이)
 
 
     # def pure_pursuit(self,point):
     def pure_pursuit(self):
 
-        if self.curve_flag: #@@@
-            self.lookahead=4
+        if 11 < self.serial_info.speed < 20:
+            self.lookahead = 0.5 * (self.serial_info.speed-12) + 3.1 # 4로 바꾸기도 해.
         else:
-            self.lookahead=5
+            if self.path.k [self.speed_idx] >= 15 : # 속도 느린 직선구간.
+                self.lookahead = 7 
+            else:
+                self.lookahead = 3 # 속도 느린 곡선구간 (좌회전, 우회전)
 
         self.select_target(self.lookahead) # @@@@
 
@@ -187,28 +168,27 @@ class General:
 
         return V_in
 
-    def calc_k(self, k):
-        critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
+    # def calc_k(self, k):
+    #     critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
 
-        if k < critical_k:
-            V_ref = self.V_ref_max
-            self.curve_flag = False
-        else:
-            V_ref = self.safety_factor * (sqrt(19.071 / k))
-            self.curve_flag = True
-        return V_ref  # km/h
+    #     if k < critical_k:
+    #         V_ref = self.V_ref_max
+    #         self.curve_flag = False
+    #     else:
+    #         V_ref = self.safety_factor * (sqrt(19.071 / k))
+    #         self.curve_flag = True
+    #     return V_ref  # km/h
 
-    def calc_Vref(self):
-        self.select_target(self.speed_lookahead)
-        target_k = abs(self.path.k[self.stidx])
-        # print(target_k)
-        V_ref = self.calc_k(target_k)
+    # def calc_Vref(self):
+    #     self.select_target(self.speed_lookahead) # 안쓰임
+    #     target_k = abs(self.path.k[self.speed_idx])
+    #     V_ref = self.calc_k(target_k)
 
-        return int(V_ref)
+    #     return int(V_ref)
 
     def calc_velocity(self):
 
-        if self.past_mode != "general":  # 미션이 바뀔 때에는 변수리셋.
+        if self.past_mode != self.mode:  # 미션이 바뀔 때에는 변수리셋.
             # 다른 미션에서 general로 왔을때 pid 변수초기화
             self.t_start = time.time()
             self.t_new = 0
@@ -223,8 +203,13 @@ class General:
             self.V_err_deri = 0
             self.V_err_pro = 0
 
-        V_ref = self.calc_Vref()
+        # V_ref = self.calc_Vref()
+
+        if self.mode =="kid":
+            V_ref = 10
+        V_ref = self.path.k[self.speed_idx]
         V_in = self.PID(V_ref)
+
         if V_in > 20:
             V_in = 20
         elif V_in < V_ref:
@@ -233,20 +218,18 @@ class General:
         return int(V_in)
 
     def driving(self, control):
-        mode = control.planning_info.mode
-        # self.temp_msg=Serial_Info()
-        # print('self.serial_info',self.serial_info.speed)
-        if mode == "general":
-            self.V_ref_max = 15
-            self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
+        self.mode = control.planning_info.mode
+        # self.temp_msg = Serial_Info()
+        if self.mode == "general":
+            self.temp_msg.speed = self.calc_velocity()  
 
-        elif mode =="kid":
-            self.V_ref_max = 10
-            self.temp_msg.speed = self.calc_velocity()  # PID 추가 #   목표하는 스피드 넣어주는거  V_in 맞는데..
-        elif mode=="small" or mode=="big":
+        elif self.mode =="kid":
+            self.temp_msg.speed = self.calc_velocity()  
+        elif self.mode=="small" or self.mode=="big":
             self.temp_msg.speed=12
-        elif mode=="bump":
+        elif self.mode=="bump":
             self.temp_msg.speed=8
+        
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
         self.temp_msg.steer = self.pure_pursuit()
 
@@ -259,13 +242,14 @@ class General:
 
         self.target = PointCloud()
         target_pt = Point32()
-        target_pt.x = self.path.x[self.target_index]
+        target_pt.x = self.path.x[self.target_index] # 이건지금 
         target_pt.y = self.path.y[self.target_index]
         self.target.points.append(target_pt)
         self.target.header.frame_id = 'world'
         self.target.header.stamp=rospy.Time.now()
         self.target_pub.publish(self.target)
 
+        print('cur_idx:',self.cur_idx,'ld:',round(self.lookahead,2),'mode:',self.mode)
 
         return self.temp_msg
 
