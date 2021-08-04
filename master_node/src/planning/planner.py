@@ -236,6 +236,31 @@ class Planner:
 
                     self.planning_msg.mode = self.pmode
 
+                if self.is_deliver is True:
+                    if self.planning_msg.mode == "deliver_a" and self.pickUpComplete is not True:
+                        self.maxClassA, self.order_b = self.detect_signs()
+                        # stopPointX, stopPointY = self.delivery_decision.find_stop_point(maxClassA)
+                        
+                        if self.delivery_decision.stop_decision(stopPointX, stopPointY):
+                            self.planning_msg.mode = "pickup_stop"
+                            self.pickUpComplete = True
+                            self.count = time.time()
+
+                    if self.planning_msg.mode == "pickup_stop" and self.count - time.time() > 5.5:
+                        self.planning_msg.mode = "general"
+                    
+                    elif self.planning_msg.mode == "deliver_b":
+                        destX, destY = self.delivery_decision.index_decision()
+                        if self.delivery_decision.stop_decision(destX, destY):
+                            self.planning_msg.mode = "delivery_stop"
+                            self.count = time.time()
+
+                    elif self.planning_msg.mode == "delivery_stop" and self.count - time.time() > 5.5:
+                        self.planning_msg.mode = "general"
+
+
+                        
+                    
 
 
                 self.vis_local_path.points = []

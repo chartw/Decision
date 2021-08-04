@@ -1,5 +1,6 @@
 from numpy import argmax, array
 from geometry_msgs.msg import Point32
+from math import hypot
 from lib.planner_utils.local_point_plan import LPP
 from lib.planner_utils.mission_plan import MissionPlan
 import csv
@@ -30,8 +31,6 @@ class deliveryClass:
 
         return self.delivery_path_a, self.delivery_path_b
 
-
-
     def detect_signs(self, boxes):
         max_count = 0
         maxClassA = ''
@@ -58,12 +57,8 @@ class deliveryClass:
         self.sign_size_b = {'B1':0, 'B2': 0, 'B3':0}
 
         return maxClassA, order_b
-                
 
-
-
-
-    def find_stop_point(self, targetPoint):
+    def find_stop_point(self, targetPoint, slicedPath):
         min = 100
         min_x, min_y = 0
 
@@ -79,7 +74,7 @@ class deliveryClass:
     def stop_decision(self, targetPoint):
         distance = hypot(self.local.x, self.local.y, targetPoint.x, targetPoint.y)
         if distance < 0.5:
-            return true
+            return True
 
     def index_decision(self, order_b, coordinate_b, targetPoint):
         goal_index = ''
@@ -88,4 +83,7 @@ class deliveryClass:
                 goal_index = order_b[i]
                 break
 
-        return coordinate_b[goal_index]
+        return coordinate_b[goal_index], goal_index
+
+
+

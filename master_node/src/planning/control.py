@@ -10,6 +10,8 @@ from nav_msgs.msg import Odometry
 from lib.control_utils.normal_stop import NormalStop
 from lib.control_utils.parking import Parking
 from lib.control_utils.stack import ParkingStack
+from lib.control_utils.delivery_control import deliveryControlClass
+
 import time
 
 """
@@ -172,32 +174,17 @@ class Control:
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
                     #self.planning_info.mode = "general"
 
-                elif self.planning_info.mode == "delivery_A":
-                    stopPointX, stopPointY = delivery.find_stop_point(targetPoint)
-                    
-                    if delivery.stop_decision(stopPointX, stopPointY):
-                        serialParkingComm(0, MAX_BRAKE, FGEAR)
-                        self.time_count = time.time()
-                        self.planning_info.mode = "delivery_start"
-                    
-                elif self.planning_info.mode == "delivery_start":
-                    if self.time_count - time.time() > 5.5:
-                        self.planning_info.mode = "general"
+                elif self.planning_info.mode == "delivery_a":
+                    self.pub_msg.steer = avoidance.pure_pursuit(self.PickUpPath)
 
+                elif self.planning_info.mode == "pickup_stop":
+                    self.serialParkingComm(0, MAX_BRAKE, FGEAR)
 
-                elif self.planning_info.mode == "delivery_B":
-                    deliverDestX, deliverDestY = delivery.index_decision(self, order_b, coordinate_b, targetIndex)
-                    if deliverDestX == -1 and deliverDestY == -1:
-                        # 못찾은 경우
-                        pass
-                    else:
-                        if delivery.stop_decision(deliverDestX, deliverDestY):                        
-                            serialParkingComm(0, MAX_BRAKE, FGEAR)
-                        self.planning_info.mode = "delivery_end"
+                elif self.planning_info.mode == "delivery_b":
+                    self.pub_msg.steer = avoidance.pure_pursuit(self.deliverPath)
 
-                elif self.planning_info.mode == "delivery_end":
-                    if self.time_count - time.time() > 5.5:
-                    self.planning_info.mode = "general":
+                elif self.planning_info.mode == "delivery_stop":
+                    self.serialParkingComm(0, MAX_BRAKE, FGEAR)
 
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.pub_msg)

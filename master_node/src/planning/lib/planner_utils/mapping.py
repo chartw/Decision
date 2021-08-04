@@ -22,6 +22,7 @@ class Obstacle:
 
 class Mapping:
     obs_map = {} # 실제 장애물 좌표가 저장되는 dictionary
+    sign_map={}
     obstacle_cnt = 0 # 현재 장애물의 개수
     local = Local() # 위치 정보
 
@@ -176,6 +177,60 @@ class Mapping:
         return target_map
 
         # target point를 key로 정렬 -> tuple로 이루어진 list[(index, point), (index, point) ... ]
+
+    def sign_mapping(self, planner, path, circles):
+        theta = radians(planner.local.heading)
+        
+        for circle in circles:
+            # 현재 mapping 중인 장애물 : circle
+            # 장애물 절대좌표 변환
+            pos=Point32()
+            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + planner.local.x
+            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + planner.local.y
+            id = -1
+            
+            for i, obstacle in self.sign_map.items():
+                if obstacle.EMA.tracking(pos):
+                    id = i
+                    break
+            
+            # 만약 딕셔너리에 없으면, 새로운 이동 평균 필터 클래스 선언후 삽입
+            # circle의 절대좌표 (x, y)로 초기화
+            if id == -1:
+    
+                min_dist=-1
+                min_index = 0
+
+                for i in range(len(path.x)):
+                    dist=hypot(path.x[i]-pos.x, path.y[i]-pos.y)
+                    if min_dist==-1 or min_dist > dist:
+                        min_dist=dist
+                        min_index = i
+
+                self.sign_map[min_index] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
+                self.obstacle_cnt += 1
+
+            # 있으면, 해당 key값 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
+            else:
+                self.sign_map[id].EMA.emaFilter(pos)
+                obstacle=self.sign_map[id]
+                emapos=obstacle.EMA.retAvg()
+
+                min_dist=-1
+                min_index=0
+                start_index=max(0,obstacle.index-10)
+                end_index=min(obstacle.index+10,len(path.x)-1)
+
+                for i in range(start_index,end_index):
+                    dist=hypot(path.x[i]-emapos.x, path.y[i]-emapos.y)
+                    if min_dist==-1 or min_dist > dist:
+                        min_dist=dist
+                        min_index = i
+
+                self.sign_map[id].index=min_index
+                self.sign_map[id].dist=min_dist
+        sign_list=sorted(self.sign_map.items())
+            
 
     # 현재 map에 저장되어있는 모든 point를 PointCloud형식으로 바꿔서 리턴하는 함수
     # 이걸 바로 rviz로 쏘고있음
