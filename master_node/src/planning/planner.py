@@ -253,7 +253,7 @@ class Planner:
                     # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
 
                 elif self.planning_msg.mode=="delivery_a":
-                    self.delivery_target, self.delivery_order = self.delivery_decision.run(planner)
+                    self.delivery_target, self.delivery_order = self.delivery_decision.detect_signs(planner)
                     # signal = self.traffic_light.run(self.object_msg.data) # string
                     # if self.global_path.mission[self.stop_index] in signal:
                     #     self.planning_msg.mode="general"
