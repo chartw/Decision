@@ -11,6 +11,7 @@ from lib.planner_utils.cubic_spline_planner import Spline2D
 class deliveryClass:
     def __init__(self):
         self.sign_count_a = {'A1':0, 'A2': 0, 'A3':0}
+        #voting self.order_count_b = {'123':0, '132':0, '}
         self.sign_names = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3']
         self.ratio_th = 1.5
         self.size_th = 2
@@ -37,8 +38,9 @@ class deliveryClass:
     def detect_signs(self, boxes):
         max_count = 0
         maxClassA = ''
-        maxClassB = ''
-        for box in boxes:
+
+        for i in range(len(boxes)):
+            box = boxes[i]
             if box.Class in self.sign_names[0:3]: #A1~A3
                 self.sign_count_a[box.Class] += 1
                 if max_count < self.sign_count_a[box.Class]:
@@ -98,13 +100,12 @@ class deliveryClass:
 
     def stop_decision(self, targetPoint):
         distance = hypot(self.local.x, self.local.y, targetPoint.x, targetPoint.y)
-        if distance < 0.5:
-            return True
+        return distance < 0.5
 
     def index_decision(self, order_b, sign_map, targetPoint):
         goal_order=order_b.index(targetPoint)
 
-        return sign_map[goal_order].index
+        return sign_map[goal_order].index()
 
 
 
