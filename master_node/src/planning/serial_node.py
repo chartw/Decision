@@ -47,6 +47,7 @@ class Serial_Node:
         while True:
             packet = self.ser.read_until(b'\x0d\x0a')
             # print(packet)
+            # print('read', packet)
             if len(packet) == 18:
                 header = packet[0:3].decode()
 
@@ -91,8 +92,8 @@ class Serial_Node:
 
 
         # print(self.control_input.auto_manual)
-        print("#######################")
-        print(self.control_input)
+        # print("#######################")
+        # print(self.control_input)
         # a = input()
         result = struct.pack(
             ">BBBBBBHhBBBB",
@@ -109,7 +110,10 @@ class Serial_Node:
             0x0D,
             0x0A
             
-        )  # big endian 방식으로 타입에 맞춰서 pack
+        )
+
+        print('speed is', self.control_input.speed * 10)
+        # print('write', result)  # big endian 방식으로 타입에 맞춰서 pack
         # tail = '\r\n'.encode()
         self.ser.write(result)
         # print('alive', self.alive)

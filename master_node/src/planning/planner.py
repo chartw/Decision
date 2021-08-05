@@ -208,8 +208,10 @@ class Planner:
         rate = rospy.Rate(50)  # 100hz
 
         while not rospy.is_shutdown():
-            print("current point is:", self.local.x, self.local.y)
+            # print("current point is:", self.local.x, self.local.y)
+            print(self.veh_index)
             if self.is_local:
+
                 # GPP
                 # print(self.planning_msg.mode)
                 # print(self.planning_msg.dist)
@@ -339,7 +341,7 @@ class Planner:
                 self.pose_pub.publish(self.pose)
 
                 self.planning_info_pub.publish(self.planning_msg)
-                print(self.local.heading, self.global_path.heading[self.veh_index])
+                # print(self.local.heading, self.global_path.heading[self.veh_index])
                 rate.sleep()
 
     # Callback Functions

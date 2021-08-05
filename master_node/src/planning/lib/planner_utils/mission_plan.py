@@ -52,7 +52,7 @@ class MissionPlan:
                     self.mode="general"
         # print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
 
-        elif hypot(4.2-self.local.x, 7.7-self.local.y) < 2:
+        elif hypot(planner.global_path.x[902]-self.local.x, planner.global_path.y[902]-self.local.y) < 3:
             self.mode = "parking"
 
         elif mission=="kid":

@@ -101,13 +101,16 @@ class General:
     # def pure_pursuit(self,point):
     def pure_pursuit(self):
 
+
+        # self.lookahead = 3
         if 11 < self.serial_info.speed < 20:
-            self.lookahead = 0.5 * (self.serial_info.speed-12) + 3.1 # 4로 바꾸기도 해.
+            self.lookahead = 0.3 * (self.serial_info.speed-12) + 4.1 # 4로 바꾸기도 해.
         else:
-            if self.path.k [self.speed_idx] >= 15 : # 속도 느린 직선구간.
-                self.lookahead = 7 
-            else:
-                self.lookahead = 3 # 속도 느린 곡선구간 (좌회전, 우회전)
+            self.lookahead = 3.6
+            # if self.path.k [self.speed_idx] >= 15 : # 속도 느린 직선구간.
+            #     self.lookahead = 7 
+            # else:
+            #     self.lookahead = 3 # 속도 느린 곡선구간 (좌회전, 우회전)
 
         self.select_target(self.lookahead) # @@@@
 

@@ -49,7 +49,7 @@ class ParkingPlan:
             print("======Initialize Parking")
 
 
-            if hypot(self.base[0].x-planner.local.x, self.base[0].y-planner.local.y)<2:
+            if hypot(planner.global_path.x[902]-planner.local.x, planner.global_path.y[902]-planner.local.y)<2:
                 self.parking_state = "parking-base1"
                 self.start_base = self.base[0]
                 self.time_count=time()
