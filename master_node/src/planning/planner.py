@@ -9,7 +9,7 @@ import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
 
-# from darknet_ros_msgs.msg import BoundingBoxes
+from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time, String, Int16, Int32
@@ -152,7 +152,7 @@ class Planner:
 
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
-        rospy.Subscriber("/darknet_ros/bounding_boxes", String, self.objectCallback)
+        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
         # rospy.Subscribeer("/")
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
@@ -209,7 +209,7 @@ class Planner:
 
         while not rospy.is_shutdown():
             # print("current point is:", self.local.x, self.local.y)
-            print(self.veh_index)
+            # print(self.veh_index)
             if self.is_local:
 
                 # GPP
@@ -249,14 +249,13 @@ class Planner:
                     self.is_parking = True
 
                 elif self.planning_msg.mode=="crossroad":
-                    self.planning_msg.mode="general"
-                    # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
+                    self.planning_msg.dist=(self.stop_index-self.veh_index)/10
 
-                    # signal = self.traffic_light.run(self.object_msg.data) # string
-                    # if self.global_path.mission[self.stop_index] in signal:
-                    #     self.planning_msg.mode="general"
-                    # else:
-                    #     self.planning_msg.mode="normal_stop"
+                    signal = self.traffic_light.run(self.object_msg.data) # string
+                    if self.global_path.mission[self.stop_index] in signal:
+                        self.planning_msg.mode="general"
+                    else:
+                        self.planning_msg.mode="normal_stop"
 
 
                 #####Parking
@@ -365,7 +364,12 @@ class Planner:
         self.serial_msg = msg
 
     def objectCallback(self, msg):
-        self.object_msg.data = msg.data
+        self.object_msg=msg
+        print(len(msg.bounding_boxes))
+        for box in msg.bounding_boxes:
+            print(box.Class)
+            print(box.xmin)
+            print(box.xmax)
 
     def parkingCallback(self, msg):
         print("Parking Callback run")

@@ -17,7 +17,7 @@ find_package(
   tf
   visualization_msgs
   genmsg
-  #darknet_ros_msgs
+  darknet_ros_msgs
   message_generation
 )
 
@@ -88,7 +88,7 @@ generate_messages(
    geometry_msgs   
    std_msgs 
    master_node
-   #darknet_ros_msgs
+   darknet_ros_msgs
 )
 
 ################################################
