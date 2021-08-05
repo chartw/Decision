@@ -61,9 +61,7 @@ class Planner:
         # subscriber 정의
         self.planning_msg = Planning_Info()
         self.obstacle_msg = Obstacles()
-        self.object_msg = String()
-        # self.object_msg = BoundingBoxes()
-        self.object_msg = String()  # temporary setting for development
+        self.object_msg = BoundingBoxes()
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
         self.parking_msg = Int32()
@@ -211,6 +209,7 @@ class Planner:
             # print("current point is:", self.local.x, self.local.y)
             # print(self.veh_index)
             if self.is_local:
+                # print(self.planning_msg.mode)
 
                 # GPP
                 # print(self.planning_msg.mode)
@@ -226,13 +225,32 @@ class Planner:
                 self.veh_index=self.get_veh_index()
                 self.stop_index=self.stop_line_checker.stop_idx_check(planner)
                 # print(self.stop_index)
-
+                
                 if not self.is_parking:
                     self.planning_msg.dist = self.check_dist()
                     self.planning_msg.mode = self.misson_planner.decision(self)
 
                 if self.planning_msg.mode == "general" or self.planning_msg.mode=="kid" or self.planning_msg.mode=="bump":
                     self.planning_msg.path = self.global_path
+
+
+
+
+
+                # #####SSHSHSHSHSHSHSH TEST#######
+                # self.planning_msg.mode = 'crossroad'
+
+
+
+                # #######################################
+
+
+
+
+
+
+
+
 
 
                 if (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
@@ -250,8 +268,8 @@ class Planner:
 
                 elif self.planning_msg.mode=="crossroad":
                     self.planning_msg.dist=(self.stop_index-self.veh_index)/10
-
-                    signal = self.traffic_light.run(self.object_msg.data) # string
+                    signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
+                    print(signal)
                     if self.global_path.mission[self.stop_index] in signal:
                         self.planning_msg.mode="general"
                     else:
@@ -365,11 +383,12 @@ class Planner:
 
     def objectCallback(self, msg):
         self.object_msg=msg
-        print(len(msg.bounding_boxes))
-        for box in msg.bounding_boxes:
-            print(box.Class)
-            print(box.xmin)
-            print(box.xmax)
+    
+        # print(len(msg.bounding_boxes))
+        # for box in msg.bounding_boxes:
+        #     print(box.Class)
+            # print(box.xmin)
+            # print(box.xmax)
 
     def parkingCallback(self, msg):
         print("Parking Callback run")

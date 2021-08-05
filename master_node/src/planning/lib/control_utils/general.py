@@ -79,7 +79,7 @@ class General:
         if self.first_check: # cur_idx 잡는데, 배달미션이나 cross 되는부분은
             for i in range(len(self.path.x)):
                 dis = hypot(self.path.x[i]-self.cur.x,self.path.y[i]-self.cur.y)
-                if min_dis > dis and abs(self.cur.heading-self.path.heading[i]) <30: # 여기에 등호가 붙으면, 뒷부분 index 잡고, 안붙으면 앞쪽 index
+                if min_dis >= dis and abs(self.cur.heading-self.path.heading[i]) <30: # 여기에 등호가 붙으면, 뒷부분 index 잡고, 안붙으면 앞쪽 index
                     min_dis = dis
                     min_idx = i
 

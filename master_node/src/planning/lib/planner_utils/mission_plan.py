@@ -41,7 +41,7 @@ class MissionPlan:
         env=planner.global_path.env[planner.veh_index]
         dist=planner.planning_msg.dist
 
-        # print(mission, env, dist)
+        print(planner.stop_index,planner.veh_index)
         if mission=="small" or mission=="big":
             if dist >0:
                 self.mode = mission
