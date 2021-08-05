@@ -79,7 +79,7 @@ class General:
         if self.first_check: # cur_idx 잡는데, 배달미션이나 cross 되는부분은
             for i in range(len(self.path.x)):
                 dis = hypot(self.path.x[i]-self.cur.x,self.path.y[i]-self.cur.y)
-                if min_dis >= dis and abs(self.cur.heading-self.path.heading[i]) <30: # 여기에 등호가 붙으면, 뒷부분 index 잡고, 안붙으면 앞쪽 index
+                if min_dis > dis and abs(self.cur.heading-self.path.heading[i]) <30: # 여기에 등호가 붙으면, 뒷부분 index 잡고, 안붙으면 앞쪽 index
                     min_dis = dis
                     min_idx = i
 
@@ -103,8 +103,8 @@ class General:
 
 
         # self.lookahead = 3
-        if 11 < self.serial_info.speed < 20:
-            self.lookahead = 0.3 * (self.serial_info.speed-12) + 4.1 # 4로 바꾸기도 해.
+        if 9 < self.serial_info.speed < 20:
+            self.lookahead = 0.22 * (self.serial_info.speed-10) + 3.88 # 4로 바꾸기도 해.
         else:
             self.lookahead = 3.6
             # if self.path.k [self.speed_idx] >= 15 : # 속도 느린 직선구간.
@@ -252,6 +252,6 @@ class General:
         self.target_pub.publish(self.target)
 
         print('cur_idx:',self.cur_idx,'ld:',round(self.lookahead,2),'mode:',self.mode)
-
+        print("V_veh:",self.serial_info.speed)
         return self.temp_msg
 

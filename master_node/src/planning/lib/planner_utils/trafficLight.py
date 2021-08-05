@@ -41,8 +41,8 @@ class trafficLight:
             self.lights_count[traffic_name]-=1
             
 
-        
-        max_traffic = argmax(array(self.lights_count.values()))
+        max_traffic = max(self.lights_count, key=self.lights_count.get())
+
         print(self.lights_count.values())
         print(max_traffic)
         return self.light_names[max_traffic]
