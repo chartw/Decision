@@ -8,15 +8,22 @@ import sys
 import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
-# from darknet_ros_msgs.msg import BoundingBoxes
+
+from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
-from std_msgs.msg import Float32, Time, String, Int16
+from std_msgs.msg import Float32, Time, String, Int16, Int32
 
 # from lane_detection.msg import lane
 from lib.planner_utils.global_path_plan import GPP
 from lib.planner_utils.local_point_plan import LPP
-from lib.planner_utils.mission_plan import MissonPlan
+from lib.planner_utils.mission_plan import MissionPlan
+from lib.planner_utils.mapping import Mapping
+from lib.planner_utils.parking_path_plan import ParkingPlan
+from lib.planner_utils.stopline_check import StopLine
+from lib.planner_utils.trafficLight import trafficLight
+
+
 
 class Planner:
     def __init__(self):
@@ -28,7 +35,8 @@ class Planner:
         arg = rospy.myargv(argv=sys.argv)
         # arg[0] == planner.py
         self.map = str(arg[1])
-        self.goal_node = str(arg[2])
+        if self.map=="songdo" or self.map=="kcity":
+            self.goal_node = str(arg[2])
 
         """
         publish 정의
@@ -41,32 +49,6 @@ class Planner:
         }
         """
 
-        planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
-
-        # subscriber 정의
-        self.planning_msg = Planning_Info()
-        self.obstacle_msg = Obstacles()
-        # self.object_msg = BoundingBoxes()
-        self.surface_msg = String()
-        self.serial_msg = Serial_Info()
-        self.parking_msg=Int16()
-        
-        # LiDAR      
-        # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        # rospy.Subscriber("/parking",Int16, self.parkingCallback)
-
-        # Localization        
-        rospy.Subscriber("/pose", Odometry, self.localCallback)
-        
-        # Vision - Object
-        # def objectCallback(self, msg): self.object_msg = msg
-        # rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)   
-        
-        rospy.Subscriber('/serial', Serial_Info, self.serialCallback)
-        
-        # Vision - Surface
-        rospy.Subscriber("/surface", String, self.surfaceCallback)
-
         # 상태 flag
         self.is_local = False
         self.is_obstacle = False
@@ -74,80 +56,345 @@ class Planner:
         self.gpp_requested = True
         self.is_global_path_pub = False
         self.mission_ing = False
+        self.is_avoidance_ing = False
+
+        # subscriber 정의
+        self.planning_msg = Planning_Info()
+        self.obstacle_msg = Obstacles()
+        self.object_msg = BoundingBoxes()
+        self.surface_msg = String()
+        self.serial_msg = Serial_Info()
+        self.parking_msg = Int32()
 
         # data 변수 선언
         self.global_path = Path()
+        self.local_path = Path()
+        self.parking_path = Path()
+        self.parking_backpath = Path()
         self.local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
-        self.mission_goal=Point32()
+        self.mission_goal = Point32()
+        self.target_map={}
+        self.past_dist=0
+        self.past_min_dist=0
+        self.start_time=time.time()
+        self.dynamic_flag=False
+        self.check_veh_index_first=True
+
+        self.veh_index = 0
+        self.target_index = 0
+        self.stop_index=0
 
         # gpp 변수 선언
-        global_path_maker = GPP(self)
-        # local_point_maker = LPP(self)
-        # misson_planner = MissonPlan(self)
+        self.global_path_maker = GPP(self)
+        self.local_path_maker = LPP(self)
+        self.parking_planner = ParkingPlan(self)
 
+        self.misson_planner = MissionPlan(self)
+        self.map_maker = Mapping(self)
+        self.stop_line_checker=StopLine()
+        self.traffic_light=trafficLight()
         
 
+        self.parking_planner
+
+        self.vis_parking_path = PointCloud()
+        self.vis_parking_path.header.frame_id = "world"
+
+        self.vis_local_path = PointCloud()
+        self.vis_local_path.header.frame_id = "world"
+
+        self.vis_global_path = PointCloud()
+        self.vis_global_path.header.frame_id = "world"
+
+        self.map = PointCloud()
+        self.map.header.frame_id = "world"
+
+        self.obs = PointCloud()
+        self.obs.header.frame_id = "world"
+
+        self.pose = PointCloud()
+        self.pose.header.frame_id = "world"
+
+        self.target=PointCloud()
+        self.target.header.frame_id = "world"
+
+        self.pmode = ""
+        self.is_parking = False
+        self.parking_target = 1
+        self.veh_index = 0
+        self.parking_target_index = 0
+        self.target_index = 0
+
+        self.count = 0
+        self.booleanFalse = False
+
+        self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
+        self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
+        self.parking_path_pub = rospy.Publisher("/parking_path", PointCloud, queue_size=1)
+        self.map_pub = rospy.Publisher("/map_pub", PointCloud, queue_size=1)
+        self.obs_pub = rospy.Publisher("/obs_pub", PointCloud, queue_size=1)
+        self.pose_pub = rospy.Publisher("/pose_pub", PointCloud, queue_size=1)
+        self.global_path_pub = rospy.Publisher("/global_path", PointCloud, queue_size=1)
+        self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
+        
+
+ 
+        # LiDAR
+        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        rospy.Subscriber("/Parking_num",Int32, self.parkingCallback)
+
+        # Localization
+        rospy.Subscriber("/pose", Odometry, self.localCallback)
+
+        # Vision - Object
+        # def objectCallback(self, msg): self.object_msg = msg
+        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
+        # rospy.Subscribeer("/")
+
+        rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
+
+        # Vision - Surface
+        rospy.Subscriber("/surface", String, self.surfaceCallback)
+    
+    def check_dist(self): 
+        obs_dist = -1
+        id=-1
+        for i, obstacle in self.map_maker.obs_map.items():
+            if obstacle.dist < 1.5:
+                dist = (obstacle.index-self.veh_index)/10
+                if dist <0:
+                    continue
+                if obs_dist > dist or obs_dist==-1:
+                    id=i
+                    obs_dist = dist
+
+        if id!=-1:
+            min_dist=self.map_maker.obs_map[id].dist
+        else:
+            min_dist=-1
+
+        if abs(self.past_dist- obs_dist) > 0.1 or abs(self.past_min_dist - min_dist)> 0.01:
+            self.start_time = time.time()
+
+        self.past_dist=obs_dist
+        self.past_min_dist=min_dist
+
+        return obs_dist
+
+    def get_veh_index(self):
+        min_dis=-1
+        min_idx=0
+        if self.check_veh_index_first: # cur_idx 잡는데, 배달미션이나 cross 되는부분은 ,  
+            for i in range(len(self.global_path.x)):
+                dis = hypot(self.global_path.x[i]-self.local.x,self.global_path.y[i]-self.local.y)
+                if min_dis > dis or min_dis==-1: # 여기에 등호가 붙으면, 뒷부분 index 잡고, 안붙으면 앞쪽 index
+                    min_dis = dis
+                    min_idx = i
+            self.check_veh_index_first = False
+        else:
+            for i in range(max(self.veh_index-50,0),self.veh_index+50):
+                dis = hypot(self.global_path.x[i]-self.local.x,self.global_path.y[i]-self.local.y)
+                if min_dis > dis or min_dis==-1:
+                    min_dis = dis
+                    min_idx = i
+
+        return min_idx
+
+    def run(self):
         rate = rospy.Rate(50)  # 100hz
 
         while not rospy.is_shutdown():
-    
+            # print("current point is:", self.local.x, self.local.y)
+            # print(self.veh_index)
             if self.is_local:
-                # gpp가 필요하고, 위치 정보가 들어와 있을 때 gpp 실행
+                # print(self.planning_msg.mode)
+
+                # GPP
+                # print(self.planning_msg.mode)
+                # print(self.planning_msg.dist)
                 if self.gpp_requested:
-                    self.global_path = global_path_maker.path_plan()
-                    self.planning_msg.path_x = self.global_path.x
-                    self.planning_msg.path_y = self.global_path.y
-                    self.planning_msg.path_heading = self.global_path.heading
-                    self.planning_msg.path_k = self.global_path.k
-                    self.planning_msg.mode="general"
+                    self.global_path = self.global_path_maker.path_plan()
+                    self.planning_msg.mode = "general"
                     self.gpp_requested = False
-                    
-                # else:
-                #     self.planning_msg.mode=misson_planner.decision(self)
 
-                #     if self.planning_msg.mode=="avoidance":
-                #         if len(self.obstacle_msg.segments) !=0:
-                #             self.planning_msg.point=local_point_maker.point_plan()
-                #             point=self.planning_msg.point
-                #             theta=self.local.heading*pi/180
-                #             self.mission_goal.x=point.x*cos(theta)+point.y*-sin(theta) + self.local.x
-                #             self.mission_goal.y=point.x*sin(theta)+point.y*cos(theta) + self.local.y
-
-                #     # elif self.planning_msg.mode=="parking-start":
-                #         # self.planning_msg.path=
+                #endcheck = False
+                # Localization Information
+                self.planning_msg.local = self.local
+                self.veh_index=self.get_veh_index()
+                self.stop_index=self.stop_line_checker.stop_idx_check(planner)
+                # print(self.stop_index)
                 
+                if not self.is_parking:
+                    self.planning_msg.dist = self.check_dist()
+                    self.planning_msg.mode = self.misson_planner.decision(self)
 
-                self.planning_msg.local=self.local
-                planning_info_pub.publish(self.planning_msg)
+                if self.planning_msg.mode == "general" or self.planning_msg.mode=="kid" or self.planning_msg.mode=="bump":
+                    self.planning_msg.path = self.global_path
 
-                if not self.gpp_requested:
-                    self.planning_msg.path_x = []
-                    self.planning_msg.path_y = []
-                    self.planning_msg.path_heading = []
-                    self.planning_msg.path_k = []
-                    
+
+
+
+
+                # #####SSHSHSHSHSHSHSH TEST#######
+                # self.planning_msg.mode = 'crossroad'
+
+
+
+                # #######################################
+
+
+
+
+
+
+
+
+
+
+                if (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
+
+                    self.target_map=self.map_maker.make_target_map(self)
+                    self.local_path = self.local_path_maker.path_plan(self.target_map)
+
+                    if self.local_path.x:
+                        self.planning_msg.path = self.local_path
+                #     if self.local_path.x:
+                #         self.planning_msg.path = self.local_path
+                #         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
+                elif self.planning_msg.mode == "parking":
+                    self.is_parking = True
+
+                elif self.planning_msg.mode=="crossroad":
+                    self.planning_msg.mode="general"
+
+                    # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
+                    # signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
+                    # print(signal)
+                    # if self.global_path.mission[self.stop_index] in signal:
+                    #     self.planning_msg.mode="general"
+                    # else:
+                    #     self.planning_msg.mode="normal_stop"
+
+
+                #####Parking
+                if self.is_parking is True:
+                    self.pmode = self.parking_planner.parking_state_decision(self)
+
+                    print("Current Mission: ", self.planning_msg.mode)
+
+                    # if self.pmode == "parking-base1":
+                    #     self.parking_path = self.parking_planner.make_parking_path(1)
+
+                    if self.pmode == "parking_ready":
+                        self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
+
+                        for i in range(len(self.parking_path.x)):
+                            self.parking_backpath.x.insert(0,self.parking_path.x[i])
+                            self.parking_backpath.y.insert(0,self.parking_path.y[i])
+                        print('==========parking path created')
+                        print(self.parking_path)
+                        self.vis_parking_path.points = []
+                        for i in range(len(self.parking_path.x)):
+                            self.vis_parking_path.points.append(Point32(self.parking_backpath.x[i], self.parking_backpath.y[i], 0))
+                        self.vis_parking_path.header.stamp = rospy.Time.now()
+                        self.parking_path_pub.publish(self.vis_parking_path)
+
+                    elif self.pmode == "parking_start":
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
+                        
+                    elif self.pmode == "parking_backward":
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
+
+
+                    elif self.pmode == "parking_end":
+                        self.pmode = "general"
+                        self.mission_ing = False
+                        self.is_parking = False
+
+                    self.planning_msg.mode = self.pmode
+
+
+
+                self.vis_local_path.points = []
+                for i in range(len(self.local_path.x)):
+                    self.vis_local_path.points.append(Point32(self.local_path.x[i], self.local_path.y[i], 0))
+                self.vis_local_path.header.stamp = rospy.Time.now()
+                self.local_path_pub.publish(self.vis_local_path)
+
+                if len(self.vis_global_path.points) == 0:
+                    for i in range(len(self.global_path.x)):
+                        self.vis_global_path.points.append(Point32(self.global_path.x[i], self.global_path.y[i], 0))
+                        self.vis_global_path.header.stamp = rospy.Time.now()
+                self.global_path_pub.publish(self.vis_global_path)
+
+                # self.target.points=[]
+                # self.target.points.append(Point32(self.global_path.x[self.veh_index],self.global_path.y[self.veh_index],0))
+                # self.target.header.stamp=rospy.Time.now()
+                # self.target_pub.publish(self.target)
+
+                # self.target.points=[]
+                # self.target.points.append(self.planning_msg.point)
+                # self.target.header.stamp=rospy.Time.now()
+                # # self.target_pub.publish(self.target)
+
+
+                self.map.points= self.map_maker.showObstacleMap().points
+                self.map.header.stamp = rospy.Time.now()
+                self.map_pub.publish(self.map)
+
+                theta=radians(self.local.heading)
+                self.obs.points=[]
+                for circle in self.obstacle_msg.circles:
+                    # 장애물 절대좌표 변환
+                    x=circle.center.x*cos(theta)+circle.center.y*-sin(theta) + self.local.x
+                    y=circle.center.x*sin(theta)+circle.center.y*cos(theta) + self.local.y
+                    self.obs.points.append(Point32(x,y,0))
+                self.obs.header.stamp=rospy.Time.now()
+                self.obs_pub.publish(self.obs)
+
+                self.pose.points = []
+                self.pose.points.append(Point32(self.local.x, self.local.y, 0))
+                self.pose.header.stamp = rospy.Time.now()
+                self.pose_pub.publish(self.pose)
+
+                self.planning_info_pub.publish(self.planning_msg)
+                # print(self.local.heading, self.global_path.heading[self.veh_index])
                 rate.sleep()
 
+    # Callback Functions
+    def obstacleCallback(self, msg):
+        self.obstacle_msg.segments = msg.segments
+        self.obstacle_msg.circles = msg.circles
+        self.obstacle_msg.circle_number = msg.circle_number
 
-    # Callback Function
-    def obstacleCallback(self, msg): 
-        self.obstacle_msg = msg  
-    
+        self.map_maker.mapping(self,msg.circles)
+
     def localCallback(self, msg):
-        # print(self.local)
         self.local.x = msg.pose.pose.position.x
         self.local.y = msg.pose.pose.position.y
         self.local.heading = msg.twist.twist.angular.z
         self.is_local = True
-
-    def surfaceCallback(self, msg): 
-        self.surface_msg = msg
         
+    def surfaceCallback(self, msg):
+        self.surface_msg = msg
+
     def serialCallback(self, msg):
         self.serial_msg = msg
 
+    def objectCallback(self, msg):
+        self.object_msg=msg
+    
+        # print(len(msg.bounding_boxes))
+        # for box in msg.bounding_boxes:
+        #     print(box.Class)
+            # print(box.xmin)
+            # print(box.xmax)
+
+    def parkingCallback(self, msg):
+        print("Parking Callback run")
+        self.parking_target = msg.data
 
 if __name__ == "__main__":
     planner = Planner()

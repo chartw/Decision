@@ -10,13 +10,14 @@ import os
 import csv
 import math
 
-from math import cos
+from math import cos, hypot
 from math import atan2
 from math import sin
 from math import degrees
 from math import radians
 
 from master_node.msg import Path
+from geometry_msgs.msg import Point32
 
 
 class Graph:  # graph
@@ -56,14 +57,17 @@ class node:  # node
 
 class GPP:
     def __init__(self, planner):
-        self.cur = planner.local
-        self.goal_id = planner.goal_node
+        self.local = planner.local
+        self.map=planner.map
 
         self.nodelist = {}
-        self.tx, self.ty, self.tyaw = [], [], []
-        self.node_set(planner.map)
-        self.lane_set(planner.map)
-        self.path=Path()
+        if self.map=="songdo" or self.map=="kcity":
+            self.goal_id = planner.goal_node
+            self.node_set(planner.map)
+            self.lane_set(planner.map)
+
+        self.global_path=Path()
+        self.target_index=0
 
     def astar_search(self, graph, mynode, start, end):  # A* search (graph)
         class Node:
@@ -137,7 +141,6 @@ class GPP:
         return None  # 목적지 까지 경로가 없을때 아무것도 출력하지 않음
 
     def lane_set(self, mapname):
-
         # 만약 g나 h값을 코드상에 미리 넣어서 계산해준다면 모든 csv파일을 읽어올 필요는 없음.
         global files
         files = os.listdir("./map/" + mapname + "_lane/")
@@ -208,42 +211,46 @@ class GPP:
                 )
 
     def path_plan(self):
-        start_id = self.select_start_node()
-        goal_ids = self.goal_id.split("/")
-        path = self.astar_search(graph, self.nodelist, start_id, goal_ids[0])
-        if len(goal_ids) > 1:
-            for i in range(len(goal_ids) - 1):
-                temppath = self.astar_search(
-                    graph, self.nodelist, goal_ids[i], goal_ids[i + 1]
-                )
-                temppath.pop(0)
-                path += temppath
-        print(path)
-        for i in range(len(path) - 1):
+        if self.map!="songdo":
+            self.make_global_map()
+            return self.global_path
+        
+        else:
+            start_id = self.select_start_node()
+            goal_ids = self.goal_id.split("/")
+            path = self.astar_search(graph, self.nodelist, start_id, goal_ids[0])
+            if len(goal_ids) > 1:
+                for i in range(len(goal_ids) - 1):
+                    temppath = self.astar_search(
+                        graph, self.nodelist, goal_ids[i], goal_ids[i + 1]
+                    )
+                    temppath.pop(0)
+                    path += temppath
+            for i in range(len(path) - 1):
 
-            # print('Lane{}'.format(path[i]+path[i+1]))
+                # print('Lane{}'.format(path[i]+path[i+1]))
 
-            for j in range(
-                len(globals()["Lane{}".format(path[i] + path[i + 1])]["x"])
-            ):
-                self.path.x.append(
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["x"][j]
-                )
-                self.path.y.append(
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["y"][j]
-                )
-                pyaw = (
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["yaw"][j]
-                )
-                
-                pyaw= (degrees(pyaw)+360) % 360
-                self.path.heading.append(pyaw)
-                self.path.k.append(
-                    globals()["Lane{}".format(path[i] + path[i + 1])]["k"][j]
-                )
+                for j in range(
+                    len(globals()["Lane{}".format(path[i] + path[i + 1])]["x"])
+                ):
+                    self.global_path.x.append(
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["x"][j]
+                    )
+                    self.global_path.y.append(
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["y"][j]
+                    )
+                    pyaw = (
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["yaw"][j]
+                    )
+                    
+                    pyaw= (degrees(pyaw)+360) % 360
+                    self.global_path.heading.append(pyaw)
+                    self.global_path.k.append(
+                        globals()["Lane{}".format(path[i] + path[i + 1])]["k"][j]
+                    )
 
-        return self.path
-        # 가장 가까운 노드를 시작 노드로 설정
+            return self.global_path
+            # 가장 가까운 노드를 시작 노드로 설정
 
     def select_start_node(self):
         nodelist = self.nodelist
@@ -254,14 +261,43 @@ class GPP:
         temp_dis = 9999
 
         for node in nodelist:
-            temp_dis = self.calc_dis(nodelist[node].x, nodelist[node].y)
+            temp_dis = hypot(self.local.x-nodelist[node].x, self.local.y-nodelist[node].y)
             if temp_dis < min_dis:
                 min_dis = temp_dis
                 min_idx = node
-
         return min_idx
 
-    def calc_dis(self, nx, ny):
-        distance = ((nx - self.cur.x ** 2) + (ny - self.cur.y) ** 2)
+    def point_plan(self, planner, lookahead):
+        valid_idx_list = []
+        idx = 0
+        min_idx=0
+        min_dist=-1
+        start=max(0,planner.veh_index-100)
+        end=min(len(self.global_path.x)-1,planner.veh_index+100)
+        for i in range(start,end):
+            dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
 
-        return distance
+            if dis < min_dist or min_dist == -1:
+                min_dist=dis
+                min_idx=i
+            
+        planner.veh_index=min_idx
+        self.target_index=min_idx+40
+        target_point=Point32(self.global_path.x[self.target_index],self.global_path.y[self.target_index],0)
+        # print(self.global_path.heading[self.target_index])
+        return self.target_index, target_point
+
+    def make_global_map(self):
+        with open("./map/kcity_map/" + self.map + ".csv", mode="r") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for line in csv_reader:
+                self.global_path.x.append(float(line[0]))
+                self.global_path.y.append(float(line[1]))
+
+                deg_yaw=(degrees(float(line[2]))+360) % 360
+                self.global_path.heading.append(deg_yaw)
+
+                self.global_path.k.append(float(line[3]))
+                # self.global_path.s.append(float(line[4]))
+                self.global_path.env.append(line[5])
+                self.global_path.mission.append(line[6])
