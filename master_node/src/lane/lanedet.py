@@ -202,7 +202,7 @@ class Controller:
         self.lidar_lane_data = msg
         if msg.curvature > 1.5: # curvature 아니고 거리 넣어둔거.
             self.avoid_steer = False
-        print('right_curve_flag:',self.right_curve_flag)
+        # print('right_curve_flag:',self.right_curve_flag)
 
 
         if self.right_curve_flag is True:
@@ -255,7 +255,7 @@ class Controller:
     def steering_angle(self,  cur_x, cur_y, cur_yaw, target_x, target_y):
         cur_yaw = 0
         # print(target_x, target_y)
-        tmp_th = degrees(atan2((target_y - cur_y), (target_x - cur_x)))
+        tmp_th = degrees(atan2((target_y - cur_y), (target_x - cur_x))) # 이게 무조건 0 이 나왔겠네..@@@
         tmp_th = tmp_th%360
         alpha =  cur_yaw - tmp_th                   # 
         # print("alpha before : ",alpha)
@@ -268,7 +268,8 @@ class Controller:
         alpha = max(alpha,  -90)
         alpha = min(alpha,  90)
         # print("alpha final : ",alpha)
-        print("x, y", target_x, target_y)
+        
+        # print("x, y", target_x, target_y)
         
         #PUREPURSUIT
 
@@ -280,8 +281,8 @@ class Controller:
         delta = degrees(atan2(2*self.WB*sin(radians(alpha))/distance,1))   # 
         
 
-        if self.right_curve_flag ==False: # 우회전 해야할때(안보이는 순간).@@@@@@@@@@@@@
-            delta = 20 # 뒤에서 71 곱해질거. 
+        if self.right_curve_flag == True: # 우회전 해야할때(안보이는 순간).@@@@@@@@@@@@@
+            delta = 10 # 뒤에서 71 곱해질거. 
         
         if abs(delta)>180:
             if (delta < 0) :
@@ -290,11 +291,11 @@ class Controller:
                 delta -= 360
 
         if self.avoid_steer is True:
-            delta += 3 # 받을때마다. ( 얼마나 빨리 받는지 check.)
+            delta += 3 # 받을때마다. ( 얼마나 빨리 받는지 check.) # 엥 이건 이안에서만 반복하는거고, 계속 13 정도만 줄것. #@@@@ 수정 필요.
 
 
 
-        print('alpha, delta [deg] : ',alpha,delta)
+        # print('alpha, delta [deg] : ',alpha,delta)
 
         if abs(delta)>30:
             if delta > 0:
@@ -302,7 +303,7 @@ class Controller:
             else :
                 return -1999
         else :    
-            delta = 71*delta
+            delta = 71 * delta
         # print("delta", delta)
 
         #와리가리 
@@ -437,7 +438,7 @@ class Controller:
             # self.goal_x, self.goal_y = (right_first.x+right_last.x)/2 + (d*cos(r_rad)), (right_first.y + right_last.y)/2 + (d*sin(r_rad))
 
         elif len(lane_data.right) == 0:
-            # self.goal_x, self.goal_y = 3, -1 # 디그리로 할래@
+            self.goal_x, self.goal_y = 3, -1 # 디그리로 할래@
             self.right_curve_flag =True # 오른차선 안 보일때 TRue @ @@@@@@@@@2
             
 
@@ -572,7 +573,7 @@ class Controller:
 
             # print("현재 속도", self.velocity_enc)
             # self.cnt=0
-
+            print('delta:',float(self.control_data['steering']/71))
             self.serWrite(self.speed,int(self.control_data['steering']), self.cnt)
             self.past_state = self.cur_state # 바로전 모드 기록 _ 종제어 용
 
@@ -619,7 +620,7 @@ class Controller:
         elif V_in < V_ref:
             V_in = V_ref
 
-        print('V_ref, V_in, V_veh:',V_ref,V_in,self.velocity_enc*36) # 10 곱해진채로 뜰거.
+        # print('V_ref, V_in, V_veh:',V_ref,V_in,self.velocity_enc*36) # 10 곱해진채로 뜰거.
         
         
         return int(V_in)
@@ -629,7 +630,7 @@ class Controller:
         self.V_err_serial = V_ref - self.V_veh #cccccccccc
         self.V_err = V_ref - self.velocity_enc*3.6*10 # 10 곱해진 상태.
 
-        print('speed_ser,speed_enc:',self.V_err_serial,self.V_err) # serial delay check.
+        print('speed_ser,speed_enc:',float(self.V_veh),float(self.velocity_enc*3.6*10)) # serial delay check.
 
         self.t_old = self.t_new
         self.t_new = time.time()
