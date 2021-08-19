@@ -103,9 +103,13 @@ class Controller:
         self.V_err_inte = 0
         self.V_err_deri = 0
 
+        self.steer_veh = 0
+        self.d =0
+
         self.safety_factor = 0.8
         self.V_ref_max = 8 #[km/h] ####@@@@@@ 정현아이게 비젼운행시 최고속도야 ( 높여줘. )
-        self.curve_flag = False # 직선에서 출발 @@@@@@@2
+        self.right_curve_flag = False # 직선에서 출발 @@@@@@@2
+        self.left_curve_flag = False
         # encoder
         self.e = 0
         self.f = 0
@@ -115,9 +119,10 @@ class Controller:
         self.velocity = 0
         self.dis_DR_flag = 0
         self.velocity_enc = 0
+
         ######################\
 
-        self.lane_flag = 1
+        self.lane_flag = 1 # 오른쪽 차선 인식되어 정보 들어있을때.
         self.goal_x_buffer = 0
         self.goal_y_buffer = 0
         
@@ -190,17 +195,21 @@ class Controller:
         else:
             print("get state message Error!!")
 
-    def getlidarlineline(self, msg):
+
+
+    def getlidarlineline(self, msg): # ROI 에 따라서 충돌 거리. 1.5 m !! (이게 좌회전과 우회전 ROI 가 중요!!)
         # self.lidar_lane_data = lane()
-        # print("get lidar lane~~~")
         self.lidar_lane_data = msg
-        if msg.curvature > 1.5:
+        if msg.curvature > 1.5: # curvature 아니고 거리 넣어둔거.
             self.avoid_steer = False
-        print(self.curve_flag)
-        if self.curve_flag is True:
+        print('right_curve_flag:',self.right_curve_flag)
+
+
+        if self.right_curve_flag is True:
             if msg.curvature < 1.5:
                 self.avoid_steer = True
-        
+
+
         ##라이다에서 들어오는 정보 없으면 차선으로 돌리는 부분인데 확인 함 필요해 보임더~~~
         
 
@@ -225,23 +234,22 @@ class Controller:
         if self.cur_state == 'vision_lane' : # 노협로
             # print("left_vi :", len(self.vision_lane_data.left))
             # print("right_vi :", len(self.vision_lane_data.right))
-            self.getline(self.vision_lane_data)
+            self.getline(self.vision_lane_data) # self.goal_x,self.goal_y 만듦.(self.d 랑)
             
 
 
-        elif self.cur_state == 'lidar_lane': # 협로
-            # print("left :", len(self.lidar_lane_data.left))
-            # print("right :", len(self.lidar_lane_data.right))
-            self.getline(self.lidar_lane_data)
+        # elif self.cur_state == 'lidar_lane': # 협로
+        #     # print("left :", len(self.lidar_lane_data.left))
+        #     # print("right :", len(self.lidar_lane_data.right))
+        #     self.getline(self.lidar_lane_data)
 
         else:
             print("Error!! State Empty")
 
-        if self.lane_flag == 1:
+        if self.lane_flag == 1: #???
             return self.steering_angle(cur_x, cur_y, cur_yaw, self.goal_x, self.goal_y)
-        else:
-            # self.goal_x = self.goal_x_buffer
-            # self.goal_y = self.goal_y_buffer
+        else: # 오른쪽 없ㅇ르때.
+            # 여기서 주면 될까나 ?? 
             return self.steering_angle(cur_x, cur_y, cur_yaw, self.goal_x, self.goal_y)
 
     def steering_angle(self,  cur_x, cur_y, cur_yaw, target_x, target_y):
@@ -271,24 +279,20 @@ class Controller:
         
         delta = degrees(atan2(2*self.WB*sin(radians(alpha))/distance,1))   # 
         
-        # 곡선일때는 alpha 가보자. @@@@@@@22
-        if self.curve_flag ==True:
-            delta = alpha  #  이게 문제가 아닐까아러아러아러ㅏㅇ러ㅏㅇㄹㅇ
-        # print('curve_flag',self.curve_flag)
-        # print("len : ", len(lane)
-        
 
-
+        if self.right_curve_flag ==False: # 우회전 해야할때(안보이는 순간).@@@@@@@@@@@@@
+            delta = 20 # 뒤에서 71 곱해질거. 
         
         if abs(delta)>180:
             if (delta < 0) :
                 delta += 360
             else :
                 delta -= 360
-        # print("delta", delta)
 
         if self.avoid_steer is True:
-            delta += 5
+            delta += 3 # 받을때마다. ( 얼마나 빨리 받는지 check.)
+
+
 
         print('alpha, delta [deg] : ',alpha,delta)
 
@@ -409,29 +413,39 @@ class Controller:
         # left_last.x, left_last.y = max(left_last.x, right_last.x), left_last.x * l_a + l_b
         # , right_last.y = left_last.x * l_a + l_b, right_last.x * r_a + r_b
 
-        # 디디디디디디
-        d = 1
+        #@@@@@@@@@@@@@@@@@@@@@@@@@@@ 좌회전 or 직진 에서만 d 사용할거야.
+        
+        if self.left_curve_flag == True:
+            self.d = 1.5
+        else:
+            self.d = 1
+
         # print("number :", len(lane_data.left), len(lane_data.right))
         # l_rad=np.arctan2(left_last.y - left_first.y, left_last.x - left_first.x) - pi / 2
         r_rad=np.arctan2(right_last.y - right_first.y, right_last.x - right_first.x) +pi / 2
 
-        if len(lane_data.right)!= 0:
-            self.curve_flag =False # 다시 잡힐 때ㄱ ㄱ 
+
+
+        ''' @@@@@@@@ curve flag 바꿔주는 곳 @@@@@@@@2'''
+
+        if len(lane_data.right)!= 0: # 오른쪽 보이면 무조건 self.d 사용 , 상대좌표 goal 좌표 사용.
+            self.right_curve_flag =False # 다시 잡힐 때 는 직선으로 인식 @@@@ 
+            self.goal_x, self.goal_y = (right_first.x+right_last.x)/2 , (right_first.y + right_last.y)/2 +  self.d  
+            # 평행사변형 # 오른차선에서부터 y 축에 평행하게 d 만큼
 
             # self.goal_x, self.goal_y = 1, l_a
             # self.goal_x, self.goal_y = (right_first.x+right_last.x)/2 + (d*cos(r_rad)), (right_first.y + right_last.y)/2 + (d*sin(r_rad))
-            self.goal_x, self.goal_y = (right_first.x+right_last.x)/2 , (right_first.y + right_last.y)/2 + d
-            # print(left_last.x, right_last.x, right_last.y, right_last.y)
 
         elif len(lane_data.right) == 0:
-            self.goal_x, self.goal_y = 3, -1
-            self.curve_flag =True
+            # self.goal_x, self.goal_y = 3, -1 # 디그리로 할래@
+            self.right_curve_flag =True # 오른차선 안 보일때 TRue @ @@@@@@@@@2
             
-            # print(left_last.x, right_last.x, right_last.y, right_last.y)
-        print("len : ", len(lane_data.right))
+
+        # print("len : ", len(lane_data.right))
+
         # elif len(lane_data.left) == 0:
         #     self.goal_x, self.goal_y = 5, 1
-            
+        
         # elif len(lane_data.left) != 0 and len(lane_data.right) == 0:
         #     # print("left_deg : ",np.rad2deg(rad2))
         #     self.goal_x = left_last.x + (d*cos(l_rad))
@@ -486,7 +500,7 @@ class Controller:
         #     path.y = right_y[i]
         #     self.paths_right.points.append(path)
         
-        goal = Point32()
+        goal = Point32() 
         goal.x = self.goal_x
         goal.y = self.goal_y
         self.goal_pt.points.append(goal)
@@ -500,10 +514,6 @@ class Controller:
     def serWrite(self,speed, steering, cnt):
         break_val = 0x01
 
-        # if self.drive_mode == 'stop':
-        #     V_in = 0x00
-        #     break_val = 50
-        
         #스피드 바꾸어 주는 부분이 아래 int(10) 되어있는 부분임다 빠르게 진행하시려면 숫자 키워주시면 됩니다링
         result = struct.pack('!BBBBBBHhBBBB', 0x53, 0x54, 0x58, 0x01, 0x00, 0x00, speed,
                     steering, break_val, self.cnt, 0x0D, 0x0A )    # big endian 방식으로 타입에 맞춰서 pack   
@@ -511,6 +521,7 @@ class Controller:
 
 
     def getOdoMsg(self,  msg):
+
         # print(self.cur_state)
         if len(self.lidar_lane_data.left) == 0 and len(self.lidar_lane_data.right) == 0:
             self.cur_state = 'vision_lane'
@@ -520,7 +531,7 @@ class Controller:
 
 
 
-        packet = self.ser.readline()
+        packet = self.ser.read_until(b'\x0d\x0a')
         # print(packet) 
         if len(packet) == 18:
             header = packet[0:3].decode()
@@ -529,6 +540,7 @@ class Controller:
 
                 tmp1, tmp2 = struct.unpack("2h", packet[6:10])
                 self.V_veh = tmp1   # *10 곱해진 값임.
+                self.steer_veh = -tmp2 / 71  # degree 도 feedback 하려했는데 굳이 필요할까 싶네.
                 # print('V_veh:',self.V_veh)
 
                 self.cnt = struct.unpack("B", packet[15:16])[0]
@@ -543,24 +555,24 @@ class Controller:
             self.control_data['steering']= self.cal_steering(self.control_data['cur_x'], self.control_data['cur_y'], self.control_data['cur_yaw'])
             
 
-            # print(self.control_data['steering'])
-            # print(self.goal_x,self.goal_y)
 
-            if self.cur_state == "lidar_lane":
-                self.speed= int(45)    
-            elif self.cur_state == "vision_lane":
-                self.speed= self.calc_velocity()
+            # if self.cur_state == "lidar_lane": #
+            #     self.speed= int(45)    
+            
+
+
+            if self.cur_state == "vision_lane":
+                self.speed= self.calc_velocity() # 직선구간 only. 
                 # self.speed= int(45)
                 # 곡선일때는 alpha 가보자. @@@@@@@22
-                if self.curve_flag ==True:
-                    self.speed=int(40)
-
+                if self.right_curve_flag ==True or self.left_curve_flag == True: # curve 구간.
+                    self.speed=int(40) # curve 구간에서는 pid 일다 안쓸랭><
                     print('speed:',self.speed)
-                    # print('speed:',speed)
                 
 
             # print("현재 속도", self.velocity_enc)
             # self.cnt=0
+
             self.serWrite(self.speed,int(self.control_data['steering']), self.cnt)
             self.past_state = self.cur_state # 바로전 모드 기록 _ 종제어 용
 
@@ -587,22 +599,26 @@ class Controller:
             self.V_err_deri = 0
             self.V_err_pro = 0
 
-        V_ref = self.calc_Vref() # 10 곱해서 준 값. 
+        
+
         
         # @@@@ 양쪽 곡률 있을 때.
         # if V_ref != (self.V_ref_max)*10:
-        #     self.curve_flag =True
+        #     self.right_curve_flag =True
         # else:
-        #     self.curve_flag =False
+        #     self.right_curve_flag =False
 
+        self.calc_Vref() #  이 안에서 self.left_curve_flag on/off
 
-        V_in = self.PID(V_ref)
+        V_ref = 10 # 지금 어차피 직선구간만 PID 쓸거?
+        V_in  = self.PID(V_ref)
 
 
         if V_in > 200:
             V_in = 200
         elif V_in < V_ref:
             V_in = V_ref
+
         print('V_ref, V_in, V_veh:',V_ref,V_in,self.velocity_enc*36) # 10 곱해진채로 뜰거.
         
         
@@ -610,9 +626,10 @@ class Controller:
 
     def PID(self,V_ref):
         
-        # self.V_err = V_ref - self.V_veh #cccccccccc
+        self.V_err_serial = V_ref - self.V_veh #cccccccccc
         self.V_err = V_ref - self.velocity_enc*3.6*10 # 10 곱해진 상태.
-        
+
+        print('speed_ser,speed_enc:',self.V_err_serial,self.V_err) # serial delay check.
 
         self.t_old = self.t_new
         self.t_new = time.time()
@@ -632,20 +649,22 @@ class Controller:
     def calc_Vref(self):
         # self.stidx = self.select_target(self.control_data['cur_x'], self.control_data['cur_y'], self.stidx, self.path_x, self.path_y, self.control_data['speed_look_ahead'])
 
-        target_k = self.vision_lane_data.curvature # vision lanedetection publish 할때 받음 > 주파수 확인.
-        # print('curvature:',self.vision_lane_data.curvature) 
+        target_k = 2 * self.vision_lane_data.curvature # vision lanedetection publish 할때 받음 > 주파수 확인.
+
         critical_k = ((self.safety_factor/self.V_ref_max)**2) * 19.071
         
-        if target_k < critical_k:
+        if target_k < critical_k:   # 직선일때.
+            self.left_curve_flag = False
             V_ref = self.V_ref_max
-        else:
+
+        else:                       # 곡선일때
+            self.left_curve_flag = True # 좌회전 flag 설정.
             V_ref = self.safety_factor * (sqrt(19.071/target_k)) # 이거 테스트해보고 아니면 그냥 뭐 속도 '절반' 이렇게 박아도 될듯. 
 
         if V_ref < 3: # 50 으로 minimum limit 걸자. 너무 느린듯.  speed_lookahead 도 좀 줄이자 3 정도로 dddddddd
             V_ref= 3  # ddddddddd 
 
-        
-        return 10 * float(V_ref)
+        # return 10 * float(V_ref)
 
     def calc_velocity_encoder(self):
         self.displacement_right = self.cur_data_right
