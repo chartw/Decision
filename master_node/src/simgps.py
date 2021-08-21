@@ -18,7 +18,7 @@ class Localization():
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #UDP LAN
-        recv_address = ('127.0.0.1',9092) #default 9092
+        recv_address = ('127.0.0.1',9094) #default 9092
         self.sock.bind(recv_address)
 
         print("Connect!")

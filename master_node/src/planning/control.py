@@ -116,7 +116,7 @@ class Control:
                     self.pub_msg=general.driving(self)
 
                     dist=self.planning_info.dist -0.9 # 범퍼위치로 기준 재설정\
-                    self.pub_msg.speed=dist/5
+                    self.pub_msg.speed=max(0,dist/5)
                     t=dist/((self.serial_info.speed/3.6)+0.1)
                     # self.pub_msg.brake=int(200/t) # 유리 함수 200/x
                     # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
