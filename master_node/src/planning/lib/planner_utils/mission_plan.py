@@ -66,11 +66,11 @@ class MissionPlan:
         elif planner.stop_index-planner.veh_index < 10*10:
             self.mode="crossroad"
 
-        elif mission=="delivery_a":
-            self.mode = "delivery_a"
+        elif mission=="delivery1":
+            self.mode = "delivery1"
 
-        elif mission=="delivery_b":
-            self.mode = "delivery_b"
+        elif mission=="delivery2":
+            self.mode = "delivery2"
 
         # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
         # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함

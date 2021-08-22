@@ -128,6 +128,7 @@ class Planner:
         self.veh_index = 0
         self.parking_target_index = 0
         self.target_index = 0
+        self.target_b = -1
 
         self.is_delivery = False
 
@@ -241,22 +242,6 @@ class Planner:
 
 
 
-                # #####SSHSHSHSHSHSHSH TEST#######
-                # self.planning_msg.mode = 'crossroad'
-
-
-
-                # #######################################
-
-
-
-
-
-
-
-
-
-
                 if (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
 
                     self.target_map=self.map_maker.make_target_map(self)
@@ -285,7 +270,7 @@ class Planner:
                     else:
                         self.planning_msg.mode="normal_stop"
 
-
+            
 
                 #####Parking
                 if self.is_parking is True:
@@ -324,25 +309,39 @@ class Planner:
 
                     self.planning_msg.mode = self.pmode
 
+
+                #####################SHSHSSHSHSHSHSHSHSHSSHSSHSHSHSHSHS TEST#################
+                self.is_delivery = True
+                self.planning_msg.mode = 'delivery1'
+
+                ############################################SHSHSH###################################SSSHSHSHSHSH
                 
                 if self.is_delivery is True:
-                    if self.planning_msg.mode == "delivery_a" and self.pickUpComplete is not True:
-                        self.maxClassA, self.order_b = self.delivery_decision.detect_signs(self.object_msg.data)
+                    if self.planning_msg.mode == "delivery1":
+                        self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg.bounding_boxes)
+
+
+                        self.delivery_decision.delivery_count(self.order_b, b_count)
+
+                        self.target_b = self.delivery_decision.target_b_decision(self.maxClassA)
+
                         sign_map=self.map_maker.a_sign_mapping(self,self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
                         for i, sign in sign_map.items():
                             # if sign.index == 신호등:
                             #     continue
                             self.planning_msg.path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_a, sign.index)
                         
-                        if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
-                            self.planning_msg.mode = "pickup_stop"
-                            self.pickUpComplete = True
-                            self.count = time.time()
+                    #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]) and self.pickUpComplete is not True:
+                    #         self.planning_msg.mode = "pickup_stop"
+                    #         self.pickUpComplete = True
+                    #         self.count = time.time()
 
-                    if self.planning_msg.mode == "pickup_stop" and time.time() - self.count > 5.5:
-                        self.planning_msg.mode = "general"
+                    # if self.planning_msg.mode == "pickup_stop" and time.time() - self.count > 5.5:
+                    #     self.planning_msg.mode = "general"
                     
-                    elif self.planning_msg.mode == "delivery_b":
+                    elif self.planning_msg.mode == "delivery2":
+                        target_b = self.delivery_decision.b_order_decision(self.maxClassA)
+                        
                         sign_map=self.map_maker.b_sign_mapping(self,self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
 
 
