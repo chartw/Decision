@@ -22,9 +22,12 @@ class Obstacle:
 
 class Mapping:
     obs_map = {} # 실제 장애물 좌표가 저장되는 dictionary
+    a_sign_map={}
+    b_sign_map={}
     obstacle_cnt = 0 # 현재 장애물의 개수
     local = Local() # 위치 정보
-
+    a_cnt=0
+    b_cnt=0
     def __init__(self, planner):
         self.local = planner.local
 
@@ -176,6 +179,114 @@ class Mapping:
         return target_map
 
         # target point를 key로 정렬 -> tuple로 이루어진 list[(index, point), (index, point) ... ]
+
+
+## 거리 조건 집어넣어서 벽 필터링 하자
+    def a_sign_mapping(self, planner, path, circles):
+        theta = radians(planner.local.heading)
+        for circle in circles:
+            # 현재 mapping 중인 장애물 : circle
+            # 장애물 절대좌표 변환
+            pos=Point32()
+            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + planner.local.x
+            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + planner.local.y
+            id = -1
+            
+            for i, obstacle in self.a_sign_map.items():
+                if obstacle.EMA.tracking(pos):
+                    id = i
+                    break
+            
+            # 만약 딕셔너리에 없으면, 새로운 이동 평균 필터 클래스 선언후 삽입
+            # circle의 절대좌표 (x, y)로 초기화
+            if id == -1:
+    
+                min_dist=-1
+                min_index = 0
+
+                for i in range(len(path.x)):
+                    dist=hypot(path.x[i]-pos.x, path.y[i]-pos.y)
+                    if min_dist==-1 or min_dist > dist:
+                        min_dist=dist
+                        min_index = i
+                    
+                self.a_sign_map[self.a_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
+                self.a_cnt += 1
+
+            # 있으면, 해당 key값 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
+            else:
+                self.a_sign_map[id].EMA.emaFilter(pos)
+                obstacle=self.a_sign_map[id]
+                emapos=obstacle.EMA.retAvg()
+
+                min_dist=-1
+                min_index=0
+                start_index=max(0,obstacle.index-10)
+                end_index=min(obstacle.index+10,len(path.x)-1)
+
+                for i in range(start_index,end_index):
+                    dist=hypot(path.x[i]-emapos.x, path.y[i]-emapos.y)
+                    if min_dist==-1 or min_dist > dist:
+                        min_dist=dist
+                        min_index = i
+
+                self.a_sign_map[id].index=min_index
+                self.a_sign_map[id].dist=min_dist
+
+        return self.a_sign_map
+
+    def b_sign_mapping(self, planner, path, circles):
+        theta = radians(planner.local.heading)
+        for circle in circles:
+            # 현재 mapping 중인 장애물 : circle
+            # 장애물 절대좌표 변환
+            pos=Point32()
+            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + planner.local.x
+            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + planner.local.y
+            id = -1
+            
+            for i, obstacle in self.b_sign_map.items():
+                if obstacle.EMA.tracking(pos):
+                    id = i
+                    break
+            
+            # 만약 딕셔너리에 없으면, 새로운 이동 평균 필터 클래스 선언후 삽입
+            # circle의 절대좌표 (x, y)로 초기화
+            if id == -1:
+    
+                min_dist=-1
+                min_index = 0
+
+                for i in range(len(path.x)):
+                    dist=hypot(path.x[i]-pos.x, path.y[i]-pos.y)
+                    if min_dist==-1 or min_dist > dist:
+                        min_dist=dist
+                        min_index = i
+                    
+                self.b_sign_map[self.b_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
+                self.b_cnt += 1
+
+            # 있으면, 해당 key값 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
+            else:
+                self.b_sign_map[id].EMA.emaFilter(pos)
+                obstacle=self.b_sign_map[id]
+                emapos=obstacle.EMA.retAvg()
+
+                min_dist=-1
+                min_index=0
+                start_index=max(0,obstacle.index-10)
+                end_index=min(obstacle.index+10,len(path.x)-1)
+
+                for i in range(start_index,end_index):
+                    dist=hypot(path.x[i]-emapos.x, path.y[i]-emapos.y)
+                    if min_dist==-1 or min_dist > dist:
+                        min_dist=dist
+                        min_index = i
+
+                self.b_sign_map[id].index=min_index
+                self.b_sign_map[id].dist=min_dist
+
+        return self.b_sign_map
 
     # 현재 map에 저장되어있는 모든 point를 PointCloud형식으로 바꿔서 리턴하는 함수
     # 이걸 바로 rviz로 쏘고있음

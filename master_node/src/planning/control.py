@@ -171,6 +171,17 @@ class Control:
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
                     #self.planning_info.mode = "general"
                     
+                elif self.planning_info.mode == "delivery_a":
+                    self.pub_msg.steer = avoidance.pure_pursuit(self.PickUpPath)
+
+                elif self.planning_info.mode == "pickup_stop":
+                    self.serialParkingComm(0, MAX_BRAKE, FGEAR)
+
+                elif self.planning_info.mode == "delivery_b":
+                    self.pub_msg.steer = avoidance.pure_pursuit(self.deliverPath)
+
+                elif self.planning_info.mode == "delivery_stop":
+                    self.serialParkingComm(0, MAX_BRAKE, FGEAR)
 
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.pub_msg)
