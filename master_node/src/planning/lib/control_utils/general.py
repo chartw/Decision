@@ -209,6 +209,7 @@ class General:
 
         if self.mode =="kid":
             V_ref = 10
+        print(self.speed_idx)
         V_ref = self.path.k[self.speed_idx]
         V_in = self.PID(V_ref)
 
@@ -231,6 +232,9 @@ class General:
             self.temp_msg.speed=12
         elif self.mode=="bump":
             self.temp_msg.speed=8
+        
+        elif self.mode=="delivery1" or self.mode=="delivery2":
+            self.temp_msg.speed= self.calc_velocity()
         
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
         self.temp_msg.steer = self.pure_pursuit()

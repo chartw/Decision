@@ -77,6 +77,7 @@ class Planner:
         self.is_person = False
         self.mission_goal = Point32()
         self.target_map={}
+        self.sign_map={}
         self.past_dist=0
         self.past_min_dist=0
         self.start_time=time.time()
@@ -131,6 +132,7 @@ class Planner:
         self.target_b = -1
 
         self.is_delivery = False
+        self.dmode=""
 
         self.count = 0
         self.booleanFalse = False
@@ -256,19 +258,19 @@ class Planner:
                     self.is_parking = True
 
 
-                elif self.planning_msg.mode == "delivery":
+                elif self.planning_msg.mode == "delivery1":
                     self.is_delivery = True
 
                 elif self.planning_msg.mode=="crossroad":
-                    # self.planning_msg.mode="general"
+                    self.planning_msg.mode="general"
 
-                    self.planning_msg.dist=(self.stop_index-self.veh_index)/10
-                    signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
-                    print(signal)
-                    if self.global_path.mission[self.stop_index] in signal:
-                        self.planning_msg.mode="general"
-                    else:
-                        self.planning_msg.mode="normal_stop"
+                    # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
+                    # signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
+                    # print(signal)
+                    # if self.global_path.mission[self.stop_index] in signal:
+                    #     self.planning_msg.mode="general"
+                    # else:
+                    #     self.planning_msg.mode="normal_stop"
 
             
 
@@ -311,13 +313,16 @@ class Planner:
 
 
                 #####################SHSHSSHSHSHSHSHSHSHSSHSSHSHSHSHSHS TEST#################
-                self.is_delivery = True
-                self.planning_msg.mode = 'delivery1'
+                # self.is_delivery = True
+                # self.planning_msg.mode = 'delivery1'
 
                 ############################################SHSHSH###################################SSSHSHSHSHSH
                 
                 if self.is_delivery is True:
+                    print(self.dmode)
+                    print(self.sign_map)
                     if self.planning_msg.mode == "delivery1":
+                        
                         self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg.bounding_boxes)
 
 
@@ -325,37 +330,76 @@ class Planner:
 
                         self.target_b = self.delivery_decision.target_b_decision(self.maxClassA)
 
-                        sign_map=self.map_maker.a_sign_mapping(self,self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
-                        for i, sign in sign_map.items():
-                            # if sign.index == 신호등:
-                            #     continue
-                            self.planning_msg.path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_a, sign.index)
+                        if not self.dmode == "pickup_complete":
+                            self.sign_map=self.map_maker.a_sign_mapping(self,self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
+                            for i, sign in self.sign_map.items():
+                                if sign.index >75 and sign.index < 86:
+                                    continue
+                                self.local_path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_a, sign.index)
+
+                            if self.local_path.x and self.dmode!="pickup_stop":
+                                self.dmode="pickup"
+                                self.planning_msg.mode="pickup"
+                                self.planning_msg.path = self.local_path
+
+                                end_point_x = self.local_path.x[-1]
+                                end_point_y = self.local_path.y[-1]
+                            
+                                distance = hypot(end_point_x-self.local.x, end_point_y - self.local.y)
+                                if distance < 1.5:
+                                    self.planning_msg.mode="normal_stop"
+                                
+                                if self.serial_msg.speed <0.1:
+                                    self.dmode="pickup_stop"
+                                    self.count = time.time()
+
+
+                            elif self.dmode == "pickup_stop":
+                                print('--------------------')
+                                self.planning_msg.mode="normal_stop"
+
+                                if time.time() - self.count > 3:
+                                    self.dmode = "pickup_complete"
+
+                    elif self.planning_msg.mode == "delivery2":
+                        self.sign_map=self.map_maker.b_sign_mapping(self,self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
                         
-                    #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]) and self.pickUpComplete is not True:
-                    #         self.planning_msg.mode = "pickup_stop"
-                    #         self.pickUpComplete = True
+                        for i, sign in self.sign_map.items():
+                            print(i,self.target_b)
+                            if i==self.target_b:
+                                self.local_path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_b, sign.index)
+
+                        if self.local_path.x and self.dmode!="drop_stop":
+                            self.dmode="drop"
+                            self.planning_msg.mode="drop"
+                            self.planning_msg.path = self.local_path
+
+                            end_point_x = self.local_path.x[-1]
+                            end_point_y = self.local_path.y[-1]
+                        
+                            distance = hypot(end_point_x-self.local.x, end_point_y - self.local.y)
+                            if distance < 1.5:
+                                self.planning_msg.mode="normal_stop"
+                            
+                            if self.serial_msg.speed <0.1:
+                                self.dmode="drop_stop"
+                                self.count = time.time()
+
+                        elif self.dmode == "drop_stop":
+                            print('--------------------')
+                            self.planning_msg.mode="normal_stop"
+
+                            if time.time() - self.count > 3:
+                                self.dmode = "drop_complete"
+                                self.is_delivery=False
+
+                    #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
+                    #         self.planning_msg.mode = "delivery_stop"
                     #         self.count = time.time()
 
-                    # if self.planning_msg.mode == "pickup_stop" and time.time() - self.count > 5.5:
+                    # elif self.planning_msg.mode == "delivery_stop" and time.time() - self.count > 5.5:
                     #     self.planning_msg.mode = "general"
-                    
-                    elif self.planning_msg.mode == "delivery2":
-                        target_b = self.delivery_decision.b_order_decision(self.maxClassA)
-                        
-                        sign_map=self.map_maker.b_sign_mapping(self,self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
-
-
-
-                        sign_index = self.delivery_decision.index_decision(self.order_b,sign_map, self.maxClassA.replace("A","B"))
-                        self.planning_msg.path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_b, sign_index)
-
-                        if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
-                            self.planning_msg.mode = "delivery_stop"
-                            self.count = time.time()
-
-                    elif self.planning_msg.mode == "delivery_stop" and time.time() - self.count > 5.5:
-                        self.planning_msg.mode = "general"
-                        self.is_delivery = False
+                    #     self.is_delivery = False
 
 
 

@@ -170,18 +170,33 @@ class Control:
                 elif self.planning_info.mode == "parking_end":
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
                     #self.planning_info.mode = "general"
+
+                
+                elif self.planning_info.mode=="delivery1" or self.planning_info.mode=="delivery2":
+                    self.pub_msg=general.driving(self)
+
+                elif self.planning_info.mode=="pickup":
+                    if self.planning_info.path.x:
+                        self.local_path.x = self.planning_info.path.x
+                        self.local_path.y = self.planning_info.path.y
+                        self.local_path.k = self.planning_info.path.k
+                        self.local_path.env = self.planning_info.path.env
+                        self.local_path.mission = self.planning_info.path.mission
+                    if self.local_path.x:
+                        self.pub_msg=avoidance.driving(self)
+
+                elif self.planning_info.mode=="drop":
+                    if self.planning_info.path.x:
+                        self.local_path.x = self.planning_info.path.x
+                        self.local_path.y = self.planning_info.path.y
+                        self.local_path.k = self.planning_info.path.k
+                        self.local_path.env = self.planning_info.path.env
+                        self.local_path.mission = self.planning_info.path.mission
+                    if self.local_path.x:
+                        self.pub_msg=avoidance.driving(self)
+                
+
                     
-                elif self.planning_info.mode == "delivery_a":
-                    self.pub_msg.steer = avoidance.pure_pursuit(self.PickUpPath)
-
-                elif self.planning_info.mode == "pickup_stop":
-                    self.serialParkingComm(0, MAX_BRAKE, FGEAR)
-
-                elif self.planning_info.mode == "delivery_b":
-                    self.pub_msg.steer = avoidance.pure_pursuit(self.deliverPath)
-
-                elif self.planning_info.mode == "delivery_stop":
-                    self.serialParkingComm(0, MAX_BRAKE, FGEAR)
 
                 self.past_mode = self.planning_info.mode
                 control_pub.publish(self.pub_msg)

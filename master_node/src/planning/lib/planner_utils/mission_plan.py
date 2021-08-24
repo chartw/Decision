@@ -69,7 +69,7 @@ class MissionPlan:
         elif mission=="delivery1":
             self.mode = "delivery1"
 
-        elif mission=="delivery2":
+        elif mission=="delivery2" and planner.is_delivery ==True:
             self.mode = "delivery2"
 
         # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
@@ -78,6 +78,7 @@ class MissionPlan:
 
         else:
             self.mode="general"
+            planner.local_path=Path()
 
         return self.mode
 

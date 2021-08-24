@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import argmax, array
 from geometry_msgs.msg import Point32
-from math import hypot
+from math import hypot, degrees
 import csv
 
 from master_node.msg import Path
@@ -18,25 +18,35 @@ class deliveryClass:
         self.queue = []
         self.queue_size=10
         self.sign_size_b = {'B1':-1, 'B2': -1, 'B3':-1}
-        self.delivery_path_a = []
-        self.delivery_path_b = []
+        self.delivery_path_a = Path()
+        self.delivery_path_b = Path()
         self.b_compare = {'B1>B2':0, 'B2>B1':0, \
                         'B2>B3':0, 'B3>B2':0, \
                         'B3>B1':0, 'B1>B3':0}
         self.maxClassA = 'A2'
         self.max_count = 0
+        self.make_delivery_path()
+
 
 
     def make_delivery_path(self):
-        with open("./map/kcity_map/final.csv", mode="r") as csv_file:
+        with open("./map/kcity_map/Delivery_kcity/delivery_a.csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
             for line in csv_reader:
-                if line[6] == "delivery_a":
-                    point = (float(line[0]), float(line[1]))
-                    self.delivery_path_a.append(point)
-                elif line[6] == "delivery_b":
-                    point = (float(line[0]), float(line[1]))
-                    self.delivery_path_b.append(point)
+                self.delivery_path_a.x.append(float(line[0]))
+                self.delivery_path_a.y.append(float(line[1]))
+
+                deg_yaw=(degrees(float(line[2]))+360) % 360
+                self.delivery_path_a.heading.append(deg_yaw)
+
+        with open("./map/kcity_map/Delivery_kcity/delivery_b.csv", mode="r") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for line in csv_reader:
+                self.delivery_path_b.x.append(float(line[0]))
+                self.delivery_path_b.y.append(float(line[1]))
+
+                deg_yaw=(degrees(float(line[2]))+360) % 360
+                self.delivery_path_b.heading.append(deg_yaw)
 
         return self.delivery_path_a, self.delivery_path_b
 
@@ -123,13 +133,13 @@ class deliveryClass:
 
 
     def path_plan(self, path, sign_index):
-        path=Path()
-
+        temp=Path()
+        print(len(path.x), sign_index)
         x_list, y_list=[],[]
-        x_list.append[path.x[0]]
-        y_list.append[path.y[0]]
-        x_list.append[path.x[sign_index]]
-        y_list.append[path.y[sign_index]]
+        x_list.append(path.x[0])
+        y_list.append(path.y[0])
+        x_list.append(path.x[sign_index])
+        y_list.append(path.y[sign_index])
 
         csp=Spline2D(x_list, y_list)
         s=np.arange(0,csp.s[-1],0.1)
@@ -140,9 +150,9 @@ class deliveryClass:
             ry.append(iy)
 
 
-        path.x=rx
-        path.y=ry
-        return path
+        temp.x=rx
+        temp.y=ry
+        return temp
 
     def find_stop_point(self, targetPoint, slicedPath):
         min = 100
@@ -166,6 +176,5 @@ class deliveryClass:
         goal_order=order_b.index(targetPoint)
 
         return sign_map[goal_order].index()
-
 
 

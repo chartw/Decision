@@ -183,6 +183,7 @@ class Mapping:
 
 ## 거리 조건 집어넣어서 벽 필터링 하자
     def a_sign_mapping(self, planner, path, circles):
+    
         theta = radians(planner.local.heading)
         for circle in circles:
             # 현재 mapping 중인 장애물 : circle
@@ -209,6 +210,9 @@ class Mapping:
                     if min_dist==-1 or min_dist > dist:
                         min_dist=dist
                         min_index = i
+
+                if min_dist > 3:
+                    continue
                     
                 self.a_sign_map[self.a_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
                 self.a_cnt += 1
@@ -262,6 +266,8 @@ class Mapping:
                     if min_dist==-1 or min_dist > dist:
                         min_dist=dist
                         min_index = i
+                if min_dist > 3:
+                    continue
                     
                 self.b_sign_map[self.b_cnt] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
                 self.b_cnt += 1
