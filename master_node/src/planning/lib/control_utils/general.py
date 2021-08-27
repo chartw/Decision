@@ -244,6 +244,7 @@ class General:
         self.temp_msg.gear = 0
         self.temp_msg.emergency_stop = 0
         self.temp_msg.auto_manual = 1
+        self.temp_msg.path_steer=self.path.heading[self.cur_idx]
 
 
         self.target = PointCloud()
