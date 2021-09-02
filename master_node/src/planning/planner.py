@@ -258,15 +258,15 @@ class Planner:
                     self.is_delivery = True
 
                 elif self.planning_msg.mode == "crossroad":
-                    self.planning_msg.mode = "general"
+                    # self.planning_msg.mode = "general"
 
-                    # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
-                    # signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
-                    # print(signal)
-                    # if self.global_path.mission[self.stop_index] in signal:
-                    #     self.planning_msg.mode="general"
-                    # else:
-                    #     self.planning_msg.mode="normal_stop"
+                    self.planning_msg.dist=(self.stop_index-self.veh_index)/10
+                    signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
+                    print(signal)
+                    if self.global_path.mission[self.stop_index] in signal:
+                        self.planning_msg.mode="general"
+                    else:
+                        self.planning_msg.mode="normal_stop"
 
                 #####Parking
                 if self.is_parking is True:
@@ -337,7 +337,7 @@ class Planner:
                                 end_point_y = self.local_path.y[-1]
 
                                 distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
-                                if distance < 1.5:
+                                if distance < 1.5: #돌려보고 수정하기
                                     self.planning_msg.mode = "normal_stop"
 
                                 if self.serial_msg.speed < 0.1:
@@ -348,7 +348,7 @@ class Planner:
                                 print("--------------------")
                                 self.planning_msg.mode = "normal_stop"
 
-                                if time.time() - self.count > 3:
+                                if time.time() - self.count > 5.5:
                                     self.dmode = "pickup_complete"
 
                     elif self.planning_msg.mode == "delivery2":
@@ -368,7 +368,7 @@ class Planner:
                             end_point_y = self.local_path.y[-1]
 
                             distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
-                            if distance < 1.5:
+                            if distance < 1.5: #돌려보고 수정하기
                                 self.planning_msg.mode = "normal_stop"
 
                             if self.serial_msg.speed < 0.1:
@@ -379,7 +379,7 @@ class Planner:
                             print("--------------------")
                             self.planning_msg.mode = "normal_stop"
 
-                            if time.time() - self.count > 3:
+                            if time.time() - self.count > 5.5:
                                 self.dmode = "drop_complete"
                                 self.is_delivery = False
 
