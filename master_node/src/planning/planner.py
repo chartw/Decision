@@ -38,6 +38,11 @@ class Planner:
         if self.map == "songdo" or self.map == "kcity":
             self.goal_node = str(arg[2])
 
+        else:
+            if len(arg) >= 3:
+                self.veh_index = int(arg[2])
+            else:
+                self.veh_index = 0
         """
         publish 정의
         Planning_Info
@@ -83,7 +88,7 @@ class Planner:
         self.dynamic_flag = False
         self.check_veh_index_first = True
 
-        self.veh_index = 0
+        # self.veh_index = 0
         self.target_index = 0
         self.stop_index = 0
 
@@ -236,12 +241,9 @@ class Planner:
                 if self.planning_msg.mode == "general" or self.planning_msg.mode == "kid" or self.planning_msg.mode == "bump":
                     self.planning_msg.path = self.global_path
 
-                """
+                if self.planning_msg.mode == "small" or self.planning_msg.mode == "big":
 
-
-                if (self.planning_msg.mode == "small" or self.planning_msg.mode=="big"):
-
-                    self.target_map=self.map_maker.make_target_map(self)
+                    self.target_map = self.map_maker.make_target_map(self)
                     self.local_path = self.local_path_maker.path_plan(self.target_map)
 
                     if self.local_path.x:
@@ -252,12 +254,11 @@ class Planner:
                 elif self.planning_msg.mode == "parking":
                     self.is_parking = True
 
-
                 elif self.planning_msg.mode == "delivery1":
                     self.is_delivery = True
 
-                elif self.planning_msg.mode=="crossroad":
-                    self.planning_msg.mode="general"
+                elif self.planning_msg.mode == "crossroad":
+                    self.planning_msg.mode = "general"
 
                     # self.planning_msg.dist=(self.stop_index-self.veh_index)/10
                     # signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
@@ -266,8 +267,6 @@ class Planner:
                     #     self.planning_msg.mode="general"
                     # else:
                     #     self.planning_msg.mode="normal_stop"
-
-            
 
                 #####Parking
                 if self.is_parking is True:
@@ -282,9 +281,9 @@ class Planner:
                         self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
 
                         for i in range(len(self.parking_path.x)):
-                            self.parking_backpath.x.insert(0,self.parking_path.x[i])
-                            self.parking_backpath.y.insert(0,self.parking_path.y[i])
-                        print('==========parking path created')
+                            self.parking_backpath.x.insert(0, self.parking_path.x[i])
+                            self.parking_backpath.y.insert(0, self.parking_path.y[i])
+                        print("==========parking path created")
                         print(self.parking_path)
                         self.vis_parking_path.points = []
                         for i in range(len(self.parking_path.x)):
@@ -294,10 +293,9 @@ class Planner:
 
                     elif self.pmode == "parking_start":
                         self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
-                        
+
                     elif self.pmode == "parking_backward":
                         self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
-
 
                     elif self.pmode == "parking_end":
                         self.pmode = "general"
@@ -306,87 +304,84 @@ class Planner:
 
                     self.planning_msg.mode = self.pmode
 
-
                 #####################SHSHSSHSHSHSHSHSHSHSSHSSHSHSHSHSHS TEST#################
                 # self.is_delivery = True
                 # self.planning_msg.mode = 'delivery1'
 
                 ############################################SHSHSH###################################SSSHSHSHSHSH
-                
+
                 if self.is_delivery is True:
                     print(self.dmode)
                     print(self.sign_map)
                     if self.planning_msg.mode == "delivery1":
-                        
-                        self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg.bounding_boxes)
 
+                        self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg.bounding_boxes)
 
                         self.delivery_decision.delivery_count(self.order_b, b_count)
 
                         self.target_b = self.delivery_decision.target_b_decision(self.maxClassA)
 
                         if not self.dmode == "pickup_complete":
-                            self.sign_map=self.map_maker.a_sign_mapping(self,self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
+                            self.sign_map = self.map_maker.a_sign_mapping(self, self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
                             for i, sign in self.sign_map.items():
-                                if sign.index >75 and sign.index < 86:
+                                if sign.index > 75 and sign.index < 86:
                                     continue
-                                self.local_path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_a, sign.index)
+                                self.local_path = self.delivery_decision.path_plan(self.delivery_decision.delivery_path_a, sign.index)
 
-                            if self.local_path.x and self.dmode!="pickup_stop":
-                                self.dmode="pickup"
-                                self.planning_msg.mode="pickup"
+                            if self.local_path.x and self.dmode != "pickup_stop":
+                                self.dmode = "pickup"
+                                self.planning_msg.mode = "pickup"
                                 self.planning_msg.path = self.local_path
 
                                 end_point_x = self.local_path.x[-1]
                                 end_point_y = self.local_path.y[-1]
-                            
-                                distance = hypot(end_point_x-self.local.x, end_point_y - self.local.y)
+
+                                distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
                                 if distance < 1.5:
-                                    self.planning_msg.mode="normal_stop"
-                                
-                                if self.serial_msg.speed <0.1:
-                                    self.dmode="pickup_stop"
+                                    self.planning_msg.mode = "normal_stop"
+
+                                if self.serial_msg.speed < 0.1:
+                                    self.dmode = "pickup_stop"
                                     self.count = time.time()
 
-
                             elif self.dmode == "pickup_stop":
-                                print('--------------------')
-                                self.planning_msg.mode="normal_stop"
+                                print("--------------------")
+                                self.planning_msg.mode = "normal_stop"
 
                                 if time.time() - self.count > 3:
                                     self.dmode = "pickup_complete"
 
                     elif self.planning_msg.mode == "delivery2":
-                        self.sign_map=self.map_maker.b_sign_mapping(self,self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
-                        
-                        for i, sign in self.sign_map.items():
-                            print(i,self.target_b)
-                            if i==self.target_b:
-                                self.local_path=self.delivery_decision.path_plan(self.delivery_decision.delivery_path_b, sign.index)
+                        self.sign_map = self.map_maker.b_sign_mapping(self, self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
 
-                        if self.local_path.x and self.dmode!="drop_stop":
-                            self.dmode="drop"
-                            self.planning_msg.mode="drop"
+                        for i, sign in self.sign_map.items():
+                            print(i, self.target_b)
+                            if i == self.target_b:
+                                self.local_path = self.delivery_decision.path_plan(self.delivery_decision.delivery_path_b, sign.index)
+
+                        if self.local_path.x and self.dmode != "drop_stop":
+                            self.dmode = "drop"
+                            self.planning_msg.mode = "drop"
                             self.planning_msg.path = self.local_path
 
                             end_point_x = self.local_path.x[-1]
                             end_point_y = self.local_path.y[-1]
-                        
-                            distance = hypot(end_point_x-self.local.x, end_point_y - self.local.y)
+
+                            distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
                             if distance < 1.5:
-                                self.planning_msg.mode="normal_stop"
-                            
-                            if self.serial_msg.speed <0.1:
-                                self.dmode="drop_stop"
+                                self.planning_msg.mode = "normal_stop"
+
+                            if self.serial_msg.speed < 0.1:
+                                self.dmode = "drop_stop"
                                 self.count = time.time()
 
                         elif self.dmode == "drop_stop":
-                            print('--------------------')
-                            self.planning_msg.mode="normal_stop"
+                            print("--------------------")
+                            self.planning_msg.mode = "normal_stop"
 
                             if time.time() - self.count > 3:
                                 self.dmode = "drop_complete"
-                                self.is_delivery=False
+                                self.is_delivery = False
 
                     #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
                     #         self.planning_msg.mode = "delivery_stop"
@@ -395,7 +390,6 @@ class Planner:
                     # elif self.planning_msg.mode == "delivery_stop" and time.time() - self.count > 5.5:
                     #     self.planning_msg.mode = "general"
                     #     self.is_delivery = False
-                """
 
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):
@@ -438,6 +432,7 @@ class Planner:
                 self.pose.header.stamp = rospy.Time.now()
                 self.pose_pub.publish(self.pose)
 
+                self.planning_msg.cur_index = self.veh_index
                 self.planning_info_pub.publish(self.planning_msg)
                 # print(self.local.heading, self.global_path.heading[self.veh_index])
                 rate.sleep()
