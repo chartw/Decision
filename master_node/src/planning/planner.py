@@ -231,12 +231,12 @@ class Planner:
                 # Localization Information
                 self.planning_msg.local = self.local
                 self.veh_index = self.get_veh_index()
-                self.stop_index = self.stop_line_checker.stop_idx_check(planner)
+                # self.stop_index = self.stop_line_checker.stop_idx_check(planner)
                 # print(self.stop_index)
 
                 if not self.is_parking:
                     self.planning_msg.dist = self.check_dist()
-                    self.planning_msg.mode = self.misson_planner.decision(self)
+                    # self.planning_msg.mode = self.misson_planner.decision(self)
 
                 if self.planning_msg.mode == "general" or self.planning_msg.mode == "kid" or self.planning_msg.mode == "bump":
                     self.planning_msg.path = self.global_path
