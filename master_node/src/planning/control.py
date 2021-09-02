@@ -1,6 +1,5 @@
 import rospy
 from math import sqrt
-
 from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from geometry_msgs.msg import Point32
 from lib.control_utils.general import General

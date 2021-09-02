@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 from master_node.msg import Serial_Info  # 개발할 메세지 타입
-
 from math import degrees, atan2, sin, radians, sqrt ,hypot
 import time, rospy
 #!/usr/bin/env python3
@@ -209,7 +208,8 @@ class General:
 
         if self.mode =="kid":
             V_ref = 10
-        print(self.speed_idx)
+        print("speed:",self.speed_idx)
+        print("cur",self.cur_idx)
         V_ref = self.path.k[self.speed_idx]
         V_in = self.PID(V_ref)
 
@@ -218,7 +218,7 @@ class General:
         elif V_in < V_ref:
             V_in = V_ref
 
-        return int(V_in)
+        return V_in
 
     def driving(self, control):
         self.mode = control.planning_info.mode
@@ -238,6 +238,7 @@ class General:
         
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
         self.temp_msg.steer = self.pure_pursuit()
+        # print("x,y",self.cur.x,self.cur.y)
 
         self.temp_msg.brake = 0
         self.temp_msg.encoder = 0
@@ -256,7 +257,7 @@ class General:
         self.target.header.stamp=rospy.Time.now()
         self.target_pub.publish(self.target)
 
-        print('cur_idx:',self.cur_idx,'ld:',round(self.lookahead,2),'mode:',self.mode)
-        print("V_veh:",self.serial_info.speed)
+        # print('cur_idx:',self.cur_idx,'ld:',round(self.lookahead,2),'mode:',self.mode)
+        # print("V_veh:",self.serial_info.speed)
         return self.temp_msg
 
