@@ -92,8 +92,9 @@ class General:
 
     # def pure_pursuit(self,point):
     def pure_pursuit(self):
+        # self.lookahead = 11
 
-        # self.lookahead = 3
+        self.lookahead = 3
         if 9 < self.serial_info.speed < 20:
             self.lookahead = 0.22 * (self.serial_info.speed - 10) + 3.88  # 4로 바꾸기도 해.
         else:
@@ -120,6 +121,8 @@ class General:
         alpha = min(alpha, 90)
 
         delta = degrees(atan2(2 * self.WB * sin(radians(alpha)) / self.lookahead, 1))
+
+        # delta = 2*delta
 
         if abs(delta) > 180:
             if delta < 0:
@@ -202,8 +205,12 @@ class General:
             V_ref = 10
         print("speed:",self.speed_idx)
         print("cur",self.cur_idx)
+        # print(self.path)
         V_ref = self.path.k[self.speed_idx]
-        V_in = self.PID(V_ref)
+        V_in = V_ref
+
+        # V_ref = self.calc_Vref()
+        # V_in = self.PID(V_ref)
 
         if V_in > 20:
             V_in = 20
