@@ -80,5 +80,7 @@ class MissionPlan:
             self.mode="general"
             planner.local_path=Path()
 
+        self.mode = "general"
+
         return self.mode
 

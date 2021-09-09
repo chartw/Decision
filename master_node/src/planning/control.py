@@ -212,6 +212,7 @@ class Control:
         self.local_point=msg.point
         self.local.x = msg.local.x
         self.local.y = msg.local.y
+        self.local.encoder = msg.local.encoder
         self.local.heading = msg.local.heading
         # print(self.planning_info)
         self.is_planning = True

@@ -144,7 +144,9 @@ class General:
     def PID(self, V_ref):
 
         self.V_err_old = self.V_err
-        self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
+        print("enc",self.cur.encoder)
+        self.V_err = V_ref - self.cur.encoder
+        # self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
 
         # print('self.cur:',self.cur)
         # print('self.path',self.path)
@@ -164,23 +166,23 @@ class General:
 
         return V_in
 
-    # def calc_k(self, k):
-    #     critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
+    def calc_k(self, k):
+        critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
 
-    #     if k < critical_k:
-    #         V_ref = self.V_ref_max
-    #         self.curve_flag = False
-    #     else:
-    #         V_ref = self.safety_factor * (sqrt(19.071 / k))
-    #         self.curve_flag = True
-    #     return V_ref  # km/h
+        if k < critical_k:
+            V_ref = self.V_ref_max
+            self.curve_flag = False
+        else:
+            V_ref = self.safety_factor * (sqrt(19.071 / k))
+            self.curve_flag = True
+        return V_ref  # km/h
 
-    # def calc_Vref(self):
-    #     self.select_target(self.speed_lookahead) # 안쓰임
-    #     target_k = abs(self.path.k[self.speed_idx])
-    #     V_ref = self.calc_k(target_k)
+    def calc_Vref(self):
+        # self.select_target(self.speed_lookahead) # 안쓰임
+        target_k = abs(self.path.k[self.speed_idx])
+        V_ref = self.calc_k(target_k)
 
-    #     return int(V_ref)
+        return int(V_ref)
 
     def calc_velocity(self):
 
@@ -198,8 +200,6 @@ class General:
             self.V_err_inte = 0
             self.V_err_deri = 0
             self.V_err_pro = 0
-
-        # V_ref = self.calc_Vref()
 
         if self.mode == "kid":
             V_ref = 10
@@ -234,10 +234,10 @@ class General:
             self.temp_msg.speed = 8
 
         elif self.mode == "delivery1" or self.mode == "delivery2":
-            self.temp_msg.speed = self.calc_velocity()
+            self.temp_msg.speed =8
 
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
-        self.temp_msg.steer = self.pure_pursuit()
+        self.temp_msg.steer =  self.pure_pursuit()
         # print("x,y",self.cur.x,self.cur.y)
 
         self.temp_msg.brake = 0
