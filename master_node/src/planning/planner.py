@@ -231,12 +231,12 @@ class Planner:
                 # Localization Information
                 self.planning_msg.local = self.local
                 self.veh_index = self.get_veh_index()
-                # self.stop_index = self.stop_line_checker.stop_idx_check(planner)
-                # print(self.stop_index)
+                self.stop_index = self.stop_line_checker.stop_idx_check(planner)
+                print(self.stop_index, self.veh_index)
 
                 if not self.is_parking:
                     self.planning_msg.dist = self.check_dist()
-                    # self.planning_msg.mode = self.misson_planner.decision(self)
+                    self.planning_msg.mode = self.misson_planner.decision(self)
 
                 if self.planning_msg.mode == "general" or self.planning_msg.mode == "kid" or self.planning_msg.mode == "bump":
                     self.planning_msg.path = self.global_path
@@ -259,7 +259,7 @@ class Planner:
 
                 elif self.planning_msg.mode == "crossroad":
                     # self.planning_msg.mode = "general"
-
+                    print('--------------------------------------------')
                     self.planning_msg.dist=(self.stop_index-self.veh_index)/10
                     signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
                     print(signal)
@@ -448,6 +448,7 @@ class Planner:
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x
         self.local.y = msg.pose.pose.position.y
+        self.local.encoder = msg.pose.pose.position.z
         self.local.heading = msg.twist.twist.angular.z
         self.is_local = True
 

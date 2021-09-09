@@ -92,12 +92,13 @@ class General:
 
     # def pure_pursuit(self,point):
     def pure_pursuit(self):
+        self.lookahead = 11
 
         # self.lookahead = 3
-        if 9 < self.serial_info.speed < 20:
-            self.lookahead = 0.22 * (self.serial_info.speed - 10) + 3.88  # 4로 바꾸기도 해.
-        else:
-            self.lookahead = 3.6
+        # if 9 < self.serial_info.speed < 20:
+        #     self.lookahead = 0.22 * (self.serial_info.speed - 10) + 3.88  # 4로 바꾸기도 해.
+        # else:
+        #     self.lookahead = 3.6
             # if self.path.k [self.speed_idx] >= 15 : # 속도 느린 직선구간.
             #     self.lookahead = 7
             # else:
@@ -121,6 +122,8 @@ class General:
 
         delta = degrees(atan2(2 * self.WB * sin(radians(alpha)) / self.lookahead, 1))
 
+        delta = 2*delta
+
         if abs(delta) > 180:
             if delta < 0:
                 delta += 360
@@ -141,7 +144,9 @@ class General:
     def PID(self, V_ref):
 
         self.V_err_old = self.V_err
-        self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
+        print("enc",self.cur.encoder)
+        self.V_err = V_ref - self.cur.encoder
+        # self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
 
         # print('self.cur:',self.cur)
         # print('self.path',self.path)
@@ -161,23 +166,23 @@ class General:
 
         return V_in
 
-    # def calc_k(self, k):
-    #     critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
+    def calc_k(self, k):
+        critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
 
-    #     if k < critical_k:
-    #         V_ref = self.V_ref_max
-    #         self.curve_flag = False
-    #     else:
-    #         V_ref = self.safety_factor * (sqrt(19.071 / k))
-    #         self.curve_flag = True
-    #     return V_ref  # km/h
+        if k < critical_k:
+            V_ref = self.V_ref_max
+            self.curve_flag = False
+        else:
+            V_ref = self.safety_factor * (sqrt(19.071 / k))
+            self.curve_flag = True
+        return V_ref  # km/h
 
-    # def calc_Vref(self):
-    #     self.select_target(self.speed_lookahead) # 안쓰임
-    #     target_k = abs(self.path.k[self.speed_idx])
-    #     V_ref = self.calc_k(target_k)
+    def calc_Vref(self):
+        # self.select_target(self.speed_lookahead) # 안쓰임
+        target_k = abs(self.path.k[self.speed_idx])
+        V_ref = self.calc_k(target_k)
 
-    #     return int(V_ref)
+        return int(V_ref)
 
     def calc_velocity(self):
 
@@ -196,13 +201,15 @@ class General:
             self.V_err_deri = 0
             self.V_err_pro = 0
 
-        # V_ref = self.calc_Vref()
-
         if self.mode == "kid":
             V_ref = 10
         print("speed:",self.speed_idx)
         print("cur",self.cur_idx)
-        V_ref = self.path.k[self.speed_idx]
+        # print(self.path)
+        # V_ref = self.path.k[self.speed_idx]
+        # V_in = V_ref
+
+        V_ref = self.calc_Vref()
         V_in = self.PID(V_ref)
 
         if V_in > 20:
@@ -227,10 +234,10 @@ class General:
             self.temp_msg.speed = 8
 
         elif self.mode == "delivery1" or self.mode == "delivery2":
-            self.temp_msg.speed = self.calc_velocity()
+            self.temp_msg.speed =8
 
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
-        self.temp_msg.steer = self.pure_pursuit()
+        self.temp_msg.steer =  self.pure_pursuit()
         # print("x,y",self.cur.x,self.cur.y)
 
         self.temp_msg.brake = 0
