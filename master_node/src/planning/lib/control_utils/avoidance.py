@@ -69,9 +69,12 @@ class Avoidance:
 
     
 
-    def driving(self, point):
+    def driving(self, control):
+
+
+
         temp_msg=Serial_Info()
-        temp_msg.steer = self.pure_pursuit(point)
+        temp_msg.steer = self.pure_pursuit(control)
         temp_msg.speed = 8
         temp_msg.brake = 0
         temp_msg.encoder = 0
