@@ -68,7 +68,8 @@ class Planner:
         # subscriber 정의
         self.planning_msg = Planning_Info()
         self.obstacle_msg = Obstacles()
-        self.object_msg = BoundingBoxes()
+        # self.object_msg = BoundingBoxes()
+        self.object_msg = Detector2DArray()
         self.surface_msg = String()
         self.serial_msg = Serial_Info()
         self.parking_msg = Int32()
@@ -233,12 +234,12 @@ class Planner:
                 # Localization Information
                 self.planning_msg.local = self.local
                 self.veh_index = self.get_veh_index()
-                # self.stop_index = self.stop_line_checker.stop_idx_check(planner)
+                self.stop_index = self.stop_line_checker.stop_idx_check(planner)
                 # print(self.stop_index)
 
                 if not self.is_parking:
                     self.planning_msg.dist = self.check_dist()
-                    # self.planning_msg.mode = self.misson_planner.decision(self)
+                    self.planning_msg.mode = self.misson_planner.decision(self)
 
                 if self.planning_msg.mode == "general" or self.planning_msg.mode == "kid" or self.planning_msg.mode == "bump":
                     self.planning_msg.path = self.global_path
@@ -295,6 +296,9 @@ class Planner:
 
                     elif self.pmode == "parking_start":
                         self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
+                        #self.planning_msg.parking_path = self.parking_path
+                        # self.planning_msg.path.x = self.parking_path.x
+                        # self.planning_msg.path.y = self.parking_path.y
 
                     elif self.pmode == "parking_backward":
                         self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)

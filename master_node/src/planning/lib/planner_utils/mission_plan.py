@@ -54,6 +54,7 @@ class MissionPlan:
 
         elif hypot(planner.global_path.x[902]-self.local.x, planner.global_path.y[902]-self.local.y) < 3:
             self.mode = "parking"
+ 
 
         elif mission=="kid":
             if env=="bump":

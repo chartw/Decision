@@ -135,7 +135,22 @@ class Control:
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
 
                 # base2로 이동
-                elif self.planning_info.mode == "parking2":
+                elif self.planning_info.mode == "parking_going2next":
+                    # base2point = Point32()
+                    # base2point.x = self.global_path.x[1037]
+                    # base2point.y = self.global_path.y[1037]
+                    
+
+                    if self.planning_info.path.x:
+                        self.local_path.x = self.global_path.x
+                        self.local_path.y = self.global_path.y
+                        self.local_path.k = self.global_path.k
+                        self.local_path.env = self.global_path.env
+                        self.local_path.mission = self.global_path.mission
+                    if self.local_path.x:
+                        self.pub_msg=avoidance.driving(self)
+
+                    # self.pub_msg.steer = avoidance.pure_pursuit(base2point)
                     self.serialParkingComm(10, 0x00, FGEAR)
                 
                 # 라이다에 쏴줄때 정지 - 없어도 될 수도
@@ -144,11 +159,19 @@ class Control:
 
                 # 주행
                 elif self.planning_info.mode == "parking_start":
-
                     self.serialParkingComm(10, 0x00, FGEAR)
-                    self.pub_msg.steer = parkingClass.pure_pursuit(self.planning_info.point, self)
-                    # 정해진 노드 따라서 주행
-                    # self.parking_stack.push(10, 0x00, self.pub_msg.steer)
+                    # if self.planning_info.path.x:
+                    #     self.local_path.x = self.planning_info.path.x
+                    #     self.local_path.y = self.planning_info.path.y
+                    #     self.local_path.k = self.planning_info.path.k
+                    #     self.local_path.env = self.planning_info.path.env
+                    #     self.local_path.mission = self.planning_info.path.mission
+                    # if self.local_path.x:
+                    #     self.pub_msg=avoidance.driving(self)
+
+                    self.pub_msg.steer = parkingClass.fpure_pursuit(self.planning_info.point, self)
+                    # 정해진 노드 따라서 주행`
+                    self.parking_stack.push(10, 0x00, self.pub_msg.steer)
 
                 # 전진 주차 끝 정지, 후진 기어
                 elif self.planning_info.mode == "parking_complete":
@@ -168,6 +191,8 @@ class Control:
 
                 elif self.planning_info.mode == "parking_end":
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+                    self.planning_info.path.x = self.global_path.x
+                    self.planning_info.path.y = self.global_path.y
                     #self.planning_info.mode = "general"
 
                 
@@ -193,6 +218,8 @@ class Control:
                         self.local_path.mission = self.planning_info.path.mission
                     if self.local_path.x:
                         self.pub_msg=avoidance.driving(self)
+
+                # print(self.veh_idx)
                 
 
                     

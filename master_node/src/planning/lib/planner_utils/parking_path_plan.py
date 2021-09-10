@@ -44,12 +44,13 @@ class ParkingPlan:
 
 
     def parking_state_decision(self, planner):
+        print(planner.veh_index)
         if self.parking_state == "parking_init":
             
             print("======Initialize Parking")
 
 
-            if hypot(planner.global_path.x[902]-planner.local.x, planner.global_path.y[902]-planner.local.y)<2:
+            if hypot(planner.global_path.x[922]-planner.local.x, planner.global_path.y[922]-planner.local.y)<2:
                 self.parking_state = "parking-base1"
                 self.start_base = self.base[0]
                 self.time_count=time()
@@ -58,6 +59,21 @@ class ParkingPlan:
             #TODO: 파킹 베이스 2로 가는 조건문
             print("======Waiting on Parking base 1")
 
+
+            if time() - self.time_count > 3 and planner.parking_target <= 3:
+                self.parking_state = "parking_ready"
+            elif time() - self.time_count > 3 and planner.parking_target > 3:
+                self.parking_state = "parking_going2next"
+                self.time_count=time()
+        
+        elif self.parking_state == "parking_going2next":
+            print("======Going to base2")
+            if time() - self.time_count > 7:
+                self.time_count = time()
+                self.parking_state = "parking-base2"
+
+        elif self.parking_state == "parking-base2":
+            print("======Waiting on Parking base 2")
             if time() - self.time_count > 3:
                 self.parking_state = "parking_ready"
 

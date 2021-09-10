@@ -60,3 +60,35 @@ class Parking:
 
         return delta #steer
 
+    def fpure_pursuit(self, point, control):
+
+        tmp_th = degrees(atan2((point.y - control.local.y), (point.x - control.local.x)))
+
+        tmp_th = tmp_th % 360
+
+        alpha = control.local.heading - tmp_th
+        if abs(alpha) > 180:
+            if alpha < 0:
+                alpha += 360
+            else:
+                alpha -= 360
+
+        alpha = max(alpha, -90)
+        alpha = min(alpha, 90)
+
+        delta = degrees(atan2(2 * self.WB * sin(radians(alpha)) / self.lookahead, 1))
+
+        if abs(delta) > 180:
+            if delta < 0:
+                delta += 360
+            else:
+                delta -= 360
+
+        if abs(delta) >= 27.7:
+            if delta > 0:
+                return 27.7
+            else:
+                return -27.7
+        else:
+
+            return delta
