@@ -94,10 +94,10 @@ class General:
     def pure_pursuit(self):
 
         # self.lookahead = 3
-        if 9 < self.serial_info.speed < 20:
-            self.lookahead = 0.22 * (self.serial_info.speed - 10) + 3.88  # 4로 바꾸기도 해.
+        if 10 < self.serial_info.speed < 20:
+            self.lookahead = 0.3 * (self.serial_info.speed - 10) + 4  # 4로 바꾸기도 해.
         else:
-            self.lookahead = 3.6
+            self.lookahead = 4
             # if self.path.k [self.speed_idx] >= 15 : # 속도 느린 직선구간.
             #     self.lookahead = 7
             # else:
@@ -200,8 +200,8 @@ class General:
 
         if self.mode == "kid":
             V_ref = 10
-        print("speed:",self.speed_idx)
-        print("cur",self.cur_idx)
+        # print("speed:",self.speed_idx)
+        # print("cur",self.cur_idx)
         V_ref = self.path.k[self.speed_idx]
         V_in = self.PID(V_ref)
 
@@ -249,6 +249,9 @@ class General:
         self.target.header.stamp = rospy.Time.now()
         self.target_pub.publish(self.target)
 
-        print("cur_idx:", self.cur_idx, "ld:", round(self.lookahead, 2), "mode:", self.mode)
-        print("V_veh:", self.serial_info.speed)
+        print("ld",self.lookahead)
+        print("ser_speed",self.serial_info.speed)
+
+        # print("cur_idx:", self.cur_idx, "ld:", round(self.lookahead, 2), "mode:", self.mode)
+        # print("V_veh:", self.serial_info.speed)
         return self.temp_msg
