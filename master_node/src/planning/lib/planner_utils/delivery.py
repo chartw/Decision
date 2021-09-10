@@ -7,6 +7,8 @@ import csv
 from master_node.msg import Path
 
 from lib.planner_utils.cubic_spline_planner import Spline2D
+from yolov4_trt_ros.msg import Detector2DArray
+from yolov4_trt_ros.msg import Detector2D
 
 class deliveryClass:
     def __init__(self):
@@ -54,9 +56,9 @@ class deliveryClass:
         detections = msg.detections
         
         b_count = 0
-        for i in range(len(detections)):
-            detection = detections[i]
-            sign_id = str(detection.result.id)
+        for detection in detections:
+            # print(detection)
+            sign_id = str(detection.results.id)
             sign_name = self.result_mapping[sign_id]
             
             if sign_name in self.sign_names[0:3]: #A1~A3
@@ -71,7 +73,8 @@ class deliveryClass:
                 x = detection.bbox.size_x
                 y = detection.bbox.size_y
                 self.sign_size_b[sign_name] = x*y
-    
+
+   
 
         sorted_signs_b = sorted(self.sign_size_b.items(), key=lambda x: x[1], reverse=True)
         order_b = []
@@ -107,8 +110,8 @@ class deliveryClass:
         # print(self.b_compare)
         
     def target_b_decision(self, maxClassA):
-        print('maxA', maxClassA)
-
+        # print('maxA', maxClassA)
+# 
         target_b = -1
         B1B2 = self.b_compare['B1>B2'] > self.b_compare['B2>B1'] # True/False
 
@@ -133,7 +136,7 @@ class deliveryClass:
                 result = [3, 2, 1]
         print('result', result)
         target_b = result.index(int(maxClassA[1]))
-        print('target_b', target_b)
+        # print('target_b', target_b)
         return target_b
 
 

@@ -267,7 +267,7 @@ class Planner:
                     # self.planning_msg.mode = "general"
 
                     self.planning_msg.dist=(self.stop_index-self.veh_index)/10
-                    signal = self.traffic_light.run(self.object_msg.bounding_boxes) # string
+                    signal = self.traffic_light.run(self.object_msg)
                     print(signal)
                     if self.global_path.mission[self.stop_index] in signal:
                         self.planning_msg.mode="general"
@@ -324,7 +324,7 @@ class Planner:
                     print(self.sign_map)
                     if self.planning_msg.mode == "delivery1":
 
-                        self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg.bounding_boxes)
+                        self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg)
 
                         self.delivery_decision.delivery_count(self.order_b, b_count)
 
