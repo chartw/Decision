@@ -25,6 +25,9 @@ from lib.planner_utils.parking_path_plan import ParkingPlan
 from lib.planner_utils.stopline_check import StopLine
 from lib.planner_utils.trafficLight import trafficLight
 from lib.planner_utils.delivery import deliveryClass
+from lib.planner_utils.sig_int_handler import SigIntHandler
+
+import signal
 
 
 class Planner:
@@ -478,5 +481,8 @@ class Planner:
 
 
 if __name__ == "__main__":
+
+    SI = SigIntHandler()
+    SI.run()
     planner = Planner()
     planner.run()

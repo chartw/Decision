@@ -6,6 +6,7 @@ import rospy
 import struct
 import threading
 from master_node.msg import Serial_Info
+from lib.planner_utils.sig_int_handler import SigIntHandler
 
 
 class Serial_Node:
@@ -128,4 +129,8 @@ class Serial_Node:
         self.control_input = msg
 
 
+
+
+SI = SigIntHandler()
+SI.run()
 erp = Serial_Node()

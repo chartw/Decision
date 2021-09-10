@@ -4,6 +4,7 @@ import socket #UDP LAN
 import rospy
 from nav_msgs.msg import Odometry
 import pymap3d
+from lib.planner_utils.sig_int_handler import SigIntHandler
 
 class Localization():
     def __init__(self):
@@ -76,6 +77,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(1000)
  
     loc.connect()
- 
+    SI = SigIntHandler()
+    SI.run()
     while not rospy.is_shutdown():
         loc.main()

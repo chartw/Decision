@@ -9,6 +9,8 @@ from nav_msgs.msg import Odometry
 from lib.control_utils.normal_stop import NormalStop
 from lib.control_utils.parking import Parking
 from lib.control_utils.stack import ParkingStack
+from lib.planner_utils.sig_int_handler import SigIntHandler
+
 import time
 
 """
@@ -258,5 +260,11 @@ class Control:
     def parkingCallback(self, msg):
         self.parking_target = msg.data
 
-print("Control start")
-control = Control()
+
+
+
+if __name__ == "__main__":
+    SI = SigIntHandler()
+    SI.run()
+    print("Control start")
+    control = Control()
