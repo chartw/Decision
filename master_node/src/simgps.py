@@ -4,7 +4,7 @@ import socket #UDP LAN
 import rospy
 from nav_msgs.msg import Odometry
 import pymap3d
-from lib.planner_utils.sig_int_handler import SigIntHandler
+from planning.lib.planner_utils.sig_int_handler import SigIntHandler
 
 class Localization():
     def __init__(self):
