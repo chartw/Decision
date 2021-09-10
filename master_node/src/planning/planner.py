@@ -9,7 +9,9 @@ import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
 
-from darknet_ros_msgs.msg import BoundingBoxes
+from yolov4_trt_ros.msg import Detector2DArray
+from yolov4_trt_ros.msg import Detector2D
+
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Point32
 from std_msgs.msg import Float32, Time, String, Int16, Int32
@@ -158,7 +160,7 @@ class Planner:
 
         # Vision - Object
         # def objectCallback(self, msg): self.object_msg = msg
-        rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.objectCallback)
+        rospy.Subscriber("/detections", Detector2DArray, self.objectCallback)
         # rospy.Subscribeer("/")
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)

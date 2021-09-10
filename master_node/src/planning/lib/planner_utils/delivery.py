@@ -26,8 +26,7 @@ class deliveryClass:
         self.maxClassA = 'A2'
         self.max_count = 0
         self.make_delivery_path()
-
-
+        self.result_mapping={'0':'A1', '1':'A2', '2':'A3', '3':'B1', '4':'B2', '5':'B3', '6':' Red', '7':'Yellow', '8' : 'RedLeft', '9': 'GreenLeft', '10':'Green'}
 
     def make_delivery_path(self):
         with open("./map/kcity_map/Delivery_kcity/delivery_a.csv", mode="r") as csv_file:
@@ -49,23 +48,29 @@ class deliveryClass:
                 self.delivery_path_b.heading.append(deg_yaw)
 
         return self.delivery_path_a, self.delivery_path_b
+    
 
-    def detect_signs(self, boxes):
+    def detect_signs(self, msg):
+        detections = msg.detections
+        
         b_count = 0
-        for i in range(len(boxes)):
-            box = boxes[i]
-            if box.Class in self.sign_names[0:3]: #A1~A3
+        for i in range(len(detections)):
+            detection = detections[i]
+            sign_id = str(detection.result.id)
+            sign_name = self.result_mapping[sign_id]
+            
+            if sign_name in self.sign_names[0:3]: #A1~A3
                 print(self.sign_count_a)
-                self.sign_count_a[box.Class] += 1
-                if self.max_count < self.sign_count_a[box.Class]:
-                    self.max_count = self.sign_count_a[box.Class]
-                    self.maxClassA = box.Class
+                self.sign_count_a[sign_name] += 1
+                if self.max_count < self.sign_count_a[sign_name]:
+                    self.max_count = self.sign_count_a[sign_name]
+                    self.maxClassA = sign_name
              
-            elif box.Class in self.sign_names[3:6]: #B1~B3
+            elif sign_name in self.sign_names[3:6]: #B1~B3
                 b_count +=1
-                x = box.xmax - box.xmin
-                y = box.ymax - box.ymin
-                self.sign_size_b[box.Class] = x*y
+                x = detection.bbox.size_x
+                y = detection.bbox.size_y
+                self.sign_size_b[sign_name] = x*y
     
 
         sorted_signs_b = sorted(self.sign_size_b.items(), key=lambda x: x[1], reverse=True)
