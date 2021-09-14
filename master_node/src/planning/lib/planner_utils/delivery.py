@@ -29,7 +29,7 @@ class deliveryClass:
         self.max_count = 0
         self.make_delivery_path()
         self.result_mapping={'0':'A1', '1':'A2', '2':'A3', '3':'B1', '4':'B2', '5':'B3', '6':' Red', '7':'Yellow', '8' : 'RedLeft', '9': 'GreenLeft', '10':'Green'}
-
+        self.b_order_vote = {'123':0, '132': 0, '213':0, '231':0, '312':0, '321':0}
     def make_delivery_path(self):
         with open("./map/kcity_map/Delivery_kcity/delivery_a.csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
@@ -74,17 +74,15 @@ class deliveryClass:
                 y = detection.bbox.size_y
                 self.sign_size_b[sign_name] = x*y
 
-   
 
         sorted_signs_b = sorted(self.sign_size_b.items(), key=lambda x: x[1], reverse=True)
         order_b = []
         for i in range(3):
             order_b.append(sorted_signs_b[i][0])
 
-
         #초기화
         self.sign_size_b = {'B1':-1, 'B2': -1, 'B3':-1}
-
+        
         return self.maxClassA, order_b, b_count
 
     def delivery_count(self, order_b, b_count):
@@ -92,20 +90,18 @@ class deliveryClass:
         # print('order_b', order_b)
         # print('b_count', b_count)
         if b_count == 2:
-            result= order_b[0] + '>' + order_b[1]
-            self.b_compare[result] +=1
+            # result= order_b[0] + '>' + order_b[1]
+            # self.b_compare[result] +=1
+            for order in self.b_order_vote.keys():
+                print('============================sibal', order, order_b)
+
+                if order.find(order_b[0][1]) < order.find(order_b[1][1]):
+                    print('==========')
+                    self.b_order_vote[order] += 1
 
         elif b_count ==3:
-
-            result= order_b[0] + '>' + order_b[1]
-            self.b_compare[result] += 1
-
-            result= order_b[1] + '>' + order_b[2]
-            self.b_compare[result] += 1
-
-            result= order_b[0] + '>' + order_b[2]
-            self.b_compare[result] += 1
-
+            order = order_b[0][1] + order_b[1][1] + order_b[2][1]
+            self.b_order_vote[order] += 1
 
         # print(self.b_compare)
         
@@ -113,30 +109,21 @@ class deliveryClass:
         # print('maxA', maxClassA)
 # 
         target_b = -1
-        B1B2 = self.b_compare['B1>B2'] > self.b_compare['B2>B1'] # True/False
 
-        B2B3 = self.b_compare['B2>B3'] > self.b_compare['B3>B2'] # True/False
 
-        B3B1 = self.b_compare['B3>B1'] > self.b_compare['B1>B3'] # True/False
-        if B1B2:
-            if B2B3:
-                result = [1, 2, 3]
-            else:
-                if B3B1:
-                    result = [3, 1, 2]
-                else:
-                    result = [1, 3, 2]
-        else:
-            if B2B3:
-                if B3B1:
-                    result = [2, 3, 1]
-                else:
-                    result = [2, 1, 3]
-            else:
-                result = [3, 2, 1]
+        max_b_order = max(self.b_order_vote, key=self.b_order_vote.get)
+        result = list(max_b_order)    
+        
+        print(self.b_order_vote)
         print('result', result)
-        target_b = result.index(int(maxClassA[1]))
+        maxClassA = 'A3'
+
+        try:
+            target_b = result.index(maxClassA[1])
+        except:
+            ValueError
         # print('target_b', target_b)
+        print('target_b', target_b)
         return target_b
 
 

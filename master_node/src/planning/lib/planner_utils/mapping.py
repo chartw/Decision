@@ -73,7 +73,7 @@ class Mapping:
                 if planner.global_path.mission[planner.veh_index]=="big":
                     if min_index in self.obs_map:
                         continue
-                    L=5.5
+                    L=4.0
 
                     for index in range(min_index, int(min_index+L*10)):
                         pos=Point32(planner.global_path.x[index],planner.global_path.y[index],0)
@@ -134,11 +134,12 @@ class Mapping:
                 std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                 if dist <1:
                     rad=radians(planner.global_path.heading[index])-pi/2
-                    r=3.4
-                else:
+                    r=3.0
+                elif dist < 2:
                     rad=radians(planner.global_path.heading[index])+pi/2
                     r=0
-
+                else:
+                    continue
 
                 std_point=Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                 point=Point32()

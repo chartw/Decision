@@ -99,9 +99,6 @@ class Control:
                     if self.planning_info.path.x:
                         self.local_path.x = self.planning_info.path.x
                         self.local_path.y = self.planning_info.path.y
-                        self.local_path.k = self.planning_info.path.k
-                        self.local_path.env = self.planning_info.path.env
-                        self.local_path.mission = self.planning_info.path.mission
                     if self.local_path.x:
                         self.pub_msg=avoidance.driving(self)
                     else:
@@ -109,6 +106,13 @@ class Control:
                 
                 elif self.planning_info.mode=="kid":
                     self.pub_msg=general.driving(self)
+                    if self.planning_info.path.x:
+                        self.global_path.x = self.planning_info.path.x
+                        self.global_path.y = self.planning_info.path.y
+                        self.global_path.k = self.planning_info.path.k
+                        self.global_path.heading=self.planning_info.path.heading
+                        self.global_path.env = self.planning_info.path.env
+                        self.global_path.mission = self.planning_info.path.mission
                     
                 elif self.planning_info.mode=="bump":
                     self.pub_msg=general.driving(self)
@@ -124,7 +128,7 @@ class Control:
                     # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
                     t=max(1,dist/((self.serial_info.speed/3.6)+0.1))
                     # self.pub_msg.brake=int(-100*sqrt(t-1)+200) # 제곱근 함수
-                    self.pub_msg.brake=int(-75*sqrt(t-1)+150) # 제곱근 함수
+                    self.pub_msg.brake=int(-75*sqrt(t-1)+200) # 제곱근 함수
                     self.pub_msg.brake=max(0,min(200,self.pub_msg.brake))
 
                     
@@ -146,6 +150,7 @@ class Control:
                     if self.planning_info.path.x:
                         self.local_path.x = self.global_path.x
                         self.local_path.y = self.global_path.y
+                        self.local_path.heading = self.global_path.heading
                         self.local_path.k = self.global_path.k
                         self.local_path.env = self.global_path.env
                         self.local_path.mission = self.global_path.mission
@@ -162,16 +167,17 @@ class Control:
                 # 주행
                 elif self.planning_info.mode == "parking_start":
                     self.serialParkingComm(10, 0x00, FGEAR)
-                    # if self.planning_info.path.x:
-                    #     self.local_path.x = self.planning_info.path.x
-                    #     self.local_path.y = self.planning_info.path.y
-                    #     self.local_path.k = self.planning_info.path.k
-                    #     self.local_path.env = self.planning_info.path.env
-                    #     self.local_path.mission = self.planning_info.path.mission
-                    # if self.local_path.x:
-                    #     self.pub_msg=avoidance.driving(self)
+                    if self.planning_info.path.x:
+                        self.local_path.x = self.planning_info.path.x
+                        self.local_path.y = self.planning_info.path.y
+                        self.local_path.heading = self.planning_info.path.heading 
+                        # self.local_path.k = self.planning_info.path.k
+                        # self.local_path.env = self.planning_info.path.env
+                        # self.local_path.mission = self.planning_info.path.mission
+                    if self.local_path.x:
+                        self.pub_msg=avoidance.driving(self)
 
-                    self.pub_msg.steer = parkingClass.fpure_pursuit(self.planning_info.point, self)
+                    # self.pub_msg.steer = parkingClass.fpure_pursuit(self.planning_info.point, self)
                     # 정해진 노드 따라서 주행`
                     self.parking_stack.push(10, 0x00, self.pub_msg.steer)
 
@@ -184,8 +190,15 @@ class Control:
                 elif self.planning_info.mode == "parking_backward":
                     # _, _, self.pub_msg.steer= self.parking_stack.pop()
                     self.serialParkingComm(10, 0x00, BGEAR)
-                    self.pub_msg.steer = parkingClass.pure_pursuit(self.planning_info.point, self)
-                    self.pub_msg.steer=-self.pub_msg.steer
+                    if self.planning_info.path.x:
+                        print("Ddd")
+                        self.local_path.x = self.planning_info.path.x
+                        self.local_path.y = self.planning_info.path.y
+                        self.local_path.heading = self.planning_info.path.heading
+
+                    if self.local_path.x:
+                        self.pub_msg=avoidance.driving(self)
+                        # self.pub_msg.steer=-self.pub_msg.steer
 
 
                 elif self.planning_info.mode == "backward_complete":
@@ -195,6 +208,8 @@ class Control:
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
                     self.planning_info.path.x = self.global_path.x
                     self.planning_info.path.y = self.global_path.y
+                    self.local_path.heading = self.global_path.heading
+
                     #self.planning_info.mode = "general"
 
                 
@@ -205,9 +220,8 @@ class Control:
                     if self.planning_info.path.x:
                         self.local_path.x = self.planning_info.path.x
                         self.local_path.y = self.planning_info.path.y
-                        self.local_path.k = self.planning_info.path.k
-                        self.local_path.env = self.planning_info.path.env
-                        self.local_path.mission = self.planning_info.path.mission
+                        self.local_path.heading = self.planning_info.path.heading 
+
                     if self.local_path.x:
                         self.pub_msg=avoidance.driving(self)
 
@@ -215,9 +229,8 @@ class Control:
                     if self.planning_info.path.x:
                         self.local_path.x = self.planning_info.path.x
                         self.local_path.y = self.planning_info.path.y
-                        self.local_path.k = self.planning_info.path.k
-                        self.local_path.env = self.planning_info.path.env
-                        self.local_path.mission = self.planning_info.path.mission
+                        self.local_path.heading = self.planning_info.path.heading 
+
                     if self.local_path.x:
                         self.pub_msg=avoidance.driving(self)
 
@@ -227,6 +240,9 @@ class Control:
                     
 
                 self.past_mode = self.planning_info.mode
+                # self.pub_msg.path_steer = self.planning_info.path.heading[self.planning_info.cur_index]
+                print(self.pub_msg.steer)
+                
                 control_pub.publish(self.pub_msg)
                 rate.sleep()
 

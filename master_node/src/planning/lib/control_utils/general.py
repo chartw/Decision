@@ -95,7 +95,7 @@ class General:
 
         # self.lookahead = 3
         if 10 < self.serial_info.speed < 20:
-            self.lookahead = 0.3 * (self.serial_info.speed - 10) + 4  # 4로 바꾸기도 해.
+            self.lookahead = 0.2 * (self.serial_info.speed - 10) + 4  # 4로 바꾸기도 해.
         else:
             self.lookahead = 4
             # if self.path.k [self.speed_idx] >= 15 : # 속도 느린 직선구간.

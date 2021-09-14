@@ -1,5 +1,5 @@
 import rospy
-from math import degrees, atan2, sin, radians, hypot
+from math import degrees, atan2, sin, radians, hypot, pi
 from master_node.msg import Serial_Info
 from geometry_msgs.msg import Point32
 from sensor_msgs.msg import PointCloud
@@ -10,7 +10,7 @@ class Avoidance:
     def __init__(self, control):
         self.local=control.local
         self.WB = 1.04
-        self.lookahead=2
+        self.lookahead=3
         self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
         self.target_point=Point32()
 
@@ -67,16 +67,44 @@ class Avoidance:
 
             return delta
 
+    def bpure_pursuit(self, control):
+        # pure pursuit 계산되는 부분
+
+        point=self.point_plan(control.local_path)
+
+        self.cur = control.local
+        tmp_th = atan2((point.y - self.cur.y), (point.x - self.cur.x))
+
+        heading=radians(self.cur.heading)
+        if control.planning_info.mode=="parking_backward":
+            heading+=pi
+        alpha = heading - tmp_th
+
+        delta = degrees(atan2(2 * self.WB * sin(alpha) / self.lookahead, 1))
+
     
 
-    def driving(self, point):
+        return delta #steer
+
+    def driving(self, control):
         temp_msg=Serial_Info()
-        temp_msg.steer = self.pure_pursuit(point)
+        if control.planning_info.mode == "parking_backward":
+            temp_msg.steer=self.bpure_pursuit(control)
+            temp_msg.gear = 2
+
+        else:
+            temp_msg.steer = self.pure_pursuit(control)
+            temp_msg.gear = 0
+
         temp_msg.speed = 8
         temp_msg.brake = 0
         temp_msg.encoder = 0
-        temp_msg.gear = 0
         temp_msg.emergency_stop = 0
+        if control.planning_info.mode == "small" or control.planning_info.mode == "big":
+            temp_msg.path_steer=0
+        else: 
+            temp_msg.path_steer=control.local_path.heading[self.target_index]
+        print(temp_msg.path_steer)
         temp_msg.auto_manual = 1
         target=PointCloud()
         target.points.append(self.target_point)

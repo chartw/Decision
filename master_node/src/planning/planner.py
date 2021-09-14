@@ -285,10 +285,14 @@ class Planner:
 
                     if self.pmode == "parking_ready":
                         self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
-
+                        self.planning_msg.path = self.parking_path
+                        self.local_path=self.parking_path
+                        
                         for i in range(len(self.parking_path.x)):
                             self.parking_backpath.x.insert(0, self.parking_path.x[i])
                             self.parking_backpath.y.insert(0, self.parking_path.y[i])
+                            self.parking_backpath.heading.insert(0, self.parking_path.heading[i])
+                            
                         print("==========parking path created")
                         print(self.parking_path)
                         self.vis_parking_path.points = []
@@ -305,9 +309,10 @@ class Planner:
 
                     elif self.pmode == "parking_backward":
                         self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
+                        self.planning_msg.path = self.parking_backpath
+                        self.local_path=self.parking_backpath
 
                     elif self.pmode == "parking_end":
-                        self.pmode = "general"
                         self.mission_ing = False
                         self.is_parking = False
 
@@ -320,8 +325,9 @@ class Planner:
                 ############################################SHSHSH###################################SSSHSHSHSHSH
 
                 if self.is_delivery is True:
-                    print(self.dmode)
-                    print(self.sign_map)
+                    # print(self.dmode)
+                    # print(self.sign_map)
+
                     if self.planning_msg.mode == "delivery1":
 
                         self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg)

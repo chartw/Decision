@@ -54,6 +54,9 @@ class MissionPlan:
 
         elif hypot(planner.global_path.x[902]-self.local.x, planner.global_path.y[902]-self.local.y) < 3:
             self.mode = "parking"
+
+        elif planner.stop_index-planner.veh_index < 10*10:
+            self.mode="crossroad"
  
 
         elif mission=="kid":
@@ -64,8 +67,7 @@ class MissionPlan:
             else:
                 self.mode="kid"
 
-        elif planner.stop_index-planner.veh_index < 10*10:
-            self.mode="crossroad"
+
 
         elif mission=="delivery1":
             self.mode = "delivery1"

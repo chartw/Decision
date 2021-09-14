@@ -50,7 +50,7 @@ class ParkingPlan:
             print("======Initialize Parking")
 
 
-            if hypot(planner.global_path.x[922]-planner.local.x, planner.global_path.y[922]-planner.local.y)<2:
+            if hypot(planner.global_path.x[882]-planner.local.x, planner.global_path.y[882]-planner.local.y)<2:
                 self.parking_state = "parking-base1"
                 self.start_base = self.base[0]
                 self.time_count=time()
@@ -68,7 +68,7 @@ class ParkingPlan:
         
         elif self.parking_state == "parking_going2next":
             print("======Going to base2")
-            if time() - self.time_count > 7:
+            if time() - self.time_count > 4:
                 self.time_count = time()
                 self.parking_state = "parking-base2"
 
@@ -102,7 +102,7 @@ class ParkingPlan:
                 self.parking_state = "parking_backward"
 
         elif self.parking_state == "parking_backward":
-            if hypot(planner.parking_backpath.x[-1]-planner.local.x, planner.parking_backpath.y[-1]-planner.local.y)<1:
+            if hypot(planner.parking_backpath.x[-1]-planner.local.x, planner.parking_backpath.y[-1]-planner.local.y)<1.5:
                 self.parking_state = "backward_complete"
                 self.time_bcount=time()
                 

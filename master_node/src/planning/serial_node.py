@@ -63,8 +63,8 @@ class Serial_Node:
                     tmp1, tmp2 = struct.unpack("2h", packet[6:10])
                     self.serial_msg.speed = tmp1 / 10  # km/h
                     self.serial_msg.steer = -tmp2 / 71  # degree
-                    print("ser,con:",self.serial_msg.steer,self.control_input.steer)
-                    # print("speed", tmp1, "steer", tmp2)
+                    # print("ser,con:",self.serial_msg.steer,self.control_input.steer)
+                    print("speed", tmp1, "steer", tmp2)
 
                     tmp3 = struct.unpack("B", packet[10:11])
                     self.serial_msg.brake = tmp3[0]
