@@ -237,20 +237,22 @@ class Planner:
                 # Localization Information
                 self.planning_msg.local = self.local
                 self.veh_index = self.get_veh_index()
-                self.stop_index = self.stop_line_checker.stop_idx_check(planner)
+                # self.stop_index = self.stop_line_checker.stop_idx_check(planner)
                 # print(self.stop_index)
 
                 if not self.is_parking:
                     self.planning_msg.dist = self.check_dist()
                     self.planning_msg.mode = self.misson_planner.decision(self)
 
+                # self.planning_msg.mode="small"
+
                 if self.planning_msg.mode == "general" or self.planning_msg.mode == "kid" or self.planning_msg.mode == "bump":
                     self.planning_msg.path = self.global_path
 
                 if self.planning_msg.mode == "small" or self.planning_msg.mode == "big":
-
-                    self.target_map = self.map_maker.make_target_map(self)
-                    self.local_path = self.local_path_maker.path_plan(self.target_map)
+                    if self.global_path.x:
+                        self.target_map = self.map_maker.make_target_map(self)
+                        self.local_path = self.local_path_maker.path_plan(self.target_map)
 
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
@@ -453,15 +455,15 @@ class Planner:
 
 
 
-                #@@@@@@@@@@@@@@@@@@@@@@배달stop test@@@@@@@@@@@@@@@@
-                # self.planning_msg.mode = 'general'
+                # #@@@@@@@@@@@@@@@@@@@@@@배달stop test@@@@@@@@@@@@@@@@
+                # # self.planning_msg.mode = 'general'
 
-                jj=230
-                distance = hypot(self.global_path.x[jj] - self.local.x, self.global_path.y[jj] - self.local.y)
-                print('dis',distance)
-                if distance < 4.1: #돌려보고 수정하기
-                    self.planning_msg.mode = "normal_stop"
-                #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                # jj=230
+                # distance = hypot(self.global_path.x[jj] - self.local.x, self.global_path.y[jj] - self.local.y)
+                # print('dis',distance)
+                # if distance < 4.1: #돌려보고 수정하기
+                #     self.planning_msg.mode = "normal_stop"
+                # #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
                 self.planning_info_pub.publish(self.planning_msg)
                 rate.sleep()

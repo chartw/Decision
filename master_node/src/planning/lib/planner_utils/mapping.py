@@ -70,23 +70,23 @@ class Mapping:
                         min_dist=dist
                         min_index = i
                     
-                if planner.global_path.mission[planner.veh_index]=="big":
-                    if min_index in self.obs_map:
-                        continue
-                    L=4.0
+                # if planner.global_path.mission[planner.veh_index]=="big":
+                #     if min_index in self.obs_map:
+                #         continue
+                #     L=4.0
 
-                    for index in range(min_index, int(min_index+L*10)):
-                        pos=Point32(planner.global_path.x[index],planner.global_path.y[index],0)
-                        self.obs_map[index] = Obstacle(index,min_dist,ExpMovAvgFilter(pos))
-                        self.obstacle_cnt += 1
-                else:
-                    self.obs_map[min_index] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
-                    self.obstacle_cnt += 1
+                #     for index in range(min_index, int(min_index+L*10)):
+                #         pos=Point32(planner.global_path.x[index],planner.global_path.y[index],0)
+                #         self.obs_map[index] = Obstacle(index,min_dist,ExpMovAvgFilter(pos))
+                #         self.obstacle_cnt += 1
+                # else:
+                self.obs_map[min_index] = Obstacle(min_index,min_dist,ExpMovAvgFilter(pos))
+                self.obstacle_cnt += 1
 
             # 있으면, 해당 key값 이동평균 필터에 circle의 절대좌표 (x, y) 삽입
             else:
-                if planner.global_path.mission[planner.veh_index]=="big":
-                    continue
+                # if planner.global_path.mission[planner.veh_index]=="big":
+                #     continue
                 self.obs_map[id].EMA.emaFilter(pos)
                 obstacle=self.obs_map[id]
                 emapos=obstacle.EMA.retAvg()

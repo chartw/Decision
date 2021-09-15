@@ -37,9 +37,11 @@ class MissionPlan:
         self.current_time = time.time()
 
     def decision(self, planner):
-        mission=planner.global_path.mission[planner.veh_index]
-        env=planner.global_path.env[planner.veh_index]
+        # mission=planner.global_path.mission[planner.veh_index]
+        # env=planner.global_path.env[planner.veh_index]
         dist=planner.planning_msg.dist
+
+        mission="small"
 
         print(planner.stop_index,planner.veh_index)
         if mission=="small" or mission=="big":

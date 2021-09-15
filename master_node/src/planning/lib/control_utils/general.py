@@ -217,7 +217,7 @@ class General:
         self.cur_idx = control.planning_info.cur_index
         # self.temp_msg = Serial_Info()
         if self.mode == "general":
-            self.temp_msg.speed = self.calc_velocity()
+            self.temp_msg.speed = 15
 
         elif self.mode == "kid":
             self.temp_msg.speed = self.calc_velocity()
