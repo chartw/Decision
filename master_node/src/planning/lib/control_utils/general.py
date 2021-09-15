@@ -249,9 +249,9 @@ class General:
         self.target.header.stamp = rospy.Time.now()
         self.target_pub.publish(self.target)
 
-        print("ld",self.lookahead)
+        # print("ld",self.lookahead)
         print("ser_speed",self.serial_info.speed)
 
-        # print("cur_idx:", self.cur_idx, "ld:", round(self.lookahead, 2), "mode:", self.mode)
+        print("cur_idx:", self.cur_idx, "ld:", round(self.lookahead, 2), "mode:", self.mode)
         # print("V_veh:", self.serial_info.speed)
         return self.temp_msg

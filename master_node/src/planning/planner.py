@@ -448,8 +448,22 @@ class Planner:
                 self.pose_pub.publish(self.pose)
 
                 self.planning_msg.cur_index = self.veh_index
-                self.planning_info_pub.publish(self.planning_msg)
                 # print(self.local.heading, self.global_path.heading[self.veh_index])
+
+
+
+
+                #@@@@@@@@@@@@@@@@@@@@@@배달stop test@@@@@@@@@@@@@@@@
+                # self.planning_msg.mode = 'general'
+
+                jj=230
+                distance = hypot(self.global_path.x[jj] - self.local.x, self.global_path.y[jj] - self.local.y)
+                print('dis',distance)
+                if distance < 4.1: #돌려보고 수정하기
+                    self.planning_msg.mode = "normal_stop"
+                #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+                self.planning_info_pub.publish(self.planning_msg)
                 rate.sleep()
 
     # Callback Functions
