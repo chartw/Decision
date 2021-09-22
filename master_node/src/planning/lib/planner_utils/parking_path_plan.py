@@ -11,7 +11,7 @@ class ParkingPlan:
         self.parking_path=Path()
         self.parking_target=0
         self.global_path = planner.parking_path
-        self.parking_state = "parking_init"
+        self.parking_state = "parking_ready"
         self.time_count = 0
         self.time_bcount= 0
         self.time_ecount= 0
@@ -19,7 +19,7 @@ class ParkingPlan:
 
 
         self.base = []
-        self.base.append(Point32(4.88, 8.876, 0))
+        self.base.append(Point32(22.9110676297, 41.2089091899, 0))
         self.base.append(Point32(8.725, 16.832, 0))
         #self.base.append(Point32(9.612609543917143, 17.94208643988677, 0))
 
@@ -50,7 +50,7 @@ class ParkingPlan:
             print("======Initialize Parking")
 
 
-            if hypot(planner.global_path.x[882]-planner.local.x, planner.global_path.y[882]-planner.local.y)<2:
+            if hypot(planner.global_path.x[0]-planner.local.x, planner.global_path.y[0]-planner.local.y)<2:
                 self.parking_state = "parking-base1"
                 self.start_base = self.base[0]
                 self.time_count=time()
@@ -78,7 +78,7 @@ class ParkingPlan:
                 self.parking_state = "parking_ready"
 
         elif self.parking_state == "parking_ready":
-            self.parking_target = planner.parking_target
+            self.parking_target = 1
 
             if self.parking_target != -1:
                 self.parking_state = "parking_start"
@@ -116,13 +116,15 @@ class ParkingPlan:
         
 
     def make_parking_path(self, parking_target):
-        with open("./map/kcity_map/Parking_kcity/" + str(parking_target) + ".csv", mode="r") as csv_file:
+        print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@##@")
+        with open("./map/kcity_map/Parking_songdo/" + str(1) + ".csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
             for line in csv_reader:
                 self.parking_path.x.append(float(line[0]))
                 self.parking_path.y.append(float(line[1]))
                 self.parking_path.heading.append(degrees(float(line[2])))
                 self.parking_path.k.append(float(line[3]))
+                print("1")
                 # self.parking_path.s.append(float(line[4]))
                 # self.parking_path.etc.append(line[5])
                 # self.parking_path.mission.append(line[6])

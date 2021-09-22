@@ -133,7 +133,8 @@ class Planner:
         self.target.header.frame_id = "world"
 
         self.pmode = ""
-        self.is_parking = False
+        self.is_parking = True
+        self.flag = True
         self.parking_target = 1
         self.veh_index = 0
         self.parking_target_index = 0
@@ -213,6 +214,7 @@ class Planner:
                 if min_dis > dis or min_dis == -1:
                     min_dis = dis
                     min_idx = i
+        print("@@@@@@@@@!!!!@@@@@@@@@")
 
         return min_idx
 
@@ -283,8 +285,9 @@ class Planner:
                     # if self.pmode == "parking-base1":
                     #     self.parking_path = self.parking_planner.make_parking_path(1)
 
-                    if self.pmode == "parking_ready":
-                        self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
+                    if self.flag:
+                        print("222222222222")
+                        self.parking_path = self.parking_planner.make_parking_path(1)
                         self.planning_msg.path = self.parking_path
                         self.local_path=self.parking_path
                         
@@ -300,8 +303,12 @@ class Planner:
                             self.vis_parking_path.points.append(Point32(self.parking_backpath.x[i], self.parking_backpath.y[i], 0))
                         self.vis_parking_path.header.stamp = rospy.Time.now()
                         self.parking_path_pub.publish(self.vis_parking_path)
+                        self.flag = False
 
                     elif self.pmode == "parking_start":
+                        print("pmod",self.pmode)
+                        print("ti",self.target_index)
+                        # print("ppath",self.parking_path)
                         self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
                         #self.planning_msg.parking_path = self.parking_path
                         # self.planning_msg.path.x = self.parking_path.x
@@ -456,11 +463,11 @@ class Planner:
                 #@@@@@@@@@@@@@@@@@@@@@@배달stop test@@@@@@@@@@@@@@@@
                 # self.planning_msg.mode = 'general'
 
-                jj=230
-                distance = hypot(self.global_path.x[jj] - self.local.x, self.global_path.y[jj] - self.local.y)
-                print('dis',distance)
-                if distance < 4.1: #돌려보고 수정하기
-                    self.planning_msg.mode = "normal_stop"
+                # jj=230
+                # distance = hypot(self.global_path.x[jj] - self.local.x, self.global_path.y[jj] - self.local.y)
+                # print('dis',distance)
+                # if distance < 4.1: #돌려보고 수정하기
+                #     self.planning_msg.mode = "normal_stop"
                 #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
                 self.planning_info_pub.publish(self.planning_msg)

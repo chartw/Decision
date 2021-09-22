@@ -83,7 +83,7 @@ class MissionPlan:
             self.mode="general"
             planner.local_path=Path()
 
-        # self.mode = "general"
+        self.mode = "parking_ready"
 
         return self.mode
 
