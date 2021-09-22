@@ -208,12 +208,12 @@ class Planner:
                     min_dis = dis
                     min_idx = i
             self.check_veh_index_first = False
-        else:
-            for i in range(max(self.veh_index - 50, 0), self.veh_index + 50):
-                dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
-                if min_dis > dis or min_dis == -1:
-                    min_dis = dis
-                    min_idx = i
+        # else:
+        #     for i in range(max(self.veh_index - 50, 0), self.veh_index + 50):
+        #         dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
+        #         if min_dis > dis or min_dis == -1:
+        #             min_dis = dis
+        #             min_idx = i
         print("@@@@@@@@@!!!!@@@@@@@@@")
 
         return min_idx
