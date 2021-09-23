@@ -32,18 +32,16 @@ class Mapping:
     a_cnt = 0
     b_cnt = 0
 
-    def __init__(self, planner):
-        self.local = planner.local
-
-    def mapping(self, planner, circles):
-        theta = radians(planner.local.heading)
-        print(planner.local.heading)
+    def mapping(self, planner, circles, local):
+        self.local = local
+        theta = radians(self.local.heading)
+        print(self.local.heading)
         for circle in circles:
             # 현재 mapping 중인 장애물 : circle
             # 장애물 절대좌표 변환
             pos = Point32()
-            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + planner.local.x
-            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + planner.local.y
+            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + self.local.x
+            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + self.local.y
             id = -1
 
             for i, obstacle in self.obs_map.items():
@@ -79,8 +77,8 @@ class Mapping:
 
                     # rad = np.arctan2(pos.y - planner.global_path.y[min_index], pos.x - planner.global_path.x[min_index])
                     # rad=degrees(rad) % 360
-                    crossP=planner.global_path.x[min_index]*pos.y-planner.global_path.y[min_index]*pos.x
-                    print(min_dist,  crossP)
+                    crossP = planner.global_path.x[min_index] * pos.y - planner.global_path.y[min_index] * pos.x
+                    print(min_dist, crossP)
                     if min_dist < 0.5:
                         pass
 
@@ -95,7 +93,7 @@ class Mapping:
 
                     L = 3
 
-                    for index in range(min_index-10, int(min_index + L * 10)-10):
+                    for index in range(min_index - 10, int(min_index + L * 10) - 10):
                         pos = Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                         self.obs_map[index] = Obstacle(index, min_dist, ExpMovAvgFilter(pos))
                         self.obstacle_cnt += 1
@@ -198,13 +196,13 @@ class Mapping:
     ## 거리 조건 집어넣어서 벽 필터링 하자
     def a_sign_mapping(self, planner, path, circles):
 
-        theta = radians(planner.local.heading)
+        theta = radians(self.local.heading)
         for circle in circles:
             # 현재 mapping 중인 장애물 : circle
             # 장애물 절대좌표 변환
             pos = Point32()
-            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + planner.local.x
-            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + planner.local.y
+            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + self.local.x
+            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + self.local.y
             id = -1
 
             for i, obstacle in self.a_sign_map.items():
@@ -254,13 +252,13 @@ class Mapping:
         return self.a_sign_map
 
     def b_sign_mapping(self, planner, path, circles):
-        theta = radians(planner.local.heading)
+        theta = radians(self.local.heading)
         for circle in circles:
             # 현재 mapping 중인 장애물 : circle
             # 장애물 절대좌표 변환
             pos = Point32()
-            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + planner.local.x
-            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + planner.local.y
+            pos.x = circle.center.x * cos(theta) + circle.center.y * -sin(theta) + self.local.x
+            pos.y = circle.center.x * sin(theta) + circle.center.y * cos(theta) + self.local.y
             id = -1
 
             for i, obstacle in self.b_sign_map.items():

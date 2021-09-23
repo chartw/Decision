@@ -6,6 +6,7 @@ import numpy as np
 from math import radians, degrees, sin, cos, hypot, atan2, pi
 import sys
 import time
+import message_filters
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
 
@@ -83,6 +84,7 @@ class Planner:
         self.parking_path = Path()
         self.parking_backpath = Path()
         self.local = Local()
+        self.obs_local=Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
         self.mission_goal = Point32()
@@ -156,7 +158,11 @@ class Planner:
         self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
 
         # LiDAR
-        rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        obs_sub=message_filters.Subscriber('/obstacles',Obstacles)
+        local_sub=message_filters.Subscriber('/pose',Odometry)
+        ts=message_filters.ApproximateTimeSynchronizer([obs_sub,local_sub],10,0.1,allow_headerless=True)
+        ts.registerCallback(self.obstacleCallback)
         rospy.Subscriber("/Parking_num", Int32, self.parkingCallback)
 
         # Localization
@@ -483,12 +489,16 @@ class Planner:
                 rate.sleep()
 
     # Callback Functions
-    def obstacleCallback(self, msg):
-        self.obstacle_msg.segments = msg.segments
-        self.obstacle_msg.circles = msg.circles
-        self.obstacle_msg.circle_number = msg.circle_number
+    def obstacleCallback(self, obs,local):
+        self.obs_local.x=local.pose.pose.position.x
+        self.obs_local.y=local.pose.pose.position.y
+        self.obs_local.heading = local.twist.twist.angular.z
 
-        self.map_maker.mapping(self, msg.circles)
+        self.obstacle_msg.segments = obs.segments
+        self.obstacle_msg.circles = obs.circles
+        self.obstacle_msg.circle_number = obs.circle_number
+
+        self.map_maker.mapping(self, obs.circles,self.obs_local)
 
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x
