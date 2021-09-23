@@ -250,7 +250,8 @@ class Planner:
                 if self.planning_msg.mode == "small" or self.planning_msg.mode == "big":
 
                     self.target_map = self.map_maker.make_target_map(self)
-                    self.local_path = self.local_path_maker.path_plan(self.target_map)
+                    if self.target_map:
+                        self.local_path = self.local_path_maker.path_plan(self.target_map)
 
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
@@ -294,7 +295,7 @@ class Planner:
                             self.parking_backpath.heading.insert(0, self.parking_path.heading[i])
                             
                         print("==========parking path created")
-                        print(self.parking_path)
+                        # print(self.parking_path)
                         self.vis_parking_path.points = []
                         for i in range(len(self.parking_path.x)):
                             self.vis_parking_path.points.append(Point32(self.parking_backpath.x[i], self.parking_backpath.y[i], 0))
@@ -468,15 +469,15 @@ class Planner:
 
 
 
-                #@@@@@@@@@@@@@@@@@@@@@@배달stop test@@@@@@@@@@@@@@@@
-                # self.planning_msg.mode = 'general'
+                # #@@@@@@@@@@@@@@@@@@@@@@배달stop test@@@@@@@@@@@@@@@@
+                # # self.planning_msg.mode = 'general'
 
-                jj=230
-                distance = hypot(self.global_path.x[jj] - self.local.x, self.global_path.y[jj] - self.local.y)
-                print('dis',distance)
-                if distance < 4.1: #돌려보고 수정하기
-                    self.planning_msg.mode = "normal_stop"
-                #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+                # jj=230
+                # distance = hypot(self.global_path.x[jj] - self.local.x, self.global_path.y[jj] - self.local.y)
+                # print('dis',distance)
+                # if distance < 4.1: #돌려보고 수정하기
+                #     self.planning_msg.mode = "normal_stop"
+                # #@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
                 self.planning_info_pub.publish(self.planning_msg)
                 rate.sleep()

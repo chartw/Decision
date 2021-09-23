@@ -4,7 +4,7 @@ from master_node.msg import Local
 from geometry_msgs.msg import Point32
 from sensor_msgs.msg import PointCloud
 
-from math import radians, cos, sin, hypot, pi
+from math import radians, cos, sin, hypot, pi, degrees
 
 
 class Obstacle:
@@ -37,6 +37,7 @@ class Mapping:
 
     def mapping(self, planner, circles):
         theta = radians(planner.local.heading)
+        print(planner.local.heading)
         for circle in circles:
             # 현재 mapping 중인 장애물 : circle
             # 장애물 절대좌표 변환
@@ -76,12 +77,14 @@ class Mapping:
 
                 if planner.global_path.mission[planner.veh_index] == "big":
 
-                    rad = np.arctan2(pos.y - planner.global_path.y[index], pos.x - planner.global_path.x[index])
-
-                    if min_dist < 1:
+                    # rad = np.arctan2(pos.y - planner.global_path.y[min_index], pos.x - planner.global_path.x[min_index])
+                    # rad=degrees(rad) % 360
+                    crossP=planner.global_path.x[min_index]*pos.y-planner.global_path.y[min_index]*pos.x
+                    print(min_dist,  crossP)
+                    if min_dist < 0.5:
                         pass
 
-                    elif rad - radians(planner.global_path.heading[index]) < 0 and min_dist < 3.4:
+                    elif crossP < 0 and min_dist < 4:
                         pass
 
                     else:
@@ -90,9 +93,9 @@ class Mapping:
                     if min_index in self.obs_map:
                         continue
 
-                    L = 5.5
+                    L = 3
 
-                    for index in range(min_index, int(min_index + L * 10)):
+                    for index in range(min_index-10, int(min_index + L * 10)-10):
                         pos = Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                         self.obs_map[index] = Obstacle(index, min_dist, ExpMovAvgFilter(pos))
                         self.obstacle_cnt += 1
@@ -148,7 +151,7 @@ class Mapping:
                 std_point = Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                 if dist < 1:
                     rad = radians(planner.global_path.heading[index]) - pi / 2
-                    r = 3.4
+                    r = 2
                 else:
                     rad = radians(planner.global_path.heading[index]) + pi / 2
                     r = 0
