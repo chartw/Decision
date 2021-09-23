@@ -96,6 +96,8 @@ class Planner:
         self.dynamic_flag = False
         self.check_veh_index_first = True
 
+        self.control_ready=0
+
         # self.veh_index = 0
         self.target_index = 0
         self.stop_index = 0
@@ -111,7 +113,6 @@ class Planner:
         self.traffic_light = trafficLight()
         self.delivery_decision = deliveryClass()
 
-        self.parking_planner
 
         self.vis_parking_path = PointCloud()
         self.vis_parking_path.header.frame_id = "world"
@@ -178,6 +179,8 @@ class Planner:
         # Vision - Surface
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
+        rospy.Subscriber("/control", Serial_Info, self.controlCallback)
+
     def check_dist(self):
         obs_dist = -1
         id = -1
@@ -206,19 +209,12 @@ class Planner:
     def get_veh_index(self):
         min_dis = -1
         min_idx = 0
-        if self.check_veh_index_first:  # cur_idx 잡는데, 배달미션이나 cross 되는부분은 ,
-            for i in range(len(self.global_path.x)):
-                dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
-                if min_dis > dis or min_dis == -1:  # 여기에 등호가 붙으면, 뒷부분 index 잡고, 안붙으면 앞쪽 index
-                    min_dis = dis
-                    min_idx = i
-            self.check_veh_index_first = False
-        else:
-            for i in range(max(self.veh_index - 50, 0), self.veh_index + 50):
-                dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
-                if min_dis > dis or min_dis == -1:
-                    min_dis = dis
-                    min_idx = i
+
+        for i in range(max(self.veh_index - 100, 0), self.veh_index + 100):
+            dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
+            if min_dis > dis or min_dis == -1:
+                min_dis = dis
+                min_idx = i
 
         return min_idx
 
@@ -226,18 +222,17 @@ class Planner:
         rate = rospy.Rate(50)  # 100hz
 
         while not rospy.is_shutdown():
-            # print("current point is:", self.local.x, self.local.y)
-            # print(self.veh_index)
             if self.is_local:
-                # print(self.planning_msg.mode)
-
-                # GPP
-                # print(self.planning_msg.mode)
-                # print(self.planning_msg.dist)
                 if self.gpp_requested:
                     self.global_path = self.global_path_maker.path_plan()
-                    self.planning_msg.mode = "general"
                     self.gpp_requested = False
+
+                if not self.control_ready:
+                    self.planning_msg.mode="general"
+                    self.planning_msg.path = self.global_path
+                    self.planning_info_pub.publish(self.planning_msg)
+                    rate.sleep()
+                    continue
 
                 # endcheck = False
                 # Localization Information
@@ -250,8 +245,8 @@ class Planner:
                     self.planning_msg.dist = self.check_dist()
                     self.planning_msg.mode = self.misson_planner.decision(self)
 
-                if self.planning_msg.mode == "general" or self.planning_msg.mode == "kid" or self.planning_msg.mode == "bump":
-                    self.planning_msg.path = self.global_path
+                # if self.planning_msg.mode == "general" or self.planning_msg.mode == "kid" or self.planning_msg.mode == "bump":
+                #     self.planning_msg.path = self.global_path
 
                 if self.planning_msg.mode == "small" or self.planning_msg.mode == "big":
 
@@ -528,6 +523,9 @@ class Planner:
     def parkingCallback(self, msg):
         print("Parking Callback run")
         self.parking_target = msg.data
+
+    def controlCallback(self,msg):
+        self.control_ready=msg.ready
 
 
 if __name__ == "__main__":
