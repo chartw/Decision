@@ -41,7 +41,6 @@ class Mapping:
         self.a_cnt = 0
         self.b_cnt = 0
 
-
     def mapping(self, planner, circles, local):
         self.local = local
         theta = radians(self.local.heading)
@@ -183,8 +182,9 @@ class Mapping:
                 # 경로와 멀때는 거의 0에 가까운 거리만큼 떨어져서 주행
 
                 rad = np.arctan2(emapos.y - std_point.y, emapos.x - std_point.x)
-
-                if rad - radians(planner.global_path.heading[index]) > 0 and dist < 0.5:
+                crossP = planner.global_path.x[index] * emapos.y - planner.global_path.y[index] * emapos.x
+                # 왼쪽에 있는데, 경로 가까이 있으면
+                if crossP > 0 and dist < 0.5:
                     r = dist + 1.25
                 else:
                     rad += pi
