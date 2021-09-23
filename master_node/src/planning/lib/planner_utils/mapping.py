@@ -31,6 +31,12 @@ class Mapping:
     local = Local()  # 위치 정보
     a_cnt = 0
     b_cnt = 0
+    big_car_length=3
+    big_1st_lane=0.5
+    big_2nd_lane=4
+    big_path_dist=2
+
+    del_wall_filter=3
 
     def initialize(self):
         self.obs_map = {}  # 실제 장애물 좌표가 저장되는 dictionary
@@ -88,10 +94,10 @@ class Mapping:
                     # rad=degrees(rad) % 360
                     crossP = planner.global_path.x[min_index] * pos.y - planner.global_path.y[min_index] * pos.x
                     # print(min_dist, crossP)
-                    if min_dist < 0.5:
+                    if min_dist < self.big_1st_lane:
                         pass
 
-                    elif crossP < 0 and min_dist < 4:
+                    elif crossP < 0 and min_dist < self.big_2nd_lane:
                         pass
 
                     else:
@@ -100,9 +106,9 @@ class Mapping:
                     if min_index in self.obs_map:
                         continue
 
-                    L = 3
+                    self.car_length = 3
 
-                    for index in range(min_index - 10, int(min_index + L * 10) - 10):
+                    for index in range(min_index - 10, int(min_index + self.car_length * 10) - 10):
                         pos = Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
                         self.obs_map[index] = Obstacle(index, min_dist, ExpMovAvgFilter(pos))
                         self.obstacle_cnt += 1
@@ -156,9 +162,9 @@ class Mapping:
                 emapos = obstacle.EMA.retAvg()
 
                 std_point = Point32(planner.global_path.x[index], planner.global_path.y[index], 0)
-                if dist < 1:
+                if dist < self.big_1st_lane:
                     rad = radians(planner.global_path.heading[index]) - pi / 2
-                    r = 2
+                    r = self.big_path_dist
                 else:
                     rad = radians(planner.global_path.heading[index]) + pi / 2
                     r = 0
@@ -233,7 +239,7 @@ class Mapping:
                         min_dist = dist
                         min_index = i
 
-                if min_dist > 3:
+                if min_dist > self.del_wall_filter:
                     continue
 
                 self.a_sign_map[self.a_cnt] = Obstacle(min_index, min_dist, ExpMovAvgFilter(pos))
@@ -288,7 +294,7 @@ class Mapping:
                     if min_dist == -1 or min_dist > dist:
                         min_dist = dist
                         min_index = i
-                if min_dist > 3:
+                if min_dist > self.del_wall_filter:
                     continue
 
                 self.b_sign_map[self.b_cnt] = Obstacle(min_index, min_dist, ExpMovAvgFilter(pos))

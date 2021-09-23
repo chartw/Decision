@@ -30,8 +30,11 @@ class deliveryClass:
         self.make_delivery_path()
         self.result_mapping={'0':'A1', '1':'A2', '2':'A3', '3':'B1', '4':'B2', '5':'B3', '6':' Red', '7':'Yellow', '8' : 'RedLeft', '9': 'GreenLeft', '10':'Green'}
         self.b_order_vote = {'123':0, '132': 0, '213':0, '231':0, '312':0, '321':0}
-    def make_delivery_path(self):
-        with open("./map/kcity_map/Delivery_kcity/delivery_a.csv", mode="r") as csv_file:
+    def make_delivery_path(self,planner):
+        temp=""
+        if "sd" in planner.map:
+            temp="sd_"
+        with open("./map/kcity_map/Delivery_kcity/"+temp+"delivery_a.csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
             for line in csv_reader:
                 self.delivery_path_a.x.append(float(line[0]))
@@ -40,7 +43,7 @@ class deliveryClass:
                 deg_yaw=(degrees(float(line[2]))+360) % 360
                 self.delivery_path_a.heading.append(deg_yaw)
 
-        with open("./map/kcity_map/Delivery_kcity/delivery_b.csv", mode="r") as csv_file:
+        with open("./map/kcity_map/Delivery_kcity/"+temp+"delivery_b.csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
             for line in csv_reader:
                 self.delivery_path_b.x.append(float(line[0]))
