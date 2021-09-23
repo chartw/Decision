@@ -32,10 +32,20 @@ class Mapping:
     a_cnt = 0
     b_cnt = 0
 
+    def initialize(self):
+        self.obs_map = {}  # 실제 장애물 좌표가 저장되는 dictionary
+        self.a_sign_map = {}
+        self.b_sign_map = {}
+        self.obstacle_cnt = 0  # 현재 장애물의 개수
+        self.local = Local()  # 위치 정보
+        self.a_cnt = 0
+        self.b_cnt = 0
+
+
     def mapping(self, planner, circles, local):
         self.local = local
         theta = radians(self.local.heading)
-        print(self.local.heading)
+        # print(self.local.heading)
         for circle in circles:
             # 현재 mapping 중인 장애물 : circle
             # 장애물 절대좌표 변환
@@ -66,8 +76,8 @@ class Mapping:
                     start_index = 0
                 else:
                     start_index = planner.veh_index
-
                 for i in range(start_index, end_index):
+
                     dist = hypot(planner.global_path.x[i] - pos.x, planner.global_path.y[i] - pos.y)
                     if min_dist == -1 or min_dist > dist:
                         min_dist = dist
@@ -78,7 +88,7 @@ class Mapping:
                     # rad = np.arctan2(pos.y - planner.global_path.y[min_index], pos.x - planner.global_path.x[min_index])
                     # rad=degrees(rad) % 360
                     crossP = planner.global_path.x[min_index] * pos.y - planner.global_path.y[min_index] * pos.x
-                    print(min_dist, crossP)
+                    # print(min_dist, crossP)
                     if min_dist < 0.5:
                         pass
 

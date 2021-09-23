@@ -106,7 +106,7 @@ class Planner:
         self.parking_planner = ParkingPlan(self)
 
         self.misson_planner = MissionPlan(self)
-        self.map_maker = Mapping(self)
+        self.map_maker = Mapping()
         self.stop_line_checker = StopLine()
         self.traffic_light = trafficLight()
         self.delivery_decision = deliveryClass()
@@ -490,6 +490,10 @@ class Planner:
 
     # Callback Functions
     def obstacleCallback(self, obs,local):
+        # lidar_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(obs.header.stamp.secs))+".%09d" % obs.header.stamp.nsecs
+        # pos_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(local.header.stamp.secs))+".%09d" % local.header.stamp.nsecs
+        # print(lidar_stamp)
+        # print(pos_stamp)
         self.obs_local.x=local.pose.pose.position.x
         self.obs_local.y=local.pose.pose.position.y
         self.obs_local.heading = local.twist.twist.angular.z
@@ -497,8 +501,8 @@ class Planner:
         self.obstacle_msg.segments = obs.segments
         self.obstacle_msg.circles = obs.circles
         self.obstacle_msg.circle_number = obs.circle_number
-
-        self.map_maker.mapping(self, obs.circles,self.obs_local)
+        if self.global_path.x:
+            self.map_maker.mapping(self, obs.circles,self.obs_local)
 
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x

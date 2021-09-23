@@ -96,7 +96,7 @@ class Avoidance:
             temp_msg.steer = self.pure_pursuit(control)
             temp_msg.gear = 0
 
-        temp_msg.speed = 8
+        temp_msg.speed = 5
         temp_msg.brake = 0
         temp_msg.encoder = 0
         temp_msg.emergency_stop = 0

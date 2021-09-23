@@ -41,7 +41,7 @@ class MissionPlan:
         env=planner.global_path.env[planner.veh_index]
         dist=planner.planning_msg.dist
 
-        # print(planner.stop_index,planner.veh_index)
+        print(planner.stop_index,planner.veh_index)
         if mission=="small" or mission=="big":
             self.mode = mission
             if len(planner.local_path.x)==0:
@@ -49,6 +49,7 @@ class MissionPlan:
             else:
                 if hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) < 3:
                     planner.local_path=Path()
+                    planner.map_maker.initialize()
                     self.mode="general"
         # print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
 
