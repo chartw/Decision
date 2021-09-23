@@ -49,7 +49,6 @@ class Control:
 
         control_pub = rospy.Publisher("/control", Serial_Info, queue_size=1)
         self.pub_msg = Serial_Info()
-        self.control_ready = False
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)  # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
@@ -77,7 +76,7 @@ class Control:
         # main loop
         while not rospy.is_shutdown():
 
-            if self.control_ready:
+            if self.global_path.x:
                 print(self.planning_info.mode)
                 if self.planning_info.mode == "general":
                     self.pub_msg = general.driving(self)
@@ -239,7 +238,6 @@ class Control:
                 # self.pub_msg.path_steer = self.planning_info.path.heading[self.planning_info.cur_index]
                 print(self.pub_msg.steer)
 
-                self.pub_msg.ready = self.control_ready
                 control_pub.publish(self.pub_msg)
                 rate.sleep()
 
@@ -256,16 +254,13 @@ class Control:
         self.local.y = msg.local.y
         self.local.heading = msg.local.heading
         # print(self.planning_info)
-        if msg.mode == "general" and not self.control_ready:
+        if msg.mode == "general" and not self.global_path.x:
             self.global_path.x = msg.path.x
             self.global_path.y = msg.path.y
             self.global_path.k = msg.path.k
             self.global_path.heading = msg.path.heading
             self.global_path.env = msg.path.env
             self.global_path.mission = msg.path.mission
-
-            if self.global_path.x:
-                self.control_ready = True
 
     def serialCallback(self, msg):
 

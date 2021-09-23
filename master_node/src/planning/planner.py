@@ -96,8 +96,6 @@ class Planner:
         self.dynamic_flag = False
         self.check_veh_index_first = True
 
-        self.control_ready=0
-
         # self.veh_index = 0
         self.target_index = 0
         self.stop_index = 0
@@ -179,8 +177,6 @@ class Planner:
         # Vision - Surface
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
-        rospy.Subscriber("/control", Serial_Info, self.controlCallback)
-
     def check_dist(self):
         obs_dist = -1
         id = -1
@@ -225,12 +221,10 @@ class Planner:
             if self.is_local:
                 if self.gpp_requested:
                     self.global_path = self.global_path_maker.path_plan()
-                    self.gpp_requested = False
-
-                if not self.control_ready:
                     self.planning_msg.mode="general"
                     self.planning_msg.path = self.global_path
                     self.planning_info_pub.publish(self.planning_msg)
+                    self.gpp_requested = False
                     rate.sleep()
                     continue
 
@@ -523,10 +517,6 @@ class Planner:
     def parkingCallback(self, msg):
         print("Parking Callback run")
         self.parking_target = msg.data
-
-    def controlCallback(self,msg):
-        self.control_ready=msg.ready
-
 
 if __name__ == "__main__":
 
