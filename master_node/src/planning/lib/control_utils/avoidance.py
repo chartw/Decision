@@ -50,7 +50,7 @@ class Avoidance:
         alpha = max(alpha, -90)
         alpha = min(alpha, 90)
 
-        delta = degrees(atan2(2 * self.WB * sin(radians(alpha)) / self.lookahead, 1))
+        delta = degrees(atan2(2 * self.WB * sin(radians(alpha)) / 2, 1))
 
         if abs(delta) > 180:
             if delta < 0:
@@ -76,11 +76,11 @@ class Avoidance:
         tmp_th = atan2((point.y - self.cur.y), (point.x - self.cur.x))
 
         heading=radians(self.cur.heading)
-        if control.planning_info.mode=="parking_backward":
-            heading+=pi
+        # if control.planning_info.mode=="parking_backward":
+        #     heading+=pi
         alpha = heading - tmp_th
 
-        delta = degrees(atan2(2 * self.WB * sin(alpha) / self.lookahead, 1))
+        delta = degrees(atan2(2 * self.WB * sin(alpha) / 2, 1))
 
     
 

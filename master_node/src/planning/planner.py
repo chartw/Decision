@@ -286,8 +286,8 @@ class Planner:
                     #     self.parking_path = self.parking_planner.make_parking_path(1)
 
                     if self.flag:
-                        print("222222222222")
-                        self.parking_path = self.parking_planner.make_parking_path(1)
+                        print("444444444444")
+                        self.parking_path = self.parking_planner.make_parking_path(4)
                         self.planning_msg.path = self.parking_path
                         self.local_path=self.parking_path
                         
@@ -309,13 +309,13 @@ class Planner:
                         print("pmod",self.pmode)
                         print("ti",self.target_index)
                         # print("ppath",self.parking_path)
-                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 2)
                         #self.planning_msg.parking_path = self.parking_path
                         # self.planning_msg.path.x = self.parking_path.x
                         # self.planning_msg.path.y = self.parking_path.y
 
                     elif self.pmode == "parking_backward":
-                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 2)
                         self.planning_msg.path = self.parking_backpath
                         self.local_path=self.parking_backpath
 

@@ -117,7 +117,7 @@ class ParkingPlan:
 
     def make_parking_path(self, parking_target):
         print("@#@#@#@#@#@#@#@#@#@#@#@#@#@#@@##@")
-        with open("./map/kcity_map/Parking_songdo/" + str(1) + ".csv", mode="r") as csv_file:
+        with open("./map/kcity_map/Parking_songdo/" + str(4) + ".csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
             for line in csv_reader:
                 self.parking_path.x.append(float(line[0]))
