@@ -96,6 +96,8 @@ class Planner:
         self.dynamic_flag = False
         self.check_veh_index_first = True
 
+        self.control_ready=0
+
         # self.veh_index = 0
         self.target_index = 0
         self.stop_index = 0
@@ -109,7 +111,7 @@ class Planner:
         self.map_maker = Mapping()
         self.stop_line_checker = StopLine()
         self.traffic_light = trafficLight()
-        self.delivery_decision = deliveryClass()
+        self.delivery_decision = deliveryClass(self)
 
 
         self.vis_parking_path = PointCloud()
@@ -140,6 +142,7 @@ class Planner:
         self.parking_target_index = 0
         self.target_index = 0
         self.target_b = -1
+        self.del1_end_index=-1
 
         self.is_delivery = False
         self.dmode = ""
@@ -176,6 +179,8 @@ class Planner:
 
         # Vision - Surface
         rospy.Subscriber("/surface", String, self.surfaceCallback)
+
+        rospy.Subscriber("/control", Serial_Info, self.controlCallback)
 
     def check_dist(self):
         obs_dist = -1
@@ -221,10 +226,12 @@ class Planner:
             if self.is_local:
                 if self.gpp_requested:
                     self.global_path = self.global_path_maker.path_plan()
+                    self.gpp_requested = False
+
+                if not self.control_ready:
                     self.planning_msg.mode="general"
                     self.planning_msg.path = self.global_path
                     self.planning_info_pub.publish(self.planning_msg)
-                    self.gpp_requested = False
                     rate.sleep()
                     continue
 
@@ -332,41 +339,45 @@ class Planner:
 
                         self.target_b = self.delivery_decision.target_b_decision(self.maxClassA)
 
-                        end_index = -1
+                        
                         if not self.dmode == "pickup_complete":
+                            self.local_path = self.delivery_decision.delivery_path_a
+                            self.planning_msg.path = self.local_path
+
                             self.sign_map = self.map_maker.a_sign_mapping(self, self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
                             for i, sign in self.sign_map.items():
                                 if sign.index > 75 and sign.index < 86:
                                     continue
 
-                                end_index = sign.index
+                                self.del1_end_index = sign.index
+                            
+                            if self.del1_end_index != -1:
 
-                            self.local_path = self.delivery_decision.delivery_path_a
+                                if self.dmode != "pickup_stop":
+                                    self.dmode = "pickup"
+                                    self.planning_msg.mode = "pickup"
+                                    
+                                    
+                                    end_point_x = self.local_path.x[self.del1_end_index]
+                                    end_point_y = self.local_path.y[self.del1_end_index]
 
-                            if self.dmode != "pickup_stop":
-                                self.dmode = "pickup"
-                                self.planning_msg.mode = "pickup"
-                                self.planning_msg.path = self.local_path
+                                    distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
+                                    print(distance)
+                                    if distance < 1.5:  # 돌려보고 수정하기
+                                        self.planning_msg.mode = "delivery_stop"
+                                        self.planning_msg.dist = distance
 
-                                end_point_x = self.local_path.x[end_index]
-                                end_point_y = self.local_path.y[end_index]
+                                    if self.serial_msg.speed < 0.1:
+                                        self.dmode = "pickup_stop"
+                                        self.count = time.time()
 
-                                distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
-                                if distance < 1.5:  # 돌려보고 수정하기
+                                elif self.dmode == "pickup_stop":
+                                    print("--------------------")
                                     self.planning_msg.mode = "delivery_stop"
-                                    self.planning_msg.dist = distance
+                                    self.planning_msg.dist = 0
 
-                                if self.serial_msg.speed < 0.1:
-                                    self.dmode = "pickup_stop"
-                                    self.count = time.time()
-
-                            elif self.dmode == "pickup_stop":
-                                print("--------------------")
-                                self.planning_msg.mode = "delivery_stop"
-                                self.planning_msg.dist = 0
-
-                                if time.time() - self.count > 5.5:
-                                    self.dmode = "pickup_complete"
+                                    if time.time() - self.count > 5.5:
+                                        self.dmode = "pickup_complete"
 
                         else:
                             self.planning_msg.mode = "delivery1"
@@ -517,6 +528,10 @@ class Planner:
     def parkingCallback(self, msg):
         print("Parking Callback run")
         self.parking_target = msg.data
+
+    def controlCallback(self,msg):
+        self.control_ready=msg.ready
+
 
 if __name__ == "__main__":
 

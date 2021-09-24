@@ -53,9 +53,6 @@ class MissionPlan:
                     self.mode="general"
         # print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
 
-        elif hypot(planner.global_path.x[902]-self.local.x, planner.global_path.y[902]-self.local.y) < 3:
-            self.mode = "parking"
-
         elif planner.stop_index-planner.veh_index < 10*10:
             self.mode="crossroad"
  
@@ -79,10 +76,13 @@ class MissionPlan:
         # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
         # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
         # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정
-
+        elif hypot(planner.global_path.x[902]-self.local.x, planner.global_path.y[902]-self.local.y) < 3:
+            self.mode = "parking"
+            
         else:
             self.mode="general"
             planner.local_path=Path()
+            
 
         # self.mode = "general"
 

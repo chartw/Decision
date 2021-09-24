@@ -11,7 +11,7 @@ from yolov4_trt_ros.msg import Detector2DArray
 from yolov4_trt_ros.msg import Detector2D
 
 class deliveryClass:
-    def __init__(self):
+    def __init__(self,planner):
         self.sign_count_a = {'A1':0, 'A2': 0, 'A3':0}
         #voting self.order_count_b = {'123':0, '132':0, '}
         self.sign_names = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3']
@@ -27,7 +27,7 @@ class deliveryClass:
                         'B3>B1':0, 'B1>B3':0}
         self.maxClassA = 'A2'
         self.max_count = 0
-        self.make_delivery_path()
+        self.make_delivery_path(planner)
         self.result_mapping={'0':'A1', '1':'A2', '2':'A3', '3':'B1', '4':'B2', '5':'B3', '6':' Red', '7':'Yellow', '8' : 'RedLeft', '9': 'GreenLeft', '10':'Green'}
         self.b_order_vote = {'123':0, '132': 0, '213':0, '231':0, '312':0, '321':0}
     def make_delivery_path(self,planner):
