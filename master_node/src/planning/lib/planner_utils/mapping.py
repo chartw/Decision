@@ -32,7 +32,7 @@ class Mapping:
     a_cnt = 0
     b_cnt = 0
     big_car_length=3
-    big_1st_lane=0.5
+    big_1st_lane=1
     big_2nd_lane=4
     big_path_dist=2
 
