@@ -222,9 +222,9 @@ class General:
         elif self.mode == "kid":
             self.temp_msg.speed = self.calc_velocity()
         elif self.mode == "small" or self.mode == "big":
-            self.temp_msg.speed = 12
-        elif self.mode == "bump":
-            self.temp_msg.speed = 8
+            self.temp_msg.speed = self.calc_velocity()
+            if control.serial_info.speed > self.temp_msg.speed + 1:
+                self.temp_msg.brake=50
         elif self.mode == "bump":
             self.temp_msg.speed = 8
 

@@ -123,6 +123,9 @@ class Avoidance:
 
     def driving(self, control):
         temp_msg=Serial_Info()
+        temp_msg.brake = 0
+        temp_msg.encoder = 0
+        temp_msg.emergency_stop = 0
         if control.planning_info.mode == "parking_backward":
             temp_msg.steer = self.bpure_pursuit(control)
             temp_msg.gear = 2
@@ -134,12 +137,14 @@ class Avoidance:
             temp_msg.gear = 0
 
         if control.planning_info.mode == "delivery1" or control.planning_info.mode == "delivery2":
-            temp_msg.speed = 8
+            temp_msg.speed = 10
+    
         else:
-            temp_msg.speed=5
-        temp_msg.brake = 0
-        temp_msg.encoder = 0
-        temp_msg.emergency_stop = 0
+            temp_msg.speed=8
+
+        if control.serial_info.speed > temp_msg.speed+1:
+            temp_msg.brake=50
+
         if control.planning_info.mode == "small" or control.planning_info.mode == "big":
             temp_msg.path_steer=0
         else: 

@@ -32,6 +32,7 @@ class MissionPlan:
 
         self.time_count = 0
         self.temp_heading = 0
+        self.big_complete=False
 
         self.start_time = time.time()
         self.current_time = time.time()
@@ -42,7 +43,7 @@ class MissionPlan:
         dist=planner.planning_msg.dist
 
         print(planner.stop_index,planner.veh_index)
-        if mission=="small" or mission=="big":
+        if (mission=="small" or mission=="big") and not self.big_complete:
             self.mode = mission
             if len(planner.local_path.x)==0:
                 planner.local_path_maker.start(planner)
@@ -51,6 +52,7 @@ class MissionPlan:
                     planner.local_path=Path()
                     planner.map_maker.initialize()
                     self.mode="general"
+                    self.big_complete=True
         # print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
 
         elif planner.stop_index-planner.veh_index < 10*10:

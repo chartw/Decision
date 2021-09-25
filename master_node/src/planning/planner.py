@@ -137,7 +137,6 @@ class Planner:
         self.pmode = ""
         self.is_parking = False
         self.parking_target = 1
-        self.veh_index = 0
         self.parking_target_index = 0
         self.target_index = 0
         self.target_b = -1
@@ -181,7 +180,6 @@ class Planner:
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         rospy.Subscriber("/control", Serial_Info, self.controlCallback)
-
     def check_dist(self):
         obs_dist = -1
         id = -1
@@ -210,7 +208,6 @@ class Planner:
     def get_veh_index(self):
         min_dis = -1
         min_idx = 0
-
         for i in range(max(self.veh_index - 100, 0), self.veh_index + 100):
             dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
             if min_dis > dis or min_dis == -1:
@@ -227,6 +224,8 @@ class Planner:
                 if self.gpp_requested:
                     self.global_path = self.global_path_maker.path_plan()
                     self.gpp_requested = False
+                    if self.veh_index==7000:
+                        self.is_delivery=True
 
                 if not self.control_ready:
                     self.planning_msg.mode = "general"

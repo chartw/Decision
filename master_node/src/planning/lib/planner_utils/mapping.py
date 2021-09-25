@@ -31,10 +31,10 @@ class Mapping:
     local = Local()  # 위치 정보
     a_cnt = 0
     b_cnt = 0
-    big_car_length=3
+    big_car_length=4
     big_1st_lane=1
     big_2nd_lane=4
-    big_path_dist=2
+    big_path_dist=3.4
 
     del_wall_filter=3
 
