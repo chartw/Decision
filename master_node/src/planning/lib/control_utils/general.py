@@ -226,9 +226,6 @@ class General:
         elif self.mode == "bump":
             self.temp_msg.speed = 8
 
-        elif self.mode == "delivery1" or self.mode == "delivery2":
-            self.temp_msg.speed = 12
-
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
         self.temp_msg.steer = self.pure_pursuit()
         # print("x,y",self.cur.x,self.cur.y)

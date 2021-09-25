@@ -84,7 +84,7 @@ class Planner:
         self.parking_path = Path()
         self.parking_backpath = Path()
         self.local = Local()
-        self.obs_local=Local()
+        self.obs_local = Local()
         # self.objects = BoundingBoxes()
         self.is_person = False
         self.mission_goal = Point32()
@@ -96,7 +96,7 @@ class Planner:
         self.dynamic_flag = False
         self.check_veh_index_first = True
 
-        self.control_ready=0
+        self.control_ready = 0
 
         # self.veh_index = 0
         self.target_index = 0
@@ -112,7 +112,6 @@ class Planner:
         self.stop_line_checker = StopLine()
         self.traffic_light = trafficLight()
         self.delivery_decision = deliveryClass(self)
-
 
         self.vis_parking_path = PointCloud()
         self.vis_parking_path.header.frame_id = "world"
@@ -142,7 +141,7 @@ class Planner:
         self.parking_target_index = 0
         self.target_index = 0
         self.target_b = -1
-        self.del1_end_index=-1
+        self.del1_end_index = -1
 
         self.is_delivery = False
         self.dmode = ""
@@ -161,9 +160,9 @@ class Planner:
 
         # LiDAR
         # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
-        obs_sub=message_filters.Subscriber('/obstacles',Obstacles)
-        local_sub=message_filters.Subscriber('/pose',Odometry)
-        ts=message_filters.ApproximateTimeSynchronizer([obs_sub,local_sub],10,0.1,allow_headerless=True)
+        obs_sub = message_filters.Subscriber("/obstacles", Obstacles)
+        local_sub = message_filters.Subscriber("/pose", Odometry)
+        ts = message_filters.ApproximateTimeSynchronizer([obs_sub, local_sub], 10, 0.1, allow_headerless=True)
         ts.registerCallback(self.obstacleCallback)
         rospy.Subscriber("/Parking_num", Int32, self.parkingCallback)
 
@@ -220,7 +219,7 @@ class Planner:
         return min_idx
 
     def run(self):
-        rate = rospy.Rate(50)  # 100hz
+        rate = rospy.Rate(20)  # 100hz
 
         while not rospy.is_shutdown():
             if self.is_local:
@@ -229,7 +228,7 @@ class Planner:
                     self.gpp_requested = False
 
                 if not self.control_ready:
-                    self.planning_msg.mode="general"
+                    self.planning_msg.mode = "general"
                     self.planning_msg.path = self.global_path
                     self.planning_info_pub.publish(self.planning_msg)
                     rate.sleep()
@@ -238,6 +237,7 @@ class Planner:
                 # endcheck = False
                 # Localization Information
                 self.planning_msg.local = self.local
+                self.local_path = Path()
                 self.veh_index = self.get_veh_index()
                 self.stop_index = self.stop_line_checker.stop_idx_check(planner)
                 # print(self.stop_index)
@@ -289,13 +289,13 @@ class Planner:
                     if self.pmode == "parking_ready":
                         self.parking_path = self.parking_planner.make_parking_path(self.parking_target)
                         self.planning_msg.path = self.parking_path
-                        self.local_path=self.parking_path
-                        
+                        self.local_path = self.parking_path
+
                         for i in range(len(self.parking_path.x)):
                             self.parking_backpath.x.insert(0, self.parking_path.x[i])
                             self.parking_backpath.y.insert(0, self.parking_path.y[i])
                             self.parking_backpath.heading.insert(0, self.parking_path.heading[i])
-                            
+
                         print("==========parking path created")
                         # print(self.parking_path)
                         self.vis_parking_path.points = []
@@ -313,7 +313,7 @@ class Planner:
                     elif self.pmode == "parking_backward":
                         self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
                         self.planning_msg.path = self.parking_backpath
-                        self.local_path=self.parking_backpath
+                        self.local_path = self.parking_backpath
 
                     elif self.pmode == "parking_end":
                         self.mission_ing = False
@@ -339,7 +339,6 @@ class Planner:
 
                         self.target_b = self.delivery_decision.target_b_decision(self.maxClassA)
 
-                        
                         if not self.dmode == "pickup_complete":
                             self.local_path = self.delivery_decision.delivery_path_a
                             self.planning_msg.path = self.local_path
@@ -350,14 +349,13 @@ class Planner:
                                     continue
 
                                 self.del1_end_index = sign.index
-                            
+
                             if self.del1_end_index != -1:
 
                                 if self.dmode != "pickup_stop":
                                     self.dmode = "pickup"
                                     self.planning_msg.mode = "pickup"
-                                    
-                                    
+
                                     end_point_x = self.local_path.x[self.del1_end_index]
                                     end_point_y = self.local_path.y[self.del1_end_index]
 
@@ -379,46 +377,47 @@ class Planner:
                                     if time.time() - self.count > 5.5:
                                         self.dmode = "pickup_complete"
 
+                            else:
+                                self.planning_msg.mode = "pickup_complete"
+
                         else:
                             self.planning_msg.mode = "delivery1"
 
                     elif self.planning_msg.mode == "delivery2":
                         self.sign_map = self.map_maker.b_sign_mapping(self, self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
-
-                        end_index = -1
+                        self.local_path = self.delivery_decision.delivery_path_b
+                        self.planning_msg.path = self.local_path
 
                         for i, sign in self.sign_map.items():
                             print(i, self.target_b)
                             if i == self.target_b:
-                                end_index = sign.index
+                                self.del2_end_index = sign.index
 
-                        self.local_path = self.delivery_decision.delivery_path_b
+                        if self.del2_end_index != -1:
+                            if self.dmode != "drop_stop":
+                                self.dmode = "drop"
+                                self.planning_msg.mode = "drop"
 
-                        if self.dmode != "drop_stop":
-                            self.dmode = "drop"
-                            self.planning_msg.mode = "drop"
-                            self.planning_msg.path = self.local_path
+                                end_point_x = self.local_path.x[self.del2_end_index]
+                                end_point_y = self.local_path.y[self.del2_end_index]
 
-                            end_point_x = self.local_path.x[end_index]
-                            end_point_y = self.local_path.y[end_index]
+                                distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
+                                if distance < 1.5:  # 돌려보고 수정하기
+                                    self.planning_msg.mode = "delivery_stop"
+                                    self.planning_msg.dist = distance
 
-                            distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
-                            if distance < 1.5:  # 돌려보고 수정하기
+                                if self.serial_msg.speed < 0.1:
+                                    self.dmode = "drop_stop"
+                                    self.count = time.time()
+
+                            elif self.dmode == "drop_stop":
+                                print("--------------------")
                                 self.planning_msg.mode = "delivery_stop"
-                                self.planning_msg.dist = distance
+                                self.planning_msg.dist = 0
 
-                            if self.serial_msg.speed < 0.1:
-                                self.dmode = "drop_stop"
-                                self.count = time.time()
-
-                        elif self.dmode == "drop_stop":
-                            print("--------------------")
-                            self.planning_msg.mode = "delivery_stop"
-                            self.planning_msg.dist = 0
-
-                            if time.time() - self.count > 5.5:
-                                self.dmode = "drop_complete"
-                                self.is_delivery = False
+                                if time.time() - self.count > 5.5:
+                                    self.dmode = "drop_complete"
+                                    self.is_delivery = False
 
                     #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
                     #         self.planning_msg.mode = "delivery_stop"
@@ -472,9 +471,6 @@ class Planner:
                 self.planning_msg.cur_index = self.veh_index
                 # print(self.local.heading, self.global_path.heading[self.veh_index])
 
-
-
-
                 # #@@@@@@@@@@@@@@@@@@@@@@배달stop test@@@@@@@@@@@@@@@@
                 # # self.planning_msg.mode = 'general'
 
@@ -489,20 +485,20 @@ class Planner:
                 rate.sleep()
 
     # Callback Functions
-    def obstacleCallback(self, obs,local):
+    def obstacleCallback(self, obs, local):
         # lidar_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(obs.header.stamp.secs))+".%09d" % obs.header.stamp.nsecs
         # pos_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(local.header.stamp.secs))+".%09d" % local.header.stamp.nsecs
         # print(lidar_stamp)
         # print(pos_stamp)
-        self.obs_local.x=local.pose.pose.position.x
-        self.obs_local.y=local.pose.pose.position.y
+        self.obs_local.x = local.pose.pose.position.x
+        self.obs_local.y = local.pose.pose.position.y
         self.obs_local.heading = local.twist.twist.angular.z
 
         self.obstacle_msg.segments = obs.segments
         self.obstacle_msg.circles = obs.circles
         self.obstacle_msg.circle_number = obs.circle_number
         if self.global_path.x:
-            self.map_maker.mapping(self, obs.circles,self.obs_local)
+            self.map_maker.mapping(self, obs.circles, self.obs_local)
 
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x
@@ -529,8 +525,8 @@ class Planner:
         print("Parking Callback run")
         self.parking_target = msg.data
 
-    def controlCallback(self,msg):
-        self.control_ready=msg.ready
+    def controlCallback(self, msg):
+        self.control_ready = msg.ready
 
 
 if __name__ == "__main__":

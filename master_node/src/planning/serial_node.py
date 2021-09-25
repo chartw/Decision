@@ -35,7 +35,7 @@ class Serial_Node:
         th_serialRead.start()
 
         # Main Loop
-        rate = rospy.Rate(50)
+        rate = rospy.Rate(20)
         while not rospy.is_shutdown():
             # print("----------loop!")
             # self.serialRead()

@@ -96,7 +96,10 @@ class Avoidance:
             temp_msg.steer = self.pure_pursuit(control)
             temp_msg.gear = 0
 
-        temp_msg.speed = 5
+        if control.planning_info.mode == "delivery1" or control.planning_info.mode == "delivery2":
+            temp_msg.speed = 8
+        else:
+            temp_msg.speed=5
         temp_msg.brake = 0
         temp_msg.encoder = 0
         temp_msg.emergency_stop = 0

@@ -71,8 +71,9 @@ class Control:
         self.is_planning = False
         self.start_time = time.time()
         self.current_time = time.time()
+        self.delivery_modes = ["delivery1", "delivery2", "pickup", "drop"]
 
-        rate = rospy.Rate(50)  # 100hz
+        rate = rospy.Rate(20)  # 100hz
 
         # main loop
         while not rospy.is_shutdown():
@@ -100,10 +101,7 @@ class Control:
                     else:
                         self.pub_msg = general.driving(self)
 
-                elif self.planning_info.mode == "kid":
-                    self.pub_msg = general.driving(self)
-
-                elif self.planning_info.mode == "bump":
+                elif self.planning_info.mode == "kid" or self.planning_info.mode == "bump" or self.planning_info.mode == "pickup_complete":
                     self.pub_msg = general.driving(self)
 
                 elif self.planning_info.mode == "normal_stop":
@@ -197,27 +195,7 @@ class Control:
                     self.local_path.heading = self.global_path.heading
 
                     # self.planning_info.mode = "general"
-
-                elif self.planning_info.mode == "delivery1" or self.planning_info.mode == "delivery2":
-                    if self.planning_info.path.x:
-                        self.local_path.x = self.planning_info.path.x
-                        self.local_path.y = self.planning_info.path.y
-                        self.local_path.heading = self.planning_info.path.heading
-                    
-                    if self.local_path.x:
-                        self.pub_msg = avoidance.driving(self)
-
-
-                elif self.planning_info.mode == "pickup":
-                    if self.planning_info.path.x:
-                        self.local_path.x = self.planning_info.path.x
-                        self.local_path.y = self.planning_info.path.y
-                        self.local_path.heading = self.planning_info.path.heading
-
-                    if self.local_path.x:
-                        self.pub_msg = avoidance.driving(self)
-
-                elif self.planning_info.mode == "drop":
+                elif self.planning_info.mode in self.delivery_modes:
                     if self.planning_info.path.x:
                         self.local_path.x = self.planning_info.path.x
                         self.local_path.y = self.planning_info.path.y
