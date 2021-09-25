@@ -45,6 +45,7 @@ class Localization():
     def get_xy(self,  lat,  lon,  alt):
         e, n, u = pymap3d.geodetic2enu(lat, lon, alt, 37.239231667, 126.773156667, 15.400)
         # e, n, u = pymap3d.geodetic2enu(lat, lon, alt, 37.239233333, 126.773156667, 15.400)
+        # print(e,n)
         return e, n
 
     def publish_msg(self):

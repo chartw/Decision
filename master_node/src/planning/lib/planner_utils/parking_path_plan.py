@@ -68,7 +68,8 @@ class ParkingPlan:
         
         elif self.parking_state == "parking_going2next":
             print("======Going to base2")
-            if time() - self.time_count > 4:
+            # if time() - self.time_count > 4:
+            if hypot(planner.global_path.x[1060]-planner.local.x, planner.global_path.y[1060]-planner.local.y)<2:
                 self.time_count = time()
                 self.parking_state = "parking-base2"
 
@@ -78,19 +79,18 @@ class ParkingPlan:
                 self.parking_state = "parking_ready"
 
         elif self.parking_state == "parking_ready":
-            self.parking_target = self.parking_target
 
-            if self.parking_target != -1:
+            if planner.parking_target != -1:
                 self.parking_state = "parking_start"
-                print("Parking start for target ", self.parking_target)
+                print("Parking start for target ", planner.parking_target)
 
         elif self.parking_state == "parking_start":
-            print("======Parking for target ", self.parking_target)
+            print("======Parking for target ", planner.parking_target)
 
             #밖에서 파킹스택 쌓기. 
-            dis_x = self.parking_lot[self.parking_target - 1].x - planner.local.x
-            dis_y = self.parking_lot[self.parking_target - 1].y - planner.local.y
-
+            dis_x = self.parking_lot[planner.parking_target - 1].x - planner.local.x
+            dis_y = self.parking_lot[planner.parking_target - 1].y - planner.local.y
+            
             print("======Distance from goal_point: ", hypot(dis_x, dis_y))
             if hypot(dis_x, dis_y) < 2:
                 self.parking_state = "parking_complete"

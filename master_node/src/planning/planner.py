@@ -136,7 +136,7 @@ class Planner:
 
         self.pmode = ""
         self.is_parking = False
-        self.parking_target = 0
+        self.parking_target = 1
         self.veh_index = 0
         self.parking_target_index = 0
         self.target_index = 0
@@ -521,6 +521,7 @@ class Planner:
 
     def parkingCallback(self, msg):
         print("Parking Callback run")
+        print(msg.data)
         self.parking_target = msg.data
 
     def controlCallback(self, msg):
