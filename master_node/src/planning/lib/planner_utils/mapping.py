@@ -297,6 +297,10 @@ class Mapping:
                     if min_dist == -1 or min_dist > dist:
                         min_dist = dist
                         min_index = i
+
+                crossP = path.x[min_index] * pos.y - path.y[min_index] * pos.x
+                if crossP > 0:
+                    continue
                 if min_dist > self.del_wall_filter:
                     continue
 

@@ -119,7 +119,6 @@ class deliveryClass:
         
         print(self.b_order_vote)
         print('result', result)
-        maxClassA = 'A3'
 
         try:
             target_b = result.index(maxClassA[1])

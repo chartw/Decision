@@ -142,6 +142,7 @@ class Planner:
         self.target_index = 0
         self.target_b = -1
         self.del1_end_index = -1
+        self.del2_end_index = -1
 
         self.is_delivery = False
         self.dmode = ""
@@ -237,7 +238,6 @@ class Planner:
                 # endcheck = False
                 # Localization Information
                 self.planning_msg.local = self.local
-                self.local_path = Path()
                 self.veh_index = self.get_veh_index()
                 self.stop_index = self.stop_line_checker.stop_idx_check(planner)
                 # print(self.stop_index)
@@ -377,11 +377,8 @@ class Planner:
                                     if time.time() - self.count > 5.5:
                                         self.dmode = "pickup_complete"
 
-                            else:
-                                self.planning_msg.mode = "pickup_complete"
-
                         else:
-                            self.planning_msg.mode = "delivery1"
+                            self.planning_msg.mode = "general"
 
                     elif self.planning_msg.mode == "delivery2":
                         self.sign_map = self.map_maker.b_sign_mapping(self, self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
@@ -392,7 +389,7 @@ class Planner:
                             print(i, self.target_b)
                             if i == self.target_b:
                                 self.del2_end_index = sign.index
-
+                        
                         if self.del2_end_index != -1:
                             if self.dmode != "drop_stop":
                                 self.dmode = "drop"
@@ -402,6 +399,7 @@ class Planner:
                                 end_point_y = self.local_path.y[self.del2_end_index]
 
                                 distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
+                                print(distance)
                                 if distance < 1.5:  # 돌려보고 수정하기
                                     self.planning_msg.mode = "delivery_stop"
                                     self.planning_msg.dist = distance
