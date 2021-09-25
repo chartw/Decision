@@ -67,6 +67,41 @@ class Avoidance:
 
             return delta
 
+
+    def parking_pure_pursuit(self,control):
+
+        point=self.point_plan(control.local_path)
+
+        tmp_th = degrees(atan2((point.y - self.local.y), (point.x - self.local.x)))
+
+        tmp_th = tmp_th % 360
+
+        alpha = self.local.heading - tmp_th
+        if abs(alpha) > 180:
+            if alpha < 0:
+                alpha += 360
+            else:
+                alpha -= 360
+
+        alpha = max(alpha, -90)
+        alpha = min(alpha, 90)
+
+        delta = degrees(atan2(2 * self.WB * sin(radians(alpha)) / 2, 1))
+
+        if abs(delta) > 180:
+            if delta < 0:
+                delta += 360
+            else:
+                delta -= 360
+
+        if abs(delta) >= 27.7:
+            if delta > 0:
+                return 27.7
+            else:
+                return -27.7
+        else:
+            return delta
+
     def bpure_pursuit(self, control):
         # pure pursuit 계산되는 부분
 
@@ -76,11 +111,11 @@ class Avoidance:
         tmp_th = atan2((point.y - self.cur.y), (point.x - self.cur.x))
 
         heading=radians(self.cur.heading)
-        if control.planning_info.mode=="parking_backward":
-            heading+=pi
+        # if control.planning_info.mode=="parking_backward":
+        #     heading+=pi
         alpha = heading - tmp_th
 
-        delta = degrees(atan2(2 * self.WB * sin(alpha) / self.lookahead, 1))
+        delta = degrees(atan2(2 * self.WB * sin(alpha) / 2, 1))
 
     
 
@@ -89,9 +124,11 @@ class Avoidance:
     def driving(self, control):
         temp_msg=Serial_Info()
         if control.planning_info.mode == "parking_backward":
-            temp_msg.steer=self.bpure_pursuit(control)
+            temp_msg.steer = self.bpure_pursuit(control)
             temp_msg.gear = 2
-
+        elif control.planning_info.mode == "parking_start":
+            temp_msg.steer = self.parking_pure_pursuit(control)
+            temp_msg.gear = 0
         else:
             temp_msg.steer = self.pure_pursuit(control)
             temp_msg.gear = 0

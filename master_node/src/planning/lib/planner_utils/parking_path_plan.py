@@ -26,12 +26,12 @@ class ParkingPlan:
         self.start_base = self.base[0]
 
         self.parking_lot = []
-        self.parking_lot.append(Point32(11.4874257376099, 10.9097614081884, 0))
-        self.parking_lot.append(Point32(11.4874257376099, 10.9097614081884, 0))
-        self.parking_lot.append(Point32(13.30981534063439, 13.317898690530509, 0))
-        self.parking_lot.append(Point32(14.19713198871293, 15.90745254290775, 0))
-        self.parking_lot.append(Point32(15.528108324120966, 18.497007306554277, 0))
-        self.parking_lot.append(Point32(17.15482766406704, 21.08667387278349, 0))
+        self.parking_lot.append(Point32(12.1308345505808, 11.0446013152771, 0))
+        self.parking_lot.append(Point32(13.4108293420966, 13.6314223045673, 0))
+        self.parking_lot.append(Point32(14.9418337803785, 16.2236247106905, 0))
+        self.parking_lot.append(Point32(16.275, 18.867, 0))
+        self.parking_lot.append(Point32(17.706, 21.457, 0))
+        self.parking_lot.append(Point32(19.0818345505808, 24.1776013152771, 0))
         # self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
         # self.parking_lot.append(Point32(15.85266480396189, 38.844924089730185, 0))
         # self.parking_lot.append(Point32(14.16998329088652, 36.736197374027405, 0))
@@ -78,7 +78,7 @@ class ParkingPlan:
                 self.parking_state = "parking_ready"
 
         elif self.parking_state == "parking_ready":
-            self.parking_target = planner.parking_target
+            self.parking_target = self.parking_target
 
             if self.parking_target != -1:
                 self.parking_state = "parking_start"
@@ -88,8 +88,8 @@ class ParkingPlan:
             print("======Parking for target ", self.parking_target)
 
             #밖에서 파킹스택 쌓기. 
-            dis_x = planner.parking_path.x[-1]-planner.local.x
-            dis_y = planner.parking_path.y[-1]-planner.local.y
+            dis_x = self.parking_lot[self.parking_target - 1].x - planner.local.x
+            dis_y = self.parking_lot[self.parking_target - 1].y - planner.local.y
 
             print("======Distance from goal_point: ", hypot(dis_x, dis_y))
             if hypot(dis_x, dis_y) < 2:

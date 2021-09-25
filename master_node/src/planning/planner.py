@@ -136,7 +136,7 @@ class Planner:
 
         self.pmode = ""
         self.is_parking = False
-        self.parking_target = 1
+        self.parking_target = 0
         self.veh_index = 0
         self.parking_target_index = 0
         self.target_index = 0
@@ -305,13 +305,13 @@ class Planner:
                         self.parking_path_pub.publish(self.vis_parking_path)
 
                     elif self.pmode == "parking_start":
-                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 3)
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_path, 2)
                         # self.planning_msg.parking_path = self.parking_path
                         # self.planning_msg.path.x = self.parking_path.x
                         # self.planning_msg.path.y = self.parking_path.y
 
                     elif self.pmode == "parking_backward":
-                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 3)
+                        self.parking_target_index, self.planning_msg.point = self.parking_planner.point_plan(self.parking_backpath, 2)
                         self.planning_msg.path = self.parking_backpath
                         self.local_path = self.parking_backpath
 
