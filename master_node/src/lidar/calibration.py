@@ -82,7 +82,7 @@ class calibration:
                     bbox_temp_xyzcnt[i][2] = bbox_temp_xyzcnt[i][2]/bbox_temp_xyzcnt[i][3]
                     point=Point32(bbox_temp_xyzcnt[i][0], bbox_temp_xyzcnt[i][1], bbox_temp_xyzcnt[i][2])
                     self.pub_msg.points.append(point)
-                    self.pub_msg.Class.append(self.bbox_msg[i].results.id)
+                    self.pub_msg.Classes.append(self.bbox_msg[i].results.id)
         
         self.pub_msg.header.stamp=rospy.Time.now()
         self.pub_msg.header.frame_id = "world"

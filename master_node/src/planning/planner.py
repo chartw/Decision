@@ -7,7 +7,7 @@ from math import radians, degrees, sin, cos, hypot, atan2, pi
 import sys
 import time
 import message_filters
-from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
+from master_node.msg import Obstacles, Planning_Info, Path, Local, Serial_Info, CalibObjects
 from nav_msgs.msg import Odometry
 
 from yolov4_trt_ros.msg import Detector2DArray
@@ -141,7 +141,7 @@ class Planner:
         self.parking_target = 1
         self.parking_target_index = 0
         self.target_index = 0
-        self.target_b = -1
+        self.target_b = None
         self.del1_end_index = -1
         self.del2_end_index = -1
 
@@ -161,11 +161,18 @@ class Planner:
         self.target_pub = rospy.Publisher("/target", PointCloud, queue_size=1)
 
         # LiDAR
-        # rospy.Subscriber("/obstacles", Obstacles, self.obstacleCallback)
+        # Pose(Local), Obstacles Time Synchronize
         obs_sub = message_filters.Subscriber("/obstacles", Obstacles)
         local_sub = message_filters.Subscriber("/pose", Odometry)
         ts = message_filters.ApproximateTimeSynchronizer([obs_sub, local_sub], 10, 0.1, allow_headerless=True)
         ts.registerCallback(self.obstacleCallback)
+
+        # Pose(Local), CalibObjects Time Synchronize
+        calib_sub = message_filters.Subscriber("/calib_object", Obstacles)
+        ts = message_filters.ApproximateTimeSynchronizer([calib_sub, local_sub], 10, 0.1, allow_headerless=True)
+        ts.registerCallback(self.calibObjectCallback)
+
+
         rospy.Subscriber("/Parking_num", Int32, self.parkingCallback)
 
         # Localization
@@ -339,22 +346,14 @@ class Planner:
 
                     if self.planning_msg.mode == "delivery1":
 
-                        self.maxClassA, self.order_b, b_count = self.delivery_decision.detect_signs(self.object_msg)
-
-                        self.delivery_decision.delivery_count(self.order_b, b_count)
-
-                        self.target_b = self.delivery_decision.target_b_decision(self.maxClassA)
-
                         if not self.dmode == "pickup_complete":
                             self.local_path = self.delivery_decision.delivery_path_a
                             self.planning_msg.path = self.local_path
 
-                            self.sign_map = self.map_maker.a_sign_mapping(self, self.delivery_decision.delivery_path_a, self.obstacle_msg.circles)
-                            for i, sign in self.sign_map.items():
-                                if sign.index > 75 and sign.index < 86:
-                                    continue
-
-                                self.del1_end_index = sign.index
+                            for i, sign in self.map_maker.sign_map.items():
+                                if sign.Class in ['A1','A2','A3']:
+                                    self.del1_end_index = sign.index
+                                    self.target_b=sign.Class.replace('A','B')
 
                             if self.del1_end_index != -1:
 
@@ -387,15 +386,11 @@ class Planner:
                             self.planning_msg.mode = "pickup_complete"
 
                     elif self.planning_msg.mode == "delivery2":
-                        self.target_b=2
-                        self.sign_map = self.map_maker.b_sign_mapping(self, self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
-                        self.local_path = self.delivery_decision.delivery_path_b
-                        self.planning_msg.path = self.local_path
 
-                        for i, sign in self.sign_map.items():
-                            print(i, self.target_b)
-                            if i == self.target_b:
+                        for i, sign in self.map_maker.sign_map.items():
+                            if sign.Class == self.target_b:
                                 self.del2_end_index = sign.index
+
                         if self.dmode!="drop_complete":
                             if self.del2_end_index != -1:
                                 if self.dmode != "drop_stop":
@@ -456,8 +451,10 @@ class Planner:
                 # self.target.points.append(self.planning_msg.point)
                 # self.target.header.stamp=rospy.Time.now()
                 # # self.target_pub.publish(self.target)
-
-                self.map.points = self.map_maker.showObstacleMap().points
+                if self.is_delivery==True:
+                    self.map.points = self.map_maker.showSignMap().points
+                else:
+                    self.map.points = self.map_maker.showObstacleMap().points
                 self.map.header.stamp = rospy.Time.now()
                 self.map_pub.publish(self.map)
 
@@ -494,12 +491,6 @@ class Planner:
 
     # Callback Functions
     def obstacleCallback(self, obs, local):
-        # lidar_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(obs.header.stamp.secs))+".%09d" % obs.header.stamp.nsecs
-        # pos_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(local.header.stamp.secs))+".%09d" % local.header.stamp.nsecs
-        # print(lidar_stamp)
-        # print(pos_stamp)
-        print(obs.circle_number)
-
         self.obs_local.x = local.pose.pose.position.x
         self.obs_local.y = local.pose.pose.position.y
         self.obs_local.heading = local.twist.twist.angular.z
@@ -509,6 +500,16 @@ class Planner:
         self.obstacle_msg.circle_number = obs.circle_number
         if self.global_path.x:
             self.map_maker.mapping(self, obs.circles, self.obs_local)
+
+    def calibObjectCallback(self, calib_object, local):
+        calib_object_local=Local()
+        calib_object_local.x = local.pose.pose.position.x
+        calib_object_local.y = local.pose.pose.position.y
+        calib_object_local.heading = local.twist.twist.angular.z
+
+        if self.planning_msg.mode in ["delivery1","delivery2"]:
+            self.map_maker.delivery_sign_mapping(self, self.local_path, calib_object, calib_object_local)
+
 
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x
