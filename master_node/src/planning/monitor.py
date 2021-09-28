@@ -17,10 +17,14 @@ from lib.planner_utils.sig_int_handler import SigIntHandler
 
 class Monitor:
     def __init__(self):
+
+        rospy.init_node("monitor", anonymous=False)
+
         self.planning_msg = Planning_Info()
         self.serial_msg = Serial_Info() # Serial Read
         self.control_msg = Serial_Info() # serial Write
         self.parking_msg = Int32()
+        self.navpvt_msg = NavPVT()
         self.global_path = Path()
         self.local = Local()
         

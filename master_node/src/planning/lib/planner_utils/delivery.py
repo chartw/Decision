@@ -32,7 +32,7 @@ class deliveryClass:
         self.b_order_vote = {'123':0, '132': 0, '213':0, '231':0, '312':0, '321':0}
     def make_delivery_path(self,planner):
         temp=""
-        if "sd" in planner.map:
+        if "sd" in planner.mapname:
             temp="sd_"
         with open("./map/kcity_map/Delivery_kcity/"+temp+"delivery_a.csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)

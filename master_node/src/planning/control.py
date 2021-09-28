@@ -83,6 +83,10 @@ class Control:
                 if self.planning_info.mode == "general":
                     self.pub_msg = general.driving(self)
 
+                if self.planning_info.mode in ["pickup_complete","drop_complete"] :
+                    print(general)
+                    self.pub_msg = general.driving(self)
+
                 elif self.planning_info.mode == "emergency_stop":
                     self.pub_msg.steer = 0
                     self.pub_msg.speed = 0
@@ -186,7 +190,7 @@ class Control:
                         # self.pub_msg.steer=-self.pub_msg.steer
 
                 elif self.planning_info.mode == "backward_complete":
-                    self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)
+                    self.serialParkingComm(0x00, MAX_BRAKE, BGEAR)
 
                 elif self.planning_info.mode == "parking_end":
                     self.serialParkingComm(0x00, MAX_BRAKE, FGEAR)

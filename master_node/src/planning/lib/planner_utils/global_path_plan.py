@@ -58,7 +58,7 @@ class node:  # node
 class GPP:
     def __init__(self, planner):
         self.local = planner.local
-        self.map=planner.map
+        self.map=planner.mapname
 
         self.nodelist = {}
         if self.map=="songdo" or self.map=="kcity":

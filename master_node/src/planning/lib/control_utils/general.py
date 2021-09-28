@@ -224,9 +224,16 @@ class General:
         elif self.mode == "small" or self.mode == "big":
             self.temp_msg.speed = self.calc_velocity()
             if control.serial_info.speed > self.temp_msg.speed + 1:
-                self.temp_msg.brake=50
+                self.temp_msg.brake=60
         elif self.mode == "bump":
             self.temp_msg.speed = 8
+        elif self.mode == "pickup_complete" or self.mode == "drop_complete":
+            self.temp_msg.speed = 15
+
+            # if hypot(self.path.x[self.cur_idx]-self.cur.x,self.path.y[self.cur_idx]-self.cur.y)>1:
+            #     self.temp_msg.speed = 8
+            # else:
+            #     self.temp_msg.speed = 13
 
         # self.temp_msg.steer = self.pure_pursuit(control.local_point)
         self.temp_msg.steer = self.pure_pursuit()

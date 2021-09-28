@@ -29,6 +29,10 @@ class Avoidance:
         else:
             self.target_index=int(min(min_idx+(self.lookahead-min_dist)*10,max_index))
         # print(self.target_index)
+
+        if hypot(self.path.x[self.cur_idx]-self.cur.x,self.path.y[self.cur_idx]-self.cur.y)>1:
+    
+
         self.target_point=Point32(local_path.x[self.target_index],local_path.y[self.target_index],0)
         return self.target_point
 
@@ -137,13 +141,13 @@ class Avoidance:
             temp_msg.gear = 0
 
         if control.planning_info.mode == "delivery1" or control.planning_info.mode == "delivery2":
-            temp_msg.speed = 10
+            temp_msg.speed = 12
     
         else:
             temp_msg.speed=8
 
         if control.serial_info.speed > temp_msg.speed+1:
-            temp_msg.brake=50
+            temp_msg.brake=70
 
         if control.planning_info.mode == "small" or control.planning_info.mode == "big":
             temp_msg.path_steer=0

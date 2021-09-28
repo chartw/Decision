@@ -40,8 +40,8 @@ class Planner:
         # 후에는 roslaunch 파일로 바꾸면서 parameter 가져오도록 변경
         arg = rospy.myargv(argv=sys.argv)
         # arg[0] == planner.py
-        self.map = str(arg[1])
-        if self.map == "songdo" or self.map == "kcity":
+        self.mapname = str(arg[1])
+        if self.mapname == "songdo" or self.mapname == "kcity":
             self.goal_node = str(arg[2])
 
         else:
@@ -49,6 +49,8 @@ class Planner:
                 self.veh_index = int(arg[2])
             else:
                 self.veh_index = 0
+
+
         """
         publish 정의
         Planning_Info
@@ -180,6 +182,8 @@ class Planner:
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         rospy.Subscriber("/control", Serial_Info, self.controlCallback)
+    
+
     def check_dist(self):
         obs_dist = -1
         id = -1
@@ -226,6 +230,9 @@ class Planner:
                     self.gpp_requested = False
                     if self.veh_index==7000:
                         self.is_delivery=True
+
+                    if self.mapname=="sd_del2":
+                        self.is_delivery =True
 
                 if not self.control_ready:
                     self.planning_msg.mode = "general"
@@ -360,7 +367,7 @@ class Planner:
 
                                     distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
                                     print(distance)
-                                    if distance < 1.5:  # 돌려보고 수정하기
+                                    if distance < 4:  # 돌려보고 수정하기
                                         self.planning_msg.mode = "delivery_stop"
                                         self.planning_msg.dist = distance
 
@@ -377,9 +384,10 @@ class Planner:
                                         self.dmode = "pickup_complete"
 
                         else:
-                            self.planning_msg.mode = "general"
+                            self.planning_msg.mode = "pickup_complete"
 
                     elif self.planning_msg.mode == "delivery2":
+                        self.target_b=2
                         self.sign_map = self.map_maker.b_sign_mapping(self, self.delivery_decision.delivery_path_b, self.obstacle_msg.circles)
                         self.local_path = self.delivery_decision.delivery_path_b
                         self.planning_msg.path = self.local_path
@@ -388,33 +396,36 @@ class Planner:
                             print(i, self.target_b)
                             if i == self.target_b:
                                 self.del2_end_index = sign.index
-                        
-                        if self.del2_end_index != -1:
-                            if self.dmode != "drop_stop":
-                                self.dmode = "drop"
-                                self.planning_msg.mode = "drop"
+                        if self.dmode!="drop_complete":
+                            if self.del2_end_index != -1:
+                                if self.dmode != "drop_stop":
+                                    self.dmode = "drop"
+                                    self.planning_msg.mode = "drop"
 
-                                end_point_x = self.local_path.x[self.del2_end_index]
-                                end_point_y = self.local_path.y[self.del2_end_index]
+                                    end_point_x = self.local_path.x[self.del2_end_index]
+                                    end_point_y = self.local_path.y[self.del2_end_index]
 
-                                distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
-                                print(distance)
-                                if distance < 1.5:  # 돌려보고 수정하기
+                                    distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
+                                    print(distance)
+                                    if distance < 4:  # 돌려보고 수정하기
+                                        self.planning_msg.mode = "delivery_stop"
+                                        self.planning_msg.dist = distance
+
+                                    if self.serial_msg.speed < 0.1:
+                                        self.dmode = "drop_stop"
+                                        self.count = time.time()
+
+                                elif self.dmode == "drop_stop":
+                                    print("--------------------")
                                     self.planning_msg.mode = "delivery_stop"
-                                    self.planning_msg.dist = distance
+                                    self.planning_msg.dist = 0
 
-                                if self.serial_msg.speed < 0.1:
-                                    self.dmode = "drop_stop"
-                                    self.count = time.time()
-
-                            elif self.dmode == "drop_stop":
-                                print("--------------------")
-                                self.planning_msg.mode = "delivery_stop"
-                                self.planning_msg.dist = 0
-
-                                if time.time() - self.count > 5.5:
-                                    self.dmode = "drop_complete"
-                                    self.is_delivery = False
+                                    if time.time() - self.count > 5.5:
+                                        self.dmode = "drop_complete"
+                        
+                        elif self.dmode=="drop_complete":
+                            self.planning_msg.mode=="drop_complete"
+                                    
 
                     #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
                     #         self.planning_msg.mode = "delivery_stop"
@@ -487,6 +498,8 @@ class Planner:
         # pos_stamp=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(local.header.stamp.secs))+".%09d" % local.header.stamp.nsecs
         # print(lidar_stamp)
         # print(pos_stamp)
+        print(obs.circle_number)
+
         self.obs_local.x = local.pose.pose.position.x
         self.obs_local.y = local.pose.pose.position.y
         self.obs_local.heading = local.twist.twist.angular.z

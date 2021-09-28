@@ -50,7 +50,7 @@ class ParkingPlan:
             print("======Initialize Parking")
 
 
-            if hypot(planner.global_path.x[882]-planner.local.x, planner.global_path.y[882]-planner.local.y)<2:
+            if hypot(planner.global_path.x[920]-planner.local.x, planner.global_path.y[920]-planner.local.y)<3:
                 self.parking_state = "parking-base1"
                 self.start_base = self.base[0]
                 self.time_count=time()
@@ -60,22 +60,22 @@ class ParkingPlan:
             print("======Waiting on Parking base 1")
 
 
-            if time() - self.time_count > 3 and planner.parking_target <= 3:
+            if time() - self.time_count > 5 and planner.parking_target <= 3:
                 self.parking_state = "parking_ready"
-            elif time() - self.time_count > 3 and planner.parking_target > 3:
+            elif time() - self.time_count > 5 and planner.parking_target > 3:
                 self.parking_state = "parking_going2next"
                 self.time_count=time()
         
         elif self.parking_state == "parking_going2next":
             print("======Going to base2")
             # if time() - self.time_count > 4:
-            if hypot(planner.global_path.x[1060]-planner.local.x, planner.global_path.y[1060]-planner.local.y)<2:
+            if hypot(planner.global_path.x[1020]-planner.local.x, planner.global_path.y[1020]-planner.local.y)<2:
                 self.time_count = time()
                 self.parking_state = "parking-base2"
 
         elif self.parking_state == "parking-base2":
             print("======Waiting on Parking base 2")
-            if time() - self.time_count > 3:
+            if time() - self.time_count > 5:
                 self.parking_state = "parking_ready"
 
         elif self.parking_state == "parking_ready":
@@ -107,7 +107,7 @@ class ParkingPlan:
                 self.time_bcount=time()
                 
         elif self.parking_state == "backward_complete":
-            if time() - self.time_bcount > 2:
+            if time() - self.time_bcount > 4:
                 self.parking_state = "parking_end"
 
         return self.parking_state
