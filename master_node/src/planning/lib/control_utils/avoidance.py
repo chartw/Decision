@@ -30,7 +30,7 @@ class Avoidance:
             self.target_index=int(min(min_idx+(self.lookahead-min_dist)*10,max_index))
         # print(self.target_index)
 
-        if hypot(self.path.x[self.cur_idx]-self.cur.x,self.path.y[self.cur_idx]-self.cur.y)>1:
+        # if hypot(self.path.x[self.cur_idx]-self.cur.x,self.path.y[self.cur_idx]-self.cur.y)>1:
     
 
         self.target_point=Point32(local_path.x[self.target_index],local_path.y[self.target_index],0)
