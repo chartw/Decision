@@ -34,6 +34,8 @@ class deliveryClass:
         temp=""
         if "sd" in planner.mapname:
             temp="sd_"
+        if "yh" in planner.mapname:
+            temp="yh_"
         with open("./map/kcity_map/Delivery_kcity/"+temp+"delivery_a.csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
             for line in csv_reader:

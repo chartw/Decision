@@ -219,6 +219,7 @@ class Planner:
     def get_veh_index(self):
         min_dis = -1
         min_idx = 0
+        print(len(self.global_path.x))
         for i in range(max(self.veh_index - 100, 0), self.veh_index + 100):
             dis = hypot(self.global_path.x[i] - self.local.x, self.global_path.y[i] - self.local.y)
             if min_dis > dis or min_dis == -1:
@@ -386,8 +387,14 @@ class Planner:
                             self.planning_msg.mode = "pickup_complete"
 
                     elif self.planning_msg.mode == "delivery2":
-
+                        self.local_path = self.delivery_decision.delivery_path_b
+                        self.planning_msg.path = self.local_path
+                        print(self.target_b)
                         for i, sign in self.map_maker.sign_map.items():
+                            if sign.Class in ['A1','A2','A3']:
+                                self.del1_end_index = sign.index
+                                self.target_b=sign.Class.replace('A','B')
+
                             if sign.Class == self.target_b:
                                 self.del2_end_index = sign.index
 
