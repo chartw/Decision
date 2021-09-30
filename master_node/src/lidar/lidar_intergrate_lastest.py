@@ -343,13 +343,13 @@ def parking(temp_points):
     
     if lidar_cur_state == 'parking-base1':
         for i in range(0, 6):
-            if parking_result[i] < 5:
+            if parking_result[i] < 10:
                 result_number = i + 1
                 return result_number
 
     elif lidar_cur_state == 'parking-base2':
         for i in range(3, 6):
-            if parking_result[i] < 5:
+            if parking_result[i] < 10:
                 result_number = i + 1
                 return result_number            
     
