@@ -254,7 +254,6 @@ class Planner:
                 self.planning_msg.local = self.local
                 self.veh_index = self.get_veh_index()
                 self.stop_index = self.stop_line_checker.stop_idx_check(planner)
-                # print(self.stop_index)
 
                 if not self.is_parking:
                     self.planning_msg.dist = self.check_dist()
