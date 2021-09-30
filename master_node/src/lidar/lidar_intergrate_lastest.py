@@ -72,12 +72,12 @@ def getMsg_general(lidar_data):
     # ROI 실행 코드 부분 
     filter_axis = 'x'
     axis_min = 0.1
-    axis_max = 10.0
+    axis_max = 12.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'y'
-    axis_min = -4.0
-    axis_max = 4.0
+    axis_min = -5.0
+    axis_max = 5.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
@@ -92,7 +92,7 @@ def getMsg_general(lidar_data):
     test.points = []
     for p in cloud:
         park = Point32()
-        park.x = p[0] + 1.05
+        park.x = p[0] + 0.8
         park.y = p[1]
         park.z = 0
         get_in.values.append(p[3])
@@ -108,6 +108,8 @@ def getMsg_static(lidar_data):
     points_list = []
 
     for p in gen:
+        # if p[4]==7:
+
         points_list.append([p[0], p[1], p[2], p[3]])
 
     pcl_data = pcl.PointCloud_PointXYZRGB()
@@ -123,12 +125,12 @@ def getMsg_static(lidar_data):
     # ROI 실행 코드 부분 
     filter_axis = 'x'
     axis_min = 0.1
-    axis_max = 7.0
+    axis_max = 8.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'y'
-    axis_min = -4.0
-    axis_max = 4.0
+    axis_min = -2.0
+    axis_max = 2.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
@@ -143,7 +145,7 @@ def getMsg_static(lidar_data):
     test.points = []
     for p in cloud:
         park = Point32()
-        park.x = p[0] + 1.05
+        park.x = p[0] + 0.8
         park.y = p[1]
         park.z = 0
         get_in.values.append(p[3])
@@ -166,44 +168,43 @@ def getMsg_dynamic(lidar_data):
 
     pcl_data = pcl.PointCloud_PointXYZRGB()
     pcl_data.from_list(points_list)
-   
+
     # downsampling 실행 코드 부분
     print("Input :", pcl_data)
 
-    LEAF_SIZE = 0.1
+    LEAF_SIZE = 0.01
     cloud = do_voxel_grid_downssampling(pcl_data, LEAF_SIZE)
     print("Output :", cloud)
 
     # ROI 실행 코드 부분 
     filter_axis = 'x'
     axis_min = 0.1
-    axis_max = 7.0
+    axis_max = 10.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'y'
-    axis_min = -4.0
-    axis_max = 4.0
+    axis_min = -5.0
+    axis_max = 5.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
-    axis_min = 0.0
+    axis_min = -0.1
     axis_max = 2.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
+
 
     test = PointCloud()
     get_in = ChannelFloat32()
     get_in.name = 'VLP_intensity'
     test.points = []
     for p in cloud:
-        # if p[1] > 0:
         park = Point32()
-        park.x = p[0] 
+        park.x = p[0] + 0.8
         park.y = p[1]
         park.z = 0
         get_in.values.append(p[3])
         test.points.append(park)
 
-    #print("Input :", cnt)
     test.channels.append(get_in)
     test.header.frame_id = 'world'
     test.header.stamp = rospy.Time.now()
@@ -239,8 +240,8 @@ def getMsg_delivery(lidar_data):
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
-    axis_min = -0.1
-    axis_max = 3.0
+    axis_min = 0.1
+    axis_max = 2.0
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     test = PointCloud()
@@ -426,7 +427,7 @@ def Do_state():
     if lidar_cur_state == 'small' or lidar_cur_state=='big':
         print("avoidance ON")
         getMsg_static(lidar_temp)
-    elif lidar_cur_state=='delivery':
+    elif lidar_cur_state=='delivery1' or lidar_cur_state=='delivery2':
         print("delivery ON")
         getMsg_delivery(lidar_temp)
     elif lidar_cur_state == 'kid':

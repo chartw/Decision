@@ -37,6 +37,7 @@ class calibration:
         if not self.lidar_flag:
             self.lidar_msg = msg
             self.lidar_flag = True
+
     
     def get_bbox(self, msg):
         if not self.bbox_flag:
@@ -51,7 +52,7 @@ class calibration:
         if self.lidar_flag and self.bbox_flag:
             for i in range(len(self.bbox_msg)):
                 center_x, center_y = self.bbox_msg[i].bbox.center.x, self.bbox_msg[i].bbox.center.y
-                delta_x, delta_y = self.bbox_msg[i].bbox.size_x/2 , self.bbox_msg[i].bbox.size_y/2 
+                delta_x, delta_y = self.bbox_msg[i].bbox.size_x/3 , self.bbox_msg[i].bbox.size_y/3 
                 bbox_space = [[center_x - delta_x, center_y - delta_y], [center_x - delta_x, center_y + delta_y], [center_x + delta_x, center_y + delta_y], [center_x + delta_x, center_y - delta_y]]
                 # print(bbox_space)
                 bbox_temp = Polygon(bbox_space)

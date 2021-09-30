@@ -21,7 +21,7 @@ class Obstacle:
     dict={'A1':0,'A2':0,'A3':0,'B1':0,'B2':0,'B3':0,}
 
 
-    def __init__(self, idx, dist, ema, Class):
+    def __init__(self, idx, dist, ema, Class=None):
         self.index = idx
         self.dist = dist
         self.EMA = ema
@@ -231,7 +231,8 @@ class Mapping:
 
         theta = radians(local.heading)
         for i in range(len(signs.points)):
-            sign_class=self.result_mapping[signs.Class[i]]
+            print(signs.Classes[i])
+            sign_class=self.result_mapping[str(signs.Classes[i])]
 
             if not sign_class in self.sign_name:
                 continue

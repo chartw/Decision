@@ -168,7 +168,7 @@ class Planner:
         ts.registerCallback(self.obstacleCallback)
 
         # Pose(Local), CalibObjects Time Synchronize
-        calib_sub = message_filters.Subscriber("/calib_object", Obstacles)
+        calib_sub = message_filters.Subscriber("/calib_object", CalibObjects)
         ts = message_filters.ApproximateTimeSynchronizer([calib_sub, local_sub], 10, 0.1, allow_headerless=True)
         ts.registerCallback(self.calibObjectCallback)
 
@@ -508,7 +508,7 @@ class Planner:
         calib_object_local.heading = local.twist.twist.angular.z
 
         if self.planning_msg.mode in ["delivery1","delivery2"]:
-            self.map_maker.delivery_sign_mapping(self, self.local_path, calib_object, calib_object_local)
+            self.map_maker.delivery_sign_mapping(self.local_path, calib_object, calib_object_local)
 
 
     def localCallback(self, msg):
