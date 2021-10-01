@@ -80,7 +80,7 @@ class Control:
 
             if self.control_ready:
                 print(self.planning_info.mode)
-                if self.planning_info.mode == "general":
+                if self.planning_info.mode in ["general", "general_left"]:
                     self.pub_msg = general.driving(self)
 
                 if self.planning_info.mode in ["pickup_complete","drop_complete"] :

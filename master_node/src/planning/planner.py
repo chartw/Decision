@@ -293,12 +293,19 @@ class Planner:
                         signal = self.traffic_light.run(self.object_msg)
                         print(signal)
                         if self.global_path.mission[self.stop_index] in signal and self.planning_msg.dist < 6:
-                            self.planning_msg.mode = "general"
+                            if self.global_path.mission[self.stop_index] == "Left":
+                                self.planning_msg.mode="general_left"
+                            else:
+                                self.planning_msg.mode = "general"
+
                             self.signal_ignore=True
                         else:
                             self.planning_msg.mode = "normal_stop"
                     else:
-                        self.planning_msg.mode="general"
+                        if self.global_path.mission[self.stop_index] == "Left":
+                            self.planning_msg.mode="general_left"
+                        else:
+                            self.planning_msg.mode = "general"
 
                 #####Parking
                 if self.is_parking is True:
