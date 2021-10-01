@@ -35,22 +35,6 @@ class Planner:
     def __init__(self):
         rospy.init_node("Planner", anonymous=False)
 
-        # 맵 이름이랑, 도착노드 system argument로 받아서 실행하자~
-        # ex) python3 planner.py songdo 38
-        # 후에는 roslaunch 파일로 바꾸면서 parameter 가져오도록 변경
-        arg = rospy.myargv(argv=sys.argv)
-        # arg[0] == planner.py
-        self.mapname = str(arg[1])
-        if self.mapname == "songdo" or self.mapname == "kcity":
-            self.goal_node = str(arg[2])
-
-        else:
-            if len(arg) >= 3:
-                self.veh_index = int(arg[2])
-            else:
-                self.veh_index = 0
-
-
         """
         publish 정의
         Planning_Info
@@ -151,6 +135,22 @@ class Planner:
         self.count = 0
         self.booleanFalse = False
 
+        self.arg = rospy.myargv(argv=sys.argv)
+        # arg[0] == planner.py
+        self.mapname = str(self.arg[1])
+        if self.mapname == "songdo" or self.mapname == "kcity":
+            self.goal_node = str(self.arg[2])
+
+        else:
+            if len(self.arg) >= 3:
+                self.veh_index = int(self.arg[2])
+
+            elif len(self.arg) >= 4:
+                self.parking_target = int(self.arg[3])
+
+            else:
+                self.veh_index = 0
+
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
         self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
         self.parking_path_pub = rospy.Publisher("/parking_path", PointCloud, queue_size=1)
@@ -172,7 +172,6 @@ class Planner:
         ts = message_filters.ApproximateTimeSynchronizer([calib_sub, local_sub], 10, 0.1, allow_headerless=True)
         ts.registerCallback(self.calibObjectCallback)
 
-
         rospy.Subscriber("/Parking_num", Int32, self.parkingCallback)
 
         # Localization
@@ -189,7 +188,10 @@ class Planner:
         rospy.Subscriber("/surface", String, self.surfaceCallback)
 
         rospy.Subscriber("/control", Serial_Info, self.controlCallback)
-    
+
+        # 맵 이름이랑, 도착노드 system argument로 받아서 실행하자~
+        # ex) python3 planner.py songdo 38
+        # 후에는 roslaunch 파일로 바꾸면서 parameter 가져오도록 변경
 
     def check_dist(self):
         obs_dist = -1
@@ -236,11 +238,11 @@ class Planner:
                 if self.gpp_requested:
                     self.global_path = self.global_path_maker.path_plan()
                     self.gpp_requested = False
-                    if self.veh_index==7000:
-                        self.is_delivery=True
+                    if self.veh_index == 7000:
+                        self.is_delivery = True
 
-                    if self.mapname=="sd_del2":
-                        self.is_delivery =True
+                    if self.mapname == "sd_del2":
+                        self.is_delivery = True
 
                 if not self.control_ready:
                     self.planning_msg.mode = "general"
@@ -351,9 +353,9 @@ class Planner:
                             self.planning_msg.path = self.local_path
 
                             for i, sign in self.map_maker.sign_map.items():
-                                if sign.Class in ['A1','A2','A3']:
+                                if sign.Class in ["A1", "A2", "A3"]:
                                     self.del1_end_index = sign.index
-                                    self.target_b=sign.Class.replace('A','B')
+                                    self.target_b = sign.Class.replace("A", "B")
 
                             if self.del1_end_index != -1:
 
@@ -387,14 +389,14 @@ class Planner:
                         self.planning_msg.path = self.local_path
                         print(self.target_b)
                         for i, sign in self.map_maker.sign_map.items():
-                            if sign.Class in ['A1','A2','A3']:
+                            if sign.Class in ["A1", "A2", "A3"]:
                                 self.del1_end_index = sign.index
-                                self.target_b=sign.Class.replace('A','B')
+                                self.target_b = sign.Class.replace("A", "B")
 
                             if sign.Class == self.target_b:
                                 self.del2_end_index = sign.index
 
-                        if self.dmode!="drop_complete":
+                        if self.dmode != "drop_complete":
                             if self.del2_end_index != -1:
                                 if self.dmode != "drop_stop":
                                     self.dmode = "drop"
@@ -416,10 +418,9 @@ class Planner:
 
                                     if time.time() - self.count > 5.5:
                                         self.dmode = "drop_complete"
-                        
-                        elif self.dmode=="drop_complete":
-                            self.planning_msg.mode=="drop_complete"
-                                    
+
+                        elif self.dmode == "drop_complete":
+                            self.planning_msg.mode == "drop_complete"
 
                     #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
                     #         self.planning_msg.mode = "delivery_stop"
@@ -450,7 +451,7 @@ class Planner:
                 # self.target.points.append(self.planning_msg.point)
                 # self.target.header.stamp=rospy.Time.now()
                 # # self.target_pub.publish(self.target)
-                if self.is_delivery==True:
+                if self.is_delivery == True:
                     self.map.points = self.map_maker.showSignMap().points
                 else:
                     self.map.points = self.map_maker.showObstacleMap().points
@@ -501,14 +502,13 @@ class Planner:
             self.map_maker.mapping(self, obs.circles, self.obs_local)
 
     def calibObjectCallback(self, calib_object, local):
-        calib_object_local=Local()
+        calib_object_local = Local()
         calib_object_local.x = local.pose.pose.position.x
         calib_object_local.y = local.pose.pose.position.y
         calib_object_local.heading = local.twist.twist.angular.z
 
-        if self.planning_msg.mode in ["delivery1","delivery2"]:
+        if self.planning_msg.mode in ["delivery1", "delivery2"]:
             self.map_maker.delivery_sign_mapping(self.local_path, calib_object, calib_object_local)
-
 
     def localCallback(self, msg):
         self.local.x = msg.pose.pose.position.x
@@ -534,7 +534,10 @@ class Planner:
     def parkingCallback(self, msg):
         print("Parking Callback run")
         print(msg.data)
-        self.parking_target = msg.data
+        if self.arg[4]:
+            pass
+        else:
+            self.parking_target = msg.data
 
     def controlCallback(self, msg):
         self.control_ready = msg.ready
