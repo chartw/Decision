@@ -26,12 +26,12 @@ class ParkingPlan:
         self.start_base = self.base[0]
 
         self.parking_lot = []
-        self.parking_lot.append(Point32(12.1308345505808, 11.0446013152771, 0))
-        self.parking_lot.append(Point32(13.4108293420966, 13.6314223045673, 0))
-        self.parking_lot.append(Point32(14.9418337803785, 16.2236247106905, 0))
-        self.parking_lot.append(Point32(16.275, 18.867, 0))
-        self.parking_lot.append(Point32(17.706, 21.457, 0))
-        self.parking_lot.append(Point32(19.0818345505808, 24.1776013152771, 0))
+        self.parking_lot.append(Point32(11.8309969592872, 11.0347312166313, 0))
+        self.parking_lot.append(Point32(13.1110007098258, 13.6212837015752, 0))
+        self.parking_lot.append(Point32(14.6419962468501, 16.2137528573887, 0))
+        self.parking_lot.append(Point32(15.975, 18.867, 0))
+        self.parking_lot.append(Point32(17.406, 21.457, 0))
+        self.parking_lot.append(Point32(18.7819969592872, 24.1677312166313, 0))
         # self.parking_lot.append(Point32(17.623907356361915, 41.175622253568505, 0))
         # self.parking_lot.append(Point32(15.85266480396189, 38.844924089730185, 0))
         # self.parking_lot.append(Point32(14.16998329088652, 36.736197374027405, 0))
