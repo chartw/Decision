@@ -108,8 +108,8 @@ def getMsg_static(lidar_data):
     points_list = []
 
     for p in gen:
-        if p[4]==7:
-            points_list.append([p[0], p[1], p[2], p[3]])
+        # if p[4]==7:
+        points_list.append([p[0], p[1], p[2], p[3]])
 
     pcl_data = pcl.PointCloud_PointXYZRGB()
     pcl_data.from_list(points_list)
@@ -129,7 +129,7 @@ def getMsg_static(lidar_data):
 
     filter_axis = 'y'
     axis_min = -2.0
-    axis_max = 0.1
+    axis_max = 0.2
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
