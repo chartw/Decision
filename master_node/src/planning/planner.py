@@ -365,19 +365,16 @@ class Planner:
                                     end_point_y = self.local_path.y[self.del1_end_index]
 
                                     distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
-                                    print(distance)
-                                    if distance < 4:  # 돌려보고 수정하기
-                                        self.planning_msg.mode = "delivery_stop"
-                                        self.planning_msg.dist = distance
 
-                                    if self.serial_msg.speed < 0.1:
+                                    self.planning_msg.mode = "delivery_stop"
+                                    self.planning_msg.dist = distance
+
+                                    if self.serial_msg.speed < 0.1 and distance < 1.5:
                                         self.dmode = "pickup_stop"
                                         self.count = time.time()
 
                                 elif self.dmode == "pickup_stop":
-                                    print("--------------------")
                                     self.planning_msg.mode = "delivery_stop"
-                                    self.planning_msg.dist = 0
 
                                     if time.time() - self.count > 5.5:
                                         self.dmode = "pickup_complete"
@@ -407,19 +404,15 @@ class Planner:
                                     end_point_y = self.local_path.y[self.del2_end_index]
 
                                     distance = hypot(end_point_x - self.local.x, end_point_y - self.local.y)
-                                    print(distance)
-                                    if distance < 4:  # 돌려보고 수정하기
-                                        self.planning_msg.mode = "delivery_stop"
-                                        self.planning_msg.dist = distance
+                                    self.planning_msg.mode = "delivery_stop"
+                                    self.planning_msg.dist = distance
 
-                                    if self.serial_msg.speed < 0.1:
+                                    if self.serial_msg.speed < 0.1 and distance < 1.5:
                                         self.dmode = "drop_stop"
                                         self.count = time.time()
 
                                 elif self.dmode == "drop_stop":
-                                    print("--------------------")
                                     self.planning_msg.mode = "delivery_stop"
-                                    self.planning_msg.dist = 0
 
                                     if time.time() - self.count > 5.5:
                                         self.dmode = "drop_complete"
