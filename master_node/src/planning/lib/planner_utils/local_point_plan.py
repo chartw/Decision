@@ -40,7 +40,7 @@ class LPP:
 
         x_list, y_list=[],[]
         
-        for i in range(len(target_point_list)-15):
+        for i in range(10,len(target_point_list)-1):
             x_list.append(target_point_list[i][1].x)
             y_list.append(target_point_list[i][1].y)
         x_list.append(self.global_path.x[last_index])

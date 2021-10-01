@@ -15,10 +15,14 @@ class Avoidance:
         self.target_point=Point32()
 
 
-    def point_plan(self, local_path):
+    def point_plan(self, control, local_path):
         max_index=len(local_path.x)-1
         min_idx=0
         min_dist=-1
+        if control.planning_info.mode=="big":
+            self.lookahead=3
+        else:
+            self.lookahead=3
         for i in range(max_index+1):
             dis = hypot(local_path.x[i] - self.local.x, local_path.y[i] - self.local.y)
             if dis < min_dist or min_dist == -1:
@@ -38,7 +42,7 @@ class Avoidance:
 
     def pure_pursuit(self,control):
 
-        point=self.point_plan(control.local_path)
+        point=self.point_plan(control, control.local_path)
 
         tmp_th = degrees(atan2((point.y - self.local.y), (point.x - self.local.x)))
 

@@ -87,6 +87,7 @@ class MissionPlan:
         else:
             self.mode="general"
             planner.is_delivery = False
+            planner.signal_ignore=False
             planner.local_path=Path()
             
 

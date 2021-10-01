@@ -103,6 +103,7 @@ class Planner:
 
         self.count = 0
         self.booleanFalse = False
+        self.signal_ignore=False
 
         self.arg = rospy.myargv(argv=sys.argv)
         # arg[0] == planner.py
@@ -285,15 +286,19 @@ class Planner:
                     self.is_delivery = True
 
                 elif self.planning_msg.mode == "crossroad":
+                    if not self.signal_ignore:
                     # self.planning_msg.mode = "general"
 
-                    self.planning_msg.dist = (self.stop_index - self.veh_index) / 10
-                    signal = self.traffic_light.run(self.object_msg)
-                    print(signal)
-                    if self.global_path.mission[self.stop_index] in signal:
-                        self.planning_msg.mode = "general"
+                        self.planning_msg.dist = (self.stop_index - self.veh_index) / 10
+                        signal = self.traffic_light.run(self.object_msg)
+                        print(signal)
+                        if self.global_path.mission[self.stop_index] in signal and self.planning_msg.dist < 6:
+                            self.planning_msg.mode = "general"
+                            self.signal_ignore=True
+                        else:
+                            self.planning_msg.mode = "normal_stop"
                     else:
-                        self.planning_msg.mode = "normal_stop"
+                        self.planning_msg.mode="general"
 
                 #####Parking
                 if self.is_parking is True:
