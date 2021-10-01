@@ -237,7 +237,7 @@ class General:
         elif self.mode == "bump":
             self.temp_msg.speed = 8
         elif self.mode == "pickup_complete" or self.mode == "drop_complete":
-            self.temp_msg.speed = 15
+            self.temp_msg.speed = 16
 
             # if hypot(self.path.x[self.cur_idx]-self.cur.x,self.path.y[self.cur_idx]-self.cur.y)>1:
             #     self.temp_msg.speed = 8

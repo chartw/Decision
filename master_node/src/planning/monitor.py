@@ -30,6 +30,7 @@ class Monitor:
         self.navpvt_msg = NavPVT()
         self.gps_status_list = ["GPS only", 'RTK floating', "RTK fixed!"]
         self.gps_status = -1
+        self.seq=0
 
         rospy.Subscriber("/control", Serial_Info, self.controlCallback)
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)
@@ -55,6 +56,7 @@ class Monitor:
         self.navpvt_msg = msg
     def navsatfixCallback(self, msg):
         self.gps_status = self.gps_status_list[msg.status.status]
+        self.seq=msg.header.seq
        
     def planningCallback(self, msg):
         self.planning_msg = msg
@@ -80,6 +82,7 @@ class Monitor:
     status: {self.gps_status}\n\
     horizontalAcc: {self.navpvt_msg.hAcc:10d}    verticalAcc: {self.navpvt_msg.vAcc:10d} \n\
     headingAcc:    {self.navpvt_msg.headAcc:10d}       speedAcc: {self.navpvt_msg.sAcc:10d} \n\
+    seq:            {self.seq:10d}\n\
     ")
     
 if __name__ == "__main__":
