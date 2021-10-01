@@ -129,7 +129,7 @@ def getMsg_static(lidar_data):
 
     filter_axis = 'y'
     axis_min = -2.0
-    axis_max = 2.0
+    axis_max = 0.1
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
