@@ -30,7 +30,6 @@ class Monitor:
         self.navpvt_msg = NavPVT()
         self.gps_status_list = ["GPS only", 'RTK floating', "RTK fixed!"]
         self.gps_status = -1
-        rospy.init_node("Monitor", anonymous=False)
 
         rospy.Subscriber("/control", Serial_Info, self.controlCallback)
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)

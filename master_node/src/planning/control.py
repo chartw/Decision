@@ -108,12 +108,10 @@ class Control:
                 elif self.planning_info.mode == "kid" or self.planning_info.mode == "bump" or self.planning_info.mode == "pickup_complete":
                     self.pub_msg = general.driving(self)
 
-                elif self.planning_info.mode in ["normal_stop", "delivery_stop"]:
-                    if self.planning_info.mode=="normal_stop":
-                        self.pub_msg = general.driving(self)
+                elif self.planning_info.mode == "normal_stop":
+
+                    self.pub_msg = general.driving(self)
                     
-                    elif self.Planning_Info.mode == "delivery_stop":
-                        self.pub_msg=avoidance.driving(self)
                     dist = self.planning_info.dist-1  # 범퍼위치로 기준 재설정\
                     print(dist)
                     self.pub_msg.speed = max(0, dist*0.9)
@@ -224,19 +222,34 @@ class Control:
                     if self.local_path.x:
                         self.pub_msg = avoidance.driving(self)
 
-                # elif self.planning_info.mode == "delivery_stop":
-                #     self.pub_msg = avoidance.driving(self)
+                elif self.planning_info.mode == "delivery_stop":
+                    self.pub_msg = avoidance.driving(self)
+                    
+                    dist = self.planning_info.dist  # 범퍼위치로 기준 재설정\
+                    print(dist)
+                    self.pub_msg.speed = max(0, dist*1)
+                    t = dist / ((self.serial_info.speed / 3.6) + 0.1)
+                    # self.pub_msg.brake=int(200/t) # 유리 함수 200/x
+                    # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
+                    # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
+                    t = max(1, dist / ((self.serial_info.speed / 3.6) + 0.1))
+                    # self.pub_msg.brake=int(-100*sqrt(t-1)+200) # 제곱근 함수
+                    # self.pub_msg.brake = int(-75 * sqrt(t - 1) + 220)  # 제곱근 함수
 
-                #     dist = self.planning_info.dist
-                #     self.pub_msg.speed = max(0, dist / 2)
-                #     t = dist / ((self.serial_info.speed / 3.6) + 0.1)
-                #     # self.pub_msg.brake=int(200/t) # 유리 함수 200/x
-                #     # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
-                #     # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
-                #     t = max(1, t)
-                #     # self.pub_msg.brake=int(-100*sqrt(t-1)+200) # 제곱근 함수
-                #     self.pub_msg.brake = int(-75 * sqrt(t - 1) + 200)  # 제곱근 함수
-                #     self.pub_msg.brake = max(0, min(200, self.pub_msg.brake))
+                    # a=1.137
+                    # b=-62
+                    # c=42
+                    a = 1.252
+                    b = -12
+                    c = 21
+
+                    if dist < 1.5:
+                        self.pub_msg.brake=200
+
+                    else:
+                        self.pub_msg.brake = int(0.9*a**(-t+c)+b)  # 제곱근 함수
+                        
+                        self.pub_msg.brake = max(0, min(200, self.pub_msg.brake))
 
                 # print(self.veh_idx)
 
