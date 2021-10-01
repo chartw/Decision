@@ -17,7 +17,6 @@ find_package(
   tf
   visualization_msgs
   genmsg
-  darknet_ros_msgs
   message_generation
 )
 
@@ -66,6 +65,8 @@ add_message_files(
    Local.msg
    Serial_Info.msg
    Planning_Info.msg
+   lane.msg
+   CalibObjects.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -88,7 +89,6 @@ generate_messages(
    geometry_msgs   
    std_msgs 
    master_node
-   darknet_ros_msgs
 )
 
 ################################################

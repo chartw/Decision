@@ -4,6 +4,7 @@ import socket #UDP LAN
 import rospy
 from nav_msgs.msg import Odometry
 import pymap3d
+from planning.lib.planner_utils.sig_int_handler import SigIntHandler
 
 class Localization():
     def __init__(self):
@@ -18,7 +19,7 @@ class Localization():
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #UDP LAN
-        recv_address = ('127.0.0.1',9092) #default 9092
+        recv_address = ('127.0.0.1',9094) #default 9092
         self.sock.bind(recv_address)
 
         print("Connect!")
@@ -44,6 +45,7 @@ class Localization():
     def get_xy(self,  lat,  lon,  alt):
         e, n, u = pymap3d.geodetic2enu(lat, lon, alt, 37.239231667, 126.773156667, 15.400)
         # e, n, u = pymap3d.geodetic2enu(lat, lon, alt, 37.239233333, 126.773156667, 15.400)
+        # print(e,n)
         return e, n
 
     def publish_msg(self):
@@ -76,6 +78,7 @@ if __name__ == '__main__':
     rate = rospy.Rate(1000)
  
     loc.connect()
- 
+    SI = SigIntHandler()
+    SI.run()
     while not rospy.is_shutdown():
         loc.main()

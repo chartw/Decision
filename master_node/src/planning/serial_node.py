@@ -6,11 +6,13 @@ import rospy
 import struct
 import threading
 from master_node.msg import Serial_Info
+from lib.planner_utils.sig_int_handler import SigIntHandler
 
 
 class Serial_Node:
     def __init__(self):
         # Serial Connect
+        # self.ser = serial.Serial("/dev/gigacha/erp42", 115200)
         self.ser = serial.Serial("/dev/ttyUSB0", 115200)
 
         # ROS Publish
@@ -34,7 +36,7 @@ class Serial_Node:
         th_serialRead.start()
 
         # Main Loop
-        rate = rospy.Rate(50)
+        rate = rospy.Rate(20)
         while not rospy.is_shutdown():
             # print("----------loop!")
             # self.serialRead()
@@ -62,7 +64,8 @@ class Serial_Node:
                     tmp1, tmp2 = struct.unpack("2h", packet[6:10])
                     self.serial_msg.speed = tmp1 / 10  # km/h
                     self.serial_msg.steer = -tmp2 / 71  # degree
-                    # print("speed", tmp1, "steer", tmp2)
+                    # print("ser,con:",self.serial_msg.steer,self.control_input.steer)
+                    print("speed", tmp1, "steer", tmp2)
 
                     tmp3 = struct.unpack("B", packet[10:11])
                     self.serial_msg.brake = tmp3[0]
@@ -112,7 +115,7 @@ class Serial_Node:
             
         )
 
-        print('speed is', self.control_input.speed * 10)
+        # print('speed is', self.control_input.speed * 10)
         # print('write', result)  # big endian 방식으로 타입에 맞춰서 pack
         # tail = '\r\n'.encode()
         self.ser.write(result)
@@ -127,4 +130,8 @@ class Serial_Node:
         self.control_input = msg
 
 
+
+
+SI = SigIntHandler()
+SI.run()
 erp = Serial_Node()

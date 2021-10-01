@@ -16,7 +16,7 @@ class ExpMovAvgFilter:
     
     def tracking(self, input):
 
-        if hypot(input.x-self.expAvg.x, input.y-self.expAvg.y) < 2:
+        if hypot(input.x-self.expAvg.x, input.y-self.expAvg.y) < 1.5:
             return True
 
         return False

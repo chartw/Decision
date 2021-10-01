@@ -5,3 +5,5 @@ float32 speed
 float32 steer
 int16 brake
 float32 encoder
+float32 path_steer
+int16 ready

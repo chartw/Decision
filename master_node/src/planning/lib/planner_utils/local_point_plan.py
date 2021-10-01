@@ -31,7 +31,7 @@ class LPP:
 
         # 마지막 target point로부터 20 index 만큼 떨어진 점을 마지막으로 추가함
         # out of index 방지 위해 min 활용
-        last_index=min(target_point_list[-1][0]+30, len(self.global_path.x)-1)
+        last_index=max(0,min(target_point_list[-1][0]+40, len(self.global_path.x)-1))
 
         if self.target_index==len(self.global_path.x)-1:
             self.target_index=target_point_list[-1][0]+50 - (len(self.global_path.x)-1)
@@ -39,7 +39,10 @@ class LPP:
         # cubic spline으로 경로 생성 local -> target_point_list[0][1] -> target_point_list[1][1]...
 
         x_list, y_list=[],[]
-        for i in range(len(target_point_list)):
+        start_index=0
+        if len(target_point_list) > 10:
+            start_index=10
+        for i in range(start_index,len(target_point_list)):
             x_list.append(target_point_list[i][1].x)
             y_list.append(target_point_list[i][1].y)
         x_list.append(self.global_path.x[last_index])

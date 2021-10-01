@@ -58,7 +58,7 @@ class node:  # node
 class GPP:
     def __init__(self, planner):
         self.local = planner.local
-        self.map=planner.map
+        self.map=planner.mapname
 
         self.nodelist = {}
         if self.map=="songdo" or self.map=="kcity":
@@ -290,6 +290,8 @@ class GPP:
     def make_global_map(self):
         with open("./map/kcity_map/" + self.map + ".csv", mode="r") as csv_file:
             csv_reader = csv.reader(csv_file)
+
+
             for line in csv_reader:
                 self.global_path.x.append(float(line[0]))
                 self.global_path.y.append(float(line[1]))
@@ -301,3 +303,41 @@ class GPP:
                 # self.global_path.s.append(float(line[4]))
                 self.global_path.env.append(line[5])
                 self.global_path.mission.append(line[6])
+
+
+########################################밑에 다지우고 위에 주석풀면 원래코드
+
+            # x = []
+            # y = []
+            # k = []
+            # yaw = []
+            # i = 0
+            # for line in csv_reader:
+            #     x.append(float(line[0]))
+            #     y.append(float(line[1]))
+
+            #     deg_yaw=(degrees(float(line[2]))+360) % 360
+            #     yaw.append(deg_yaw)
+
+            #     k.append(float(line[3]))
+            #     # self.global_path.s.append(float(line[4]))
+            #     self.global_path.env.append(line[5])
+            #     self.global_path.mission.append(line[6])
+            #     i += 1
+            #     if i == 1219 :
+            #         break;
+            #     print(i)
+            # i-=1
+            # print("ㅁㅎ여ㅑ호")
+            
+            # for _ in range(1218):
+            #     if i == 0 :
+            #         break;
+            #     self.global_path.x.append(x[i])
+            #     self.global_path.y.append(y[i])
+
+            #     self.global_path.k.append(k[i])
+            #     self.global_path.heading.append(yaw[i])
+
+            #     i-=1
+                
