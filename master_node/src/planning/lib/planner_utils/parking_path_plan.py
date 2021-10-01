@@ -41,6 +41,7 @@ class ParkingPlan:
         planner.parking_target_index = 0
 
         self.veh_index = 0
+        self.parking_target=-1
 
 
     def parking_state_decision(self, planner):
@@ -58,11 +59,12 @@ class ParkingPlan:
         elif self.parking_state == "parking-base1":
             #TODO: 파킹 베이스 2로 가는 조건문
             print("======Waiting on Parking base 1")
+            self.parking_target=planner.parking_target
 
 
-            if time() - self.time_count > 5 and planner.parking_target <= 3:
+            if time() - self.time_count > 5 and self.parking_target <= 3:
                 self.parking_state = "parking_ready"
-            elif time() - self.time_count > 5 and planner.parking_target > 3:
+            elif time() - self.time_count > 5 and self.parking_target > 3:
                 self.parking_state = "parking_going2next"
                 self.time_count=time()
         
@@ -80,16 +82,16 @@ class ParkingPlan:
 
         elif self.parking_state == "parking_ready":
 
-            if planner.parking_target != -1:
+            if self.parking_target != -1:
                 self.parking_state = "parking_start"
-                print("Parking start for target ", planner.parking_target)
+                print("Parking start for target ", self.parking_target)
 
         elif self.parking_state == "parking_start":
-            print("======Parking for target ", planner.parking_target)
+            print("======Parking for target ", self.parking_target)
 
             #밖에서 파킹스택 쌓기. 
-            dis_x = self.parking_lot[planner.parking_target - 1].x - planner.local.x
-            dis_y = self.parking_lot[planner.parking_target - 1].y - planner.local.y
+            dis_x = self.parking_lot[self.parking_target - 1].x - planner.local.x
+            dis_y = self.parking_lot[self.parking_target - 1].y - planner.local.y
             
             print("======Distance from goal_point: ", hypot(dis_x, dis_y))
             if hypot(dis_x, dis_y) < 2:
@@ -98,7 +100,7 @@ class ParkingPlan:
    
 
         elif self.parking_state == "parking_complete":
-            if time() - self.time_count > 3:
+            if time() - self.time_count > 13:
                 self.parking_state = "parking_backward"
 
         elif self.parking_state == "parking_backward":

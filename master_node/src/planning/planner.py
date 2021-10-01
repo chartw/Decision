@@ -84,9 +84,40 @@ class Planner:
 
         self.control_ready = 0
 
-        # self.veh_index = 0
+        self.veh_index = 0
         self.target_index = 0
         self.stop_index = 0
+
+
+        self.pmode = ""
+        self.is_parking = False
+        self.parking_target = 1
+        self.parking_target_index = 0
+        self.target_index = 0
+        self.target_b = None
+        self.del1_end_index = -1
+        self.del2_end_index = -1
+
+        self.is_delivery = False
+        self.dmode = ""
+
+        self.count = 0
+        self.booleanFalse = False
+
+        self.arg = rospy.myargv(argv=sys.argv)
+        # arg[0] == planner.py
+        self.mapname = str(self.arg[1])
+        if self.mapname == "songdo" or self.mapname == "kcity":
+            self.goal_node = str(self.arg[2])
+
+        else:
+            if len(self.arg) >= 4:
+                self.parking_target = int(self.arg[3])
+            elif len(self.arg) >= 3:
+                self.veh_index = int(self.arg[2])
+            else:
+                self.veh_index = 0
+
 
         # gpp 변수 선언
         self.global_path_maker = GPP(self)
@@ -120,36 +151,8 @@ class Planner:
         self.target = PointCloud()
         self.target.header.frame_id = "world"
 
-        self.pmode = ""
-        self.is_parking = False
-        self.parking_target = 1
-        self.parking_target_index = 0
-        self.target_index = 0
-        self.target_b = None
-        self.del1_end_index = -1
-        self.del2_end_index = -1
 
-        self.is_delivery = False
-        self.dmode = ""
 
-        self.count = 0
-        self.booleanFalse = False
-
-        self.arg = rospy.myargv(argv=sys.argv)
-        # arg[0] == planner.py
-        self.mapname = str(self.arg[1])
-        if self.mapname == "songdo" or self.mapname == "kcity":
-            self.goal_node = str(self.arg[2])
-
-        else:
-            if len(self.arg) >= 3:
-                self.veh_index = int(self.arg[2])
-
-            elif len(self.arg) >= 4:
-                self.parking_target = int(self.arg[3])
-
-            else:
-                self.veh_index = 0
 
         self.planning_info_pub = rospy.Publisher("/planner", Planning_Info, queue_size=1)
         self.local_path_pub = rospy.Publisher("/local_path", PointCloud, queue_size=1)
@@ -534,7 +537,7 @@ class Planner:
     def parkingCallback(self, msg):
         print("Parking Callback run")
         print(msg.data)
-        if self.arg[4]:
+        if len(self.arg)==4:
             pass
         else:
             self.parking_target = msg.data

@@ -353,7 +353,7 @@ def parking(temp_points):
                 result_number = i + 1
                 return result_number            
     
-    # return result_number
+    return result_number
 
 
 def getMsg_parking(lidar_data):

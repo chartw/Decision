@@ -12,7 +12,8 @@ from lib.planner_utils.sig_int_handler import SigIntHandler
 class Serial_Node:
     def __init__(self):
         # Serial Connect
-        self.ser = serial.Serial("/dev/gigacha/erp42", 115200)
+        # self.ser = serial.Serial("/dev/gigacha/erp42", 115200)
+        self.ser = serial.Serial("/dev/ttyUSB0", 115200)
 
         # ROS Publish
         rospy.init_node("Serial", anonymous=False)
