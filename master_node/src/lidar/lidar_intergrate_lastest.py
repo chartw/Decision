@@ -109,7 +109,6 @@ def getMsg_static(lidar_data):
 
     for p in gen:
         if p[4]==7:
-
             points_list.append([p[0], p[1], p[2], p[3]])
 
     pcl_data = pcl.PointCloud_PointXYZRGB()

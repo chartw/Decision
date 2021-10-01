@@ -114,6 +114,7 @@ class Planner:
         else:
             if len(self.arg) >= 4:
                 self.parking_target = int(self.arg[3])
+                self.veh_index = int(self.arg[2])
             elif len(self.arg) >= 3:
                 self.veh_index = int(self.arg[2])
             else:
@@ -238,14 +239,12 @@ class Planner:
         rate = rospy.Rate(20)  # 100hz
 
         while not rospy.is_shutdown():
+            print(len(self.local_path.x))
             if self.is_local:
                 if self.gpp_requested:
                     self.global_path = self.global_path_maker.path_plan()
                     self.gpp_requested = False
                     if self.veh_index == 7000:
-                        self.is_delivery = True
-
-                    if self.mapname == "sd_del2":
                         self.is_delivery = True
 
                 if not self.control_ready:
@@ -276,6 +275,8 @@ class Planner:
 
                     if self.local_path.x:
                         self.planning_msg.path = self.local_path
+                    else:
+                        self.planning_msg.path=Path()
                 #     if self.local_path.x:
                 #         self.planning_msg.path = self.local_path
                 #         self.planning_msg.point = self.local_path_maker.point_plan(self, 2)
@@ -402,11 +403,9 @@ class Planner:
                     elif self.planning_msg.mode == "delivery2":
                         self.local_path = self.delivery_decision.delivery_path_b
                         self.planning_msg.path = self.local_path
+
                         print(self.target_b)
                         for i, sign in self.map_maker.sign_map.items():
-                            if sign.Class in ["A1", "A2", "A3"]:
-                                self.del1_end_index = sign.index
-                                self.target_b = sign.Class.replace("A", "B")
 
                             if sign.Class == self.target_b:
                                 self.del2_end_index = sign.index
@@ -435,15 +434,8 @@ class Planner:
                                         self.dmode = "drop_complete"
 
                         elif self.dmode == "drop_complete":
-                            self.planning_msg.mode == "drop_complete"
+                            self.planning_msg.mode = "drop_complete"
 
-                    #     if self.delivery_decision.stop_decision(self.planning_msg.path.x[-1], self.planning_msg.path.y[-1]):
-                    #         self.planning_msg.mode = "delivery_stop"
-                    #         self.count = time.time()
-
-                    # elif self.planning_msg.mode == "delivery_stop" and time.time() - self.count > 5.5:
-                    #     self.planning_msg.mode = "general"
-                    #     self.is_delivery = False
 
                 self.vis_local_path.points = []
                 for i in range(len(self.local_path.x)):

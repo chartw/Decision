@@ -213,13 +213,13 @@ class General:
         return V_in
 
     def driving(self, control):
-        min_dis = 999
-        min_idx = 999
-        for i in range(len(self.path.x)):
-            dis = hypot(self.path.x[i]-self.cur.x,self.path.y[i]-self.cur.y)
-            if dis < min_dis:
-                min_dis = dis
-        print("lat_err : ", min_dis)
+        # min_dis = 999
+        # min_idx = 999
+        # for i in range(len(self.path.x)):
+        #     dis = hypot(self.path.x[i]-self.cur.x,self.path.y[i]-self.cur.y)
+        #     if dis < min_dis:
+        #         min_dis = dis
+        # print("lat_err : ", min_dis)
         self.mode = control.planning_info.mode
         self.cur_idx = control.planning_info.cur_index
         # self.temp_msg = Serial_Info()

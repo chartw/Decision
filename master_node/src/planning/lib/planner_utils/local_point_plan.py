@@ -39,8 +39,10 @@ class LPP:
         # cubic spline으로 경로 생성 local -> target_point_list[0][1] -> target_point_list[1][1]...
 
         x_list, y_list=[],[]
-        
-        for i in range(10,len(target_point_list)-1):
+        start_index=0
+        if len(target_point_list) > 10:
+            start_index=10
+        for i in range(start_index,len(target_point_list)):
             x_list.append(target_point_list[i][1].x)
             y_list.append(target_point_list[i][1].y)
         x_list.append(self.global_path.x[last_index])

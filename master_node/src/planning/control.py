@@ -11,7 +11,7 @@ from lib.control_utils.normal_stop import NormalStop
 from lib.control_utils.parking import Parking
 from lib.control_utils.stack import ParkingStack
 from lib.planner_utils.sig_int_handler import SigIntHandler
-
+import gc
 import time
 
 """
@@ -77,14 +77,14 @@ class Control:
 
         # main loop
         while not rospy.is_shutdown():
-
+            print(len(self.local_path.x))
             if self.control_ready:
                 print(self.planning_info.mode)
                 if self.planning_info.mode in ["general", "general_left"]:
+
                     self.pub_msg = general.driving(self)
 
                 if self.planning_info.mode in ["pickup_complete","drop_complete"] :
-                    print(general)
                     self.pub_msg = general.driving(self)
 
                 elif self.planning_info.mode == "emergency_stop":
@@ -97,9 +97,10 @@ class Control:
                     self.pub_msg.auto_manual = 1
 
                 elif self.planning_info.mode == "small" or self.planning_info.mode == "big":
-                    if self.planning_info.path.x:
-                        self.local_path.x = self.planning_info.path.x
-                        self.local_path.y = self.planning_info.path.y
+                    print('sibal', len(self.local_path.x))
+
+                    self.local_path.x = self.planning_info.path.x
+                    self.local_path.y = self.planning_info.path.y
                     if self.local_path.x:
                         self.pub_msg = avoidance.driving(self)
                     else:
@@ -212,18 +213,23 @@ class Control:
                     self.planning_info.path.y = self.global_path.y
                     self.local_path.heading = self.global_path.heading
 
+
                     # self.planning_info.mode = "general"
                 elif self.planning_info.mode in self.delivery_modes:
                     if self.planning_info.path.x:
                         self.local_path.x = self.planning_info.path.x
                         self.local_path.y = self.planning_info.path.y
-                        self.local_path.heading = self.planning_info.path.heading
 
                     if self.local_path.x:
                         self.pub_msg = avoidance.driving(self)
 
                 elif self.planning_info.mode == "delivery_stop":
-                    self.pub_msg = avoidance.driving(self)
+                    if self.planning_info.path.x:
+                        self.local_path.x = self.planning_info.path.x
+                        self.local_path.y = self.planning_info.path.y
+
+                    if self.local_path.x:
+                        self.pub_msg = avoidance.driving(self)
                     
                     dist = self.planning_info.dist  # 범퍼위치로 기준 재설정\
                     print(dist)
@@ -284,8 +290,7 @@ class Control:
 
             if self.global_path.x:
                 self.control_ready = True
-        else:
-            self.local_path
+            
 
     def serialCallback(self, msg):
 

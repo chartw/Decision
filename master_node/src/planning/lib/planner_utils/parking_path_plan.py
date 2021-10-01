@@ -62,9 +62,9 @@ class ParkingPlan:
             self.parking_target=planner.parking_target
 
 
-            if time() - self.time_count > 5 and self.parking_target <= 3:
+            if time() - self.time_count > 3 and self.parking_target <= 3:
                 self.parking_state = "parking_ready"
-            elif time() - self.time_count > 5 and self.parking_target > 3:
+            elif time() - self.time_count > 3 and self.parking_target > 3:
                 self.parking_state = "parking_going2next"
                 self.time_count=time()
         
@@ -77,7 +77,7 @@ class ParkingPlan:
 
         elif self.parking_state == "parking-base2":
             print("======Waiting on Parking base 2")
-            if time() - self.time_count > 5:
+            if time() - self.time_count > 3:
                 self.parking_state = "parking_ready"
 
         elif self.parking_state == "parking_ready":

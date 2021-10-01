@@ -78,7 +78,7 @@ class Avoidance:
 
     def parking_pure_pursuit(self,control):
 
-        point=self.point_plan(control.local_path)
+        point=self.point_plan(control,control.local_path)
 
         tmp_th = degrees(atan2((point.y - self.local.y), (point.x - self.local.x)))
 
@@ -113,7 +113,7 @@ class Avoidance:
     def bpure_pursuit(self, control):
         # pure pursuit 계산되는 부분
 
-        point=self.point_plan(control.local_path)
+        point=self.point_plan(control,control.local_path)
 
         self.cur = control.local
         tmp_th = atan2((point.y - self.cur.y), (point.x - self.cur.x))
@@ -153,10 +153,6 @@ class Avoidance:
         if control.serial_info.speed > temp_msg.speed+1:
             temp_msg.brake=70
 
-        if control.planning_info.mode == "small" or control.planning_info.mode == "big":
-            temp_msg.path_steer=0
-        else: 
-            temp_msg.path_steer=control.local_path.heading[self.target_index]
         print(temp_msg.path_steer)
         temp_msg.auto_manual = 1
         target=PointCloud()

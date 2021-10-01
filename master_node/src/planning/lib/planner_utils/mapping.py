@@ -46,9 +46,9 @@ class Mapping:
     local = Local()  # 위치 정보
     sign_cnt = 0
     b_cnt = 0
-    big_car_length=5
-    big_1st_lane=1.7
-    big_2nd_lane=4
+    big_car_length=5.5
+    big_1st_lane=1.8
+    big_2nd_lane=3.5
     big_path_dist=3.4
 
     del_wall_filter=3
