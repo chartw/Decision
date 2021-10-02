@@ -62,11 +62,11 @@ class ParkingPlan:
             self.parking_target=planner.parking_target
 
 
-            if time() - self.time_count > 3 and self.parking_target <= 3:
+            if time() - self.time_count > 3 and self.parking_target !=-1:
                 self.parking_state = "parking_ready"
-            elif time() - self.time_count > 3 and self.parking_target > 3:
-                self.parking_state = "parking_going2next"
-                self.time_count=time()
+            # elif time() - self.time_count > 3 and self.parking_target > 3:
+            #     self.parking_state = "parking_going2next"
+            #     self.time_count=time()
         
         elif self.parking_state == "parking_going2next":
             print("======Going to base2")

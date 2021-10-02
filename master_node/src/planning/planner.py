@@ -373,6 +373,7 @@ class Planner:
                                     self.del1_end_index = sign.index
                                     self.target_b = sign.Class.replace("A", "B")
 
+
                             if self.del1_end_index != -1:
 
                                 if self.dmode != "pickup_stop":
@@ -409,6 +410,7 @@ class Planner:
 
                             if sign.Class == self.target_b:
                                 self.del2_end_index = sign.index
+
 
                         if self.dmode != "drop_complete":
                             if self.del2_end_index != -1:
