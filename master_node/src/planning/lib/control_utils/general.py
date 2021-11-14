@@ -142,44 +142,43 @@ class General:
 
 
 
-    def calc_velocity(self):
+    def calc_velocity(self, D_cur):
 
         D_ref = 10
-        V_in = self.pid.run(D_ref,D_cur)
+        V_control = self.pid.run(D_ref,D_cur,self.serial_info.speed)
 
-        if V_in > 20:
-            V_in = 20
-        elif V_in < V_ref:
-            V_in = V_ref
+        V_in = self.serial_info.speed
+        if V_control > 0:
+            V_in+=V_control
 
-        return V_in
+        elif V_control < 0 :
+            V_in-=V_control
+            # B_in = abs(V_control)*12.75
+            B_in=0
+
+        V_in = max(min(V_in, 5),0)
+        B_in = min(B_in, 255)
+        return V_in, B_in
 
     def driving(self, control):
-        # min_dis = 999
-        # min_idx = 999
-        # for i in range(len(self.path.x)):
-        #     dis = hypot(self.path.x[i]-self.cur.x,self.path.y[i]-self.cur.y)
-        #     if dis < min_dis:
-        #         min_dis = dis
-        # print("lat_err : ", min_dis)
         self.mode = control.planning_info.mode
         self.cur_idx = control.planning_info.cur_index
         # self.temp_msg = Serial_Info()
         if self.mode == "general":
-            self.temp_msg.speed = self.calc_velocity()
+            self.temp_msg.speed, self.temp_msg.brake = self.calc_velocity(control.D_cur)      # 매개변수로 거리값
         elif self.mode=="general_left":
             self.temp_msg.speed = 12
 
-        elif self.mode == "kid":
-            self.temp_msg.speed = self.calc_velocity()
-        elif self.mode == "small" or self.mode == "big":
-            self.temp_msg.speed = self.calc_velocity()
-            if control.serial_info.speed > self.temp_msg.speed + 1:
-                self.temp_msg.brake=60
-        elif self.mode == "bump":
-            self.temp_msg.speed = 8
-        elif self.mode == "pickup_complete" or self.mode == "drop_complete":
-            self.temp_msg.speed = 16
+        # elif self.mode == "kid":
+        #     self.temp_msg.speed = self.calc_velocity()
+        # elif self.mode == "small" or self.mode == "big":
+        #     self.temp_msg.speed = self.calc_velocity()
+        #     if control.serial_info.speed > self.temp_msg.speed + 1:
+        #         self.temp_msg.brake=60
+        # elif self.mode == "bump":
+        #     self.temp_msg.speed = 8
+        # elif self.mode == "pickup_complete" or self.mode == "drop_complete":
+        #     self.temp_msg.speed = 16
 
             # if hypot(self.path.x[self.cur_idx]-self.cur.x,self.path.y[self.cur_idx]-self.cur.y)>1:
             #     self.temp_msg.speed = 8

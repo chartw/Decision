@@ -1,6 +1,6 @@
 import rospy
-from math import sqrt
-from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
+from math import sqrt, hypot
+from master_node.msg import Path, Serial_Info, Planning_Info, Local, Obstacles  # 개발할 메세지 타입
 from geometry_msgs.msg import Point32
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
@@ -53,6 +53,8 @@ class Control:
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)  # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
+        rospy.Subscriber("/obstacles", Obstacles, self.distanceCallback)
+
         self.planning_info = Planning_Info()
         self.serial_info = Serial_Info()  # 위에서 받았는데 얘가 계속 초기화 되는거 아니가?? @@@@@@@@
         self.local = Local()
@@ -72,8 +74,9 @@ class Control:
         self.start_time = time.time()
         self.current_time = time.time()
         self.delivery_modes = ["delivery1", "delivery2", "pickup", "drop"]
+        self.D_cur=0
 
-        rate = rospy.Rate(20)  # 100hz
+        rate = rospy.Rate(10)  # 100hz
 
         # main loop
         while not rospy.is_shutdown():
@@ -306,6 +309,12 @@ class Control:
 
     def parkingCallback(self, msg):
         self.parking_target = msg.data
+
+    def distanceCallback(self,msg):
+
+        for circle in msg.circles:
+            if abs(circle.center.y) < 1:
+                self.D_cur=hypot(circle.center.x,circle.center.y)
 
 
 if __name__ == "__main__":
