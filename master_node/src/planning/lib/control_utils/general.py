@@ -14,6 +14,7 @@ import sys
 import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
 from nav_msgs.msg import Odometry
+from lib.control_utils.pid import PID
 
 # from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import PointCloud
@@ -67,6 +68,7 @@ class General:
         self.curve_flag = False
 
         self.first_check = True
+        self.pid=PID()
 
     def select_target(self, lookahead):  # 여기서 사용하는 self.path 관련정보를 바꾸면 됨. 여기서바꿔야하나?
         # min_dis = 99999
@@ -138,72 +140,12 @@ class General:
 
     ###################조향 속도 구분선###################
 
-    def PID(self, V_ref):
 
-        self.V_err_old = self.V_err
-        self.V_err = V_ref - self.serial_info.speed  ##외않대 ㅡ.ㅡ########
-
-        # print('self.cur:',self.cur)
-        # print('self.path',self.path)
-        # print("self.serial_info.speed:", self.serial_info)
-
-        self.t_old = self.t_new
-        self.t_new = time.time()
-        self.t_delta = self.t_new - self.t_old
-        self.t = time.time() - self.t_start
-
-        self.V_err_pro = self.Kp_v * self.V_err
-        if self.Ki_v * self.V_err * self.t_delta < 100:
-            self.V_err_inte += self.Ki_v * self.V_err * self.t_delta
-        self.V_err_deri = self.Kd_v * (self.V_err - self.V_err_old) / self.t_delta
-
-        V_in = self.V_err_pro + self.V_err_inte + self.V_err_deri
-
-        return V_in
-
-    # def calc_k(self, k):
-    #     critical_k = ((self.safety_factor / self.V_ref_max) ** 2) * 19.071
-
-    #     if k < critical_k:
-    #         V_ref = self.V_ref_max
-    #         self.curve_flag = False
-    #     else:
-    #         V_ref = self.safety_factor * (sqrt(19.071 / k))
-    #         self.curve_flag = True
-    #     return V_ref  # km/h
-
-    # def calc_Vref(self):
-    #     self.select_target(self.speed_lookahead) # 안쓰임
-    #     target_k = abs(self.path.k[self.speed_idx])
-    #     V_ref = self.calc_k(target_k)
-
-    #     return int(V_ref)
 
     def calc_velocity(self):
 
-        if self.past_mode != self.mode:  # 미션이 바뀔 때에는 변수리셋.
-            # 다른 미션에서 general로 왔을때 pid 변수초기화
-            self.t_start = time.time()
-            self.t_new = 0
-            self.t_delta = 0
-            self.t_old = 0
-            self.t_new = 0
-            self.t = 0
-
-            self.V_err = 0
-            self.V_err_old = 0
-            self.V_err_inte = 0
-            self.V_err_deri = 0
-            self.V_err_pro = 0
-
-        # V_ref = self.calc_Vref()
-
-        if self.mode == "kid":
-            V_ref = 10
-        # print("speed:",self.speed_idx)
-        # print("cur",self.cur_idx)
-        V_ref = self.path.k[self.speed_idx]
-        V_in = self.PID(V_ref)
+        D_ref = 10
+        V_in = self.pid.run(D_ref,D_cur)
 
         if V_in > 20:
             V_in = 20
