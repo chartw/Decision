@@ -144,20 +144,23 @@ class General:
 
     def calc_velocity(self, D_cur):
 
-        D_ref = 10
+        D_ref = 8
+        B_in = 0
         V_control = self.pid.run(D_ref,D_cur,self.serial_info.speed)
-
+        print("vcontrol = ",V_control)
         V_in = self.serial_info.speed
         if V_control > 0:
             V_in+=V_control
 
         elif V_control < 0 :
-            V_in-=V_control
-            # B_in = abs(V_control)*12.75
-            B_in=0
+            V_in+=V_control
+            B_in = int(abs(V_control)*5)
+            # B_in=0
 
-        V_in = max(min(V_in, 5),0)
+        V_in = max(min(V_in, 8),0)
         B_in = min(B_in, 255)
+        print("V_in",V_in,"B_in",B_in)
+        print("D_cur = ",D_cur)
         return V_in, B_in
 
     def driving(self, control):
@@ -189,7 +192,6 @@ class General:
         self.temp_msg.steer = self.pure_pursuit()
         # print("x,y",self.cur.x,self.cur.y)
 
-        self.temp_msg.brake = 0
         self.temp_msg.encoder = 0
         self.temp_msg.gear = 0
         self.temp_msg.emergency_stop = 0

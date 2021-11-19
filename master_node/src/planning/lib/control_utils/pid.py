@@ -8,10 +8,14 @@ class PID:
         self.dt = 1.0 / 10.0
 
     def run(self, target, current, Vcurrent):
-        if Vcurrent < 1:
+        if Vcurrent < 0.2  and current <= 1:
             self.pre_error = 0.0
             self.error_sum = 0.0
-            return -0.7  # 어떤값으로 주는게 좋을지 찾아야함
+            return 0.7  # 어떤값으로 주는게 좋을지 찾아야함
+        elif current >= 10:
+            self.pre_error = 0.0
+            self.error_sum = 0.0
+            return 8.0
         else:
             error = current - target
 

@@ -311,10 +311,13 @@ class Control:
         self.parking_target = msg.data
 
     def distanceCallback(self,msg):
-
+        self.D_cur = 10
         for circle in msg.circles:
             if abs(circle.center.y) < 1:
-                self.D_cur=hypot(circle.center.x,circle.center.y)
+                dist = hypot(circle.center.x,circle.center.y)
+                if self.D_cur > dist:
+                    self.D_cur=dist
+        
 
 
 if __name__ == "__main__":

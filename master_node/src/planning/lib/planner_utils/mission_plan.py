@@ -95,5 +95,7 @@ class MissionPlan:
 
         # self.mode = "parking-base1"
 
+        self.mode="general"
+
         return self.mode
 
