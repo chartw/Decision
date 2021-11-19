@@ -81,7 +81,7 @@ def getMsg_general(lidar_data):
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 
     filter_axis = 'z'
-    axis_min = 0.1
+    axis_min = -0.1
     axis_max = 2
     cloud = do_passthrough(cloud, filter_axis, axis_min, axis_max)
 

@@ -258,7 +258,7 @@ class Planner:
                 # Localization Information
                 self.planning_msg.local = self.local
                 self.veh_index = self.get_veh_index()
-                self.stop_index = self.stop_line_checker.stop_idx_check(planner)
+                # self.stop_index = self.stop_line_checker.stop_idx_check(planner)
 
                 if not self.is_parking:
                     self.planning_msg.dist = self.check_dist()
@@ -524,6 +524,7 @@ class Planner:
         self.local.y = msg.pose.pose.position.y
         self.local.heading = msg.twist.twist.angular.z
         self.is_local = True
+        print(self.local)
 
     def surfaceCallback(self, msg):
         self.surface_msg = msg

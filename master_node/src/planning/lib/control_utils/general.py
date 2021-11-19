@@ -10,6 +10,8 @@ import rospy
 
 import numpy as np
 from math import radians, degrees, sin, cos, hypot, atan2, pi
+import matplotlib.pyplot as plt
+
 import sys
 import time
 from master_node.msg import Obstacles, PangPang, Planning_Info, Path, Local, Serial_Info
@@ -69,6 +71,12 @@ class General:
 
         self.first_check = True
         self.pid=PID()
+        self.dist_list=[]
+        self.dt_list=[0]
+        self.target_list=[]
+        self.vc_list=[]
+        self.dt = 1.0 / 10.0
+
 
     def select_target(self, lookahead):  # 여기서 사용하는 self.path 관련정보를 바꾸면 됨. 여기서바꿔야하나?
         # min_dis = 99999
@@ -147,6 +155,15 @@ class General:
         D_ref = 8
         B_in = 0
         V_control = self.pid.run(D_ref,D_cur,self.serial_info.speed)
+        V_control = min(V_control,8)
+        self.dist_list.append(D_cur)
+        self.target_list.append(D_ref)
+        self.vc_list.append(V_control)
+        plt.plot(self.dt_list,self.dist_list,'b')
+        plt.plot(self.dt_list,self.target_list,'r')
+        # plt.plot(self.dt_list,self.vc_list,'g')
+        plt.pause(0.001)
+        self.dt_list.append(self.dt_list[-1]+self.dt)
         print("vcontrol = ",V_control)
         V_in = self.serial_info.speed
         if V_control > 0:
@@ -154,7 +171,7 @@ class General:
 
         elif V_control < 0 :
             V_in+=V_control
-            B_in = int(abs(V_control)*5)
+            B_in = int(abs(V_control)*2.5)
             # B_in=0
 
         V_in = max(min(V_in, 8),0)

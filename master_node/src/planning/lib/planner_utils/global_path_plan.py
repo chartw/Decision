@@ -63,8 +63,8 @@ class GPP:
         self.nodelist = {}
         if self.map=="songdo" or self.map=="kcity":
             self.goal_id = planner.goal_node
-            self.node_set(planner.map)
-            self.lane_set(planner.map)
+            self.node_set(self.map)
+            self.lane_set(self.map)
 
         self.global_path=Path()
         self.target_index=0

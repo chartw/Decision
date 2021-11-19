@@ -1,13 +1,16 @@
 class PID:
     def __init__(self):
-        self.P = 2.0
-        self.I = 0.04
-        self.D = 2.0
+        self.P = 4.0
+        self.I = 0.5
+        self.D = 0
         self.pre_error = 0.0
         self.error_sum = 0.0
         self.dt = 1.0 / 10.0
 
+
+
     def run(self, target, current, Vcurrent):
+
         if Vcurrent < 0.2  and current <= 1:
             self.pre_error = 0.0
             self.error_sum = 0.0

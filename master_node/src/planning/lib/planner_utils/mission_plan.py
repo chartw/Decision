@@ -38,59 +38,59 @@ class MissionPlan:
         self.current_time = time.time()
 
     def decision(self, planner):
-        mission=planner.global_path.mission[planner.veh_index]
-        env=planner.global_path.env[planner.veh_index]
+        # mission=planner.global_path.mission[planner.veh_index]
+        # env=planner.global_path.env[planner.veh_index]
         dist=planner.planning_msg.dist
 
-        print(planner.stop_index,planner.veh_index)
+        # print(planner.stop_index,planner.veh_index)
         
-        if (mission=="small" or mission=="big") and not self.big_complete:
-            self.mode = mission
-            if len(planner.local_path.x)==0:
-                planner.local_path=Path()
-                planner.local_path_maker.start(planner)
-            else:
-                if hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) < 3:
-                    planner.local_path=Path()
-                    planner.map_maker.initialize()
-                    self.mode="general"
-                    self.big_complete=True
-        # print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
+        # if (mission=="small" or mission=="big") and not self.big_complete:
+        #     self.mode = mission
+        #     if len(planner.local_path.x)==0:
+        #         planner.local_path=Path()
+        #         planner.local_path_maker.start(planner)
+        #     else:
+        #         if hypot(planner.local_path.x[-1] - planner.local.x, planner.local_path.y[-1] - planner.local.y) < 3:
+        #             planner.local_path=Path()
+        #             planner.map_maker.initialize()
+        #             self.mode="general"
+        #             self.big_complete=True
+        # # print("???????????", hypot(self.base[0].x-self.local.x, self.base[0].y-self.local.y))
 
-        elif planner.stop_index-planner.veh_index < 15*10:
-            self.mode="crossroad"
+        # elif planner.stop_index-planner.veh_index < 15*10:
+        #     self.mode="crossroad"
  
 
-        elif mission=="kid":
-            if env=="bump":
-                self.mode="bump"
-            elif dist > 0 and dist < 7:
-                self.mode="emergency_stop"
-            else:
-                self.mode="kid"
+        # elif mission=="kid":
+        #     if env=="bump":
+        #         self.mode="bump"
+        #     elif dist > 0 and dist < 7:
+        #         self.mode="emergency_stop"
+        #     else:
+        #         self.mode="kid"
 
 
 
-        elif mission=="delivery1":
-            self.mode = "delivery1"
-            planner.is_delivery=True
+        # elif mission=="delivery1":
+        #     self.mode = "delivery1"
+        #     planner.is_delivery=True
 
-        elif mission=="delivery2" :
-            self.mode = "delivery2"
-            planner.is_delivery=True
+        # elif mission=="delivery2" :
+        #     self.mode = "delivery2"
+        #     planner.is_delivery=True
 
 
-        # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
-        # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
-        # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정
-        elif hypot(planner.global_path.x[902]-self.local.x, planner.global_path.y[902]-self.local.y) < 3:
-            self.mode = "parking"
+        # # 주차 공간이 무조건 하나 있다고 생각했을때의 parking mode들.
+        # # 만약 주차공간이 없을경우, 그냥 지나치는것도 가정할거면 base2이후의 모드를 더 추가해야 함
+        # # parking이고, base1에 가까이 올경우 -> parking-base1으로 변경하고 정지하여 그때의 시간 측정
+        # elif hypot(planner.global_path.x[902]-self.local.x, planner.global_path.y[902]-self.local.y) < 3:
+        #     self.mode = "parking"
             
-        else:
-            self.mode="general"
-            planner.is_delivery = False
-            planner.signal_ignore=False
-            planner.local_path=Path()
+        # else:
+        #     self.mode="general"
+        #     planner.is_delivery = False
+        #     planner.signal_ignore=False
+        #     planner.local_path=Path()
             
 
         # self.mode = "parking-base1"
