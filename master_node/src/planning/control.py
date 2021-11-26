@@ -1,6 +1,6 @@
 import rospy
-from math import sqrt, hypot
-from master_node.msg import Path, Serial_Info, Planning_Info, Local, Obstacles  # 개발할 메세지 타입
+from math import sqrt
+from master_node.msg import Path, Serial_Info, Planning_Info, Local  # 개발할 메세지 타입
 from geometry_msgs.msg import Point32
 from lib.control_utils.general import General
 from lib.control_utils.avoidance import Avoidance
@@ -42,7 +42,6 @@ NGEAR = 0x01
 FGEAR = 0x00
 MAX_BRAKE = 200
 
-
 class Control:
     def __init__(self):
         rospy.init_node("Control", anonymous=False)
@@ -53,8 +52,6 @@ class Control:
 
         rospy.Subscriber("/serial", Serial_Info, self.serialCallback)  # 여기서 지금 받은거._ 현재  SERIAL 상태.
         rospy.Subscriber("/planner", Planning_Info, self.planningCallback)
-        rospy.Subscriber("/obstacles", Obstacles, self.distanceCallback)
-
         self.planning_info = Planning_Info()
         self.serial_info = Serial_Info()  # 위에서 받았는데 얘가 계속 초기화 되는거 아니가?? @@@@@@@@
         self.local = Local()
@@ -73,12 +70,11 @@ class Control:
         self.is_planning = False
         self.start_time = time.time()
         self.current_time = time.time()
-        self.delivery_modes = ["delivery1", "delivery2", "pickup", "drop"]
-        self.D_cur=0
+        # self.delivery_modes = ["delivery1", "delivery2", "pickup", "drop"]
 
-        rate = rospy.Rate(10)  # 100hz
+        rate = rospy.Rate(20)  # 100hz
 
-        # main loop
+                # main loop
         while not rospy.is_shutdown():
             print(len(self.local_path.x))
             if self.control_ready:
@@ -87,8 +83,6 @@ class Control:
 
                     self.pub_msg = general.driving(self)
 
-                if self.planning_info.mode in ["pickup_complete","drop_complete"] :
-                    self.pub_msg = general.driving(self)
 
                 elif self.planning_info.mode == "emergency_stop":
                     self.pub_msg.steer = 0
@@ -98,19 +92,6 @@ class Control:
                     self.pub_msg.gear = 0
                     self.pub_msg.emergency_stop = 1
                     self.pub_msg.auto_manual = 1
-
-                elif self.planning_info.mode == "small" or self.planning_info.mode == "big":
-                    print('sibal', len(self.local_path.x))
-
-                    self.local_path.x = self.planning_info.path.x
-                    self.local_path.y = self.planning_info.path.y
-                    if self.local_path.x:
-                        self.pub_msg = avoidance.driving(self)
-                    else:
-                        self.pub_msg = general.driving(self)
-
-                elif self.planning_info.mode == "kid" or self.planning_info.mode == "bump" or self.planning_info.mode == "pickup_complete":
-                    self.pub_msg = general.driving(self)
 
                 elif self.planning_info.mode == "normal_stop":
 
@@ -139,10 +120,6 @@ class Control:
                         self.pub_msg.brake = int(0.9*a**(-t+c)+b)  # 제곱근 함수
                         
                         self.pub_msg.brake = max(0, min(200, self.pub_msg.brake))
-
-                # elif self.planning_info.mode == 'normal_stop':
-                #     is_first = (self.past_mode != 'normal_stop')
-                #     self.normal_stop.run(is_first)
 
                 # base에서 정지
                 elif self.planning_info.mode == "parking-base1" or self.planning_info.mode == "parking-base2":
@@ -217,51 +194,6 @@ class Control:
                     self.local_path.heading = self.global_path.heading
 
 
-                    # self.planning_info.mode = "general"
-                elif self.planning_info.mode in self.delivery_modes:
-                    if self.planning_info.path.x:
-                        self.local_path.x = self.planning_info.path.x
-                        self.local_path.y = self.planning_info.path.y
-
-                    if self.local_path.x:
-                        self.pub_msg = avoidance.driving(self)
-
-                elif self.planning_info.mode == "delivery_stop":
-                    if self.planning_info.path.x:
-                        self.local_path.x = self.planning_info.path.x
-                        self.local_path.y = self.planning_info.path.y
-
-                    if self.local_path.x:
-                        self.pub_msg = avoidance.driving(self)
-                    
-                    dist = self.planning_info.dist  # 범퍼위치로 기준 재설정\
-                    print(dist)
-                    self.pub_msg.speed = max(0, dist*1)
-                    t = dist / ((self.serial_info.speed / 3.6) + 0.1)
-                    # self.pub_msg.brake=int(200/t) # 유리 함수 200/x
-                    # self.pub_msg.brake=int((200/t)-20) # 유리 함수 200/x - 20
-                    # self.pub_msg.brake=int((300/t)-60) # 유리 함수 300/x - 60
-                    t = max(1, dist / ((self.serial_info.speed / 3.6) + 0.1))
-                    # self.pub_msg.brake=int(-100*sqrt(t-1)+200) # 제곱근 함수
-                    # self.pub_msg.brake = int(-75 * sqrt(t - 1) + 220)  # 제곱근 함수
-
-                    # a=1.137
-                    # b=-62
-                    # c=42
-                    a = 1.252
-                    b = -12
-                    c = 21
-
-                    if dist < 1.5:
-                        self.pub_msg.brake=200
-
-                    else:
-                        self.pub_msg.brake = int(0.9*a**(-t+c)+b)  # 제곱근 함수
-                        
-                        self.pub_msg.brake = max(0, min(200, self.pub_msg.brake))
-
-                # print(self.veh_idx)
-
                 self.past_mode = self.planning_info.mode
                 # self.pub_msg.path_steer = self.planning_info.path.heading[self.planning_info.cur_index]
                 # print(self.pub_msg.steer)
@@ -269,6 +201,7 @@ class Control:
                 self.pub_msg.ready = self.control_ready
                 control_pub.publish(self.pub_msg)
                 rate.sleep()
+
 
     def serialParkingComm(self, speed, brake, gear):
         self.pub_msg.speed = speed
@@ -309,15 +242,6 @@ class Control:
 
     def parkingCallback(self, msg):
         self.parking_target = msg.data
-
-    def distanceCallback(self,msg):
-        self.D_cur = 10
-        for circle in msg.circles:
-            if abs(circle.center.y) < 1:
-                dist = hypot(circle.center.x,circle.center.y)
-                if self.D_cur > dist:
-                    self.D_cur=dist
-        
 
 
 if __name__ == "__main__":
