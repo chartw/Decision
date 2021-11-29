@@ -1,8 +1,8 @@
 class PID:
     def __init__(self):
-        self.P = 4.0
+        self.P = 6
         self.I = 0.5
-        self.D = 0
+        self.D = 3
         self.pre_error = 0.0
         self.error_sum = 0.0
         self.dt = 1.0 / 10.0

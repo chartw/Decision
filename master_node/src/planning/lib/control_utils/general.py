@@ -75,7 +75,12 @@ class General:
         self.dt_list=[0]
         self.target_list=[]
         self.vc_list=[]
+        self.vin_list = []
         self.dt = 1.0 / 10.0
+        self.leader_car=5
+        self.leader_v=4
+        self.leader_pos=0
+        self.cur_pos=0
 
 
     def select_target(self, lookahead):  # 여기서 사용하는 self.path 관련정보를 바꾸면 됨. 여기서바꿔야하나?
@@ -151,7 +156,9 @@ class General:
 
 
     def calc_velocity(self, D_cur):
-
+        self.leader_pos+=self.leader_v*self.dt*(10/36)
+        self.cur_pos+=self.serial_info.speed*self.dt*(10/36)
+        D_cur = self.leader_pos - self.cur_pos
         D_ref = 8
         B_in = 0
         V_control = self.pid.run(D_ref,D_cur,self.serial_info.speed)
@@ -159,9 +166,13 @@ class General:
         self.dist_list.append(D_cur)
         self.target_list.append(D_ref)
         self.vc_list.append(V_control)
+        
+        plt.subplot(2,1,1)
         plt.plot(self.dt_list,self.dist_list,'b')
         plt.plot(self.dt_list,self.target_list,'r')
-        # plt.plot(self.dt_list,self.vc_list,'g')
+        plt.subplot(2,1,2)
+        plt.plot(self.dt_list, self.vc_list)
+        plt.plot(self.dt_list,self.vc_list,'g')
         plt.pause(0.001)
         self.dt_list.append(self.dt_list[-1]+self.dt)
         print("vcontrol = ",V_control)
@@ -170,14 +181,16 @@ class General:
             V_in+=V_control
 
         elif V_control < 0 :
-            V_in+=V_control
+            # V_in+=V_control
             B_in = int(abs(V_control)*2.5)
             # B_in=0
 
         V_in = max(min(V_in, 8),0)
+        
         B_in = min(B_in, 255)
         print("V_in",V_in,"B_in",B_in)
         print("D_cur = ",D_cur)
+
         return V_in, B_in
 
     def driving(self, control):
