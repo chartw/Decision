@@ -300,9 +300,9 @@ class GPP:
                 self.global_path.heading.append(deg_yaw)
 
                 self.global_path.k.append(float(line[3]))
-                # self.global_path.s.append(float(line[4]))
-                self.global_path.env.append(line[5])
-                self.global_path.mission.append(line[6])
+                self.global_path.s.append(float(line[4]))
+                # self.global_path.env.append(line[5])
+                # self.global_path.mission.append(line[6])
 
 
 ########################################밑에 다지우고 위에 주석풀면 원래코드

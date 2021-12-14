@@ -76,10 +76,7 @@ class General:
         self.target_list=[]
         self.vc_list=[]
         self.vin_list = []
-<<<<<<< HEAD
         self.vtarget_list = []
-=======
->>>>>>> SCC
         self.dt = 1.0 / 10.0
         self.leader_car=5
         self.leader_v=4
@@ -171,11 +168,6 @@ class General:
         self.dist_list.append(D_cur)
         self.target_list.append(D_ref)
         self.vc_list.append(V_control)
-<<<<<<< HEAD
-        self.vtarget_list.append(V_ref)
-        
-        
-=======
         
         plt.subplot(2,1,1)
         plt.plot(self.dt_list,self.dist_list,'b')
@@ -185,7 +177,6 @@ class General:
         plt.plot(self.dt_list,self.vc_list,'g')
         plt.pause(0.001)
         self.dt_list.append(self.dt_list[-1]+self.dt)
->>>>>>> SCC
         print("vcontrol = ",V_control)
         V_in = self.serial_info.speed
         if V_control > 0:
@@ -201,20 +192,6 @@ class General:
         B_in = min(B_in, 255)
         print("V_in",V_in,"B_in",B_in)
         print("D_cur = ",D_cur)
-<<<<<<< HEAD
-        self.vin_list.append(V_in)
-
-        plt.subplot(2,1,1)
-        plt.plot(self.dt_list,self.dist_list,'b')
-        plt.plot(self.dt_list,self.target_list,'r')
-        plt.subplot(2,1,2)
-        plt.plot(self.dt_list, self.vin_list,'g')
-        plt.plot(self.dt_list, self.vtarget_list, 'r')
-        plt.pause(0.001)
-        
-        self.dt_list.append(self.dt_list[-1]+self.dt)
-=======
->>>>>>> SCC
 
         return V_in, B_in
 
